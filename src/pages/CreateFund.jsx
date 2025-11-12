@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import InfoCard from "../components/InfoCard";
+import { Switch } from "@/components/ui/switch";
 
 export default function CreateFund() {
   const navigate = useNavigate();
@@ -236,6 +237,9 @@ export default function CreateFund() {
       if (!allPredictionsValid()) {
         throw new Error("Invalid predictions. Use 10-12 credits total, 1-3 per match."); // Updated message
       }
+      if (fundData.visibility === "private" && (!fundData.password || fundData.password.length < 4)) {
+        throw new Error("Private funds require a password of at least 4 digits.");
+      }
 
       const sortedMatches = [...selectedMatches].sort((a, b) =>
         new Date(a.match_date) - new Date(b.match_date)
@@ -433,6 +437,49 @@ export default function CreateFund() {
                 </div>
               </div>
 
+              {/* 🔒 PRIVATE FUND SECTION */}
+              <div className="space-y-4 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-gray-300 text-base">Приватный фонд</Label>
+                    <p className="text-xs text-gray-500 mt-1">Доступен только по ссылке и паролю</p>
+                  </div>
+                  <Switch 
+                    checked={fundData.visibility === "private"}
+                    onCheckedChange={(checked) => 
+                      setFundData({
+                        ...fundData, 
+                        visibility: checked ? "private" : "public",
+                        password: checked ? fundData.password : "" // Clear password if switching to public
+                      })
+                    }
+                  />
+                </div>
+                
+                {fundData.visibility === "private" && (
+                  <div className="pt-2">
+                    <Label className="text-gray-300 mb-2">Пароль (4-6 цифр)</Label>
+                    <Input
+                      type="text"
+                      maxLength={6}
+                      placeholder="1234"
+                      value={fundData.password}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, ''); // Allow only digits
+                        setFundData({...fundData, password: digits});
+                      }}
+                      className="bg-white/5 border-gray-700 text-white text-center text-2xl font-bold tracking-widest"
+                    />
+                    {fundData.password && fundData.password.length < 4 && (
+                      <p className="text-xs text-red-400 mt-1">Пароль должен содержать не менее 4 цифр.</p>
+                    )}
+                    <p className="text-xs text-purple-300 mt-2 flex items-center gap-1">
+                      💡 Поделитесь ссылкой и паролем с друзьями после создания
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                 <p className="text-blue-300 text-sm">
                   <strong>📊 Система кредитов:</strong> Вы получите 12 кредитов на 10 матчей. Стратегические прогнозы приносят 1.5-8 очков за матч!
@@ -441,7 +488,11 @@ export default function CreateFund() {
 
               <Button
                 onClick={() => setStep(2)}
-                disabled={!fundData.title || fundData.max_participants < 2}
+                disabled={
+                  !fundData.title || 
+                  fundData.max_participants < 2 ||
+                  (fundData.visibility === "private" && (!fundData.password || fundData.password.length < 4))
+                }
                 className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6"
               >
                 Далее: Выбрать матчи

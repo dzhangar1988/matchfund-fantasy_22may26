@@ -14,8 +14,14 @@ import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function FundDetails() {
   const navigate = useNavigate();
@@ -34,6 +40,9 @@ export default function FundDetails() {
   const [error, setError] = useState(null);
   const [showExactScore, setShowExactScore] = useState({});
   const [exactScores, setExactScores] = useState({});
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     if (!fundId) {
@@ -191,6 +200,15 @@ export default function FundDetails() {
   const submitPredictions = async () => {
     if (isSubmitting) return;
     
+    // 🔒 Check password for private funds
+    if (fund.visibility === "private" && fund.password) {
+      if (passwordInput !== fund.password) {
+        setPasswordError("Неверный пароль");
+        setShowPasswordModal(true);
+        return;
+      }
+    }
+    
     setIsSubmitting(true);
     setError(null);
     
@@ -208,6 +226,16 @@ export default function FundDetails() {
       }
 
       const totalCredits = getTotalCredits();
+      
+      // Collect device fingerprint
+      const deviceInfo = {
+        user_agent: navigator.userAgent,
+        language: navigator.language,
+        screen_resolution: `${window.screen.width}x${window.screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timestamp: new Date().toISOString()
+      };
+      
       const participation = await base44.entities.Participation.create({
         fund_id: fundId,
         user_id: user.id,
@@ -217,7 +245,8 @@ export default function FundDetails() {
         credits_used: totalCredits,
         total_points: 0,
         joined_at: new Date().toISOString(),
-        predictions_completed_at: new Date().toISOString()
+        predictions_completed_at: new Date().toISOString(),
+        device_info: deviceInfo
       });
 
       for (const match of matches) {
@@ -236,16 +265,12 @@ export default function FundDetails() {
         total_predictions: (user.total_predictions || 0) + matches.length
       });
 
-      // ✅ FIX: Update total_pool when new participant joins
       const currentFund = await base44.entities.MatchFund.get(fundId);
       await base44.entities.MatchFund.update(fundId, {
         total_pool: (currentFund.total_pool || 0) + fund.entry_fee
       });
 
-      // ✅ Reload data instead of navigate
       await loadData();
-      
-      // Scroll to top to show success
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       setError(error.message || "Failed to submit predictions");
@@ -254,8 +279,14 @@ export default function FundDetails() {
     }
   };
 
-  // ✅ Show gross pool (before fees)
-  // The fund?.entry_fee should always be defined if fund exists, but || 0 is a safe fallback.
+  const handleJoinPrivateFund = () => {
+    if (fund.visibility === "private" && fund.password && !passwordInput) {
+      setShowPasswordModal(true);
+    } else {
+      submitPredictions();
+    }
+  };
+
   const prizePool = participants.length * (fund?.entry_fee || 0);
 
   const totalCredits = getTotalCredits();
@@ -282,7 +313,7 @@ export default function FundDetails() {
             onClick={() => navigate(createPageUrl("Home"))}
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600"
           >
-            Back to Home
+            Назад на главную
           </Button>
         </Card>
       </div>
@@ -292,6 +323,47 @@ export default function FundDetails() {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
+        {/* 🔒 PASSWORD MODAL */}
+        <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
+          <DialogContent className="bg-[#0F1E35] border-gray-800">
+            <DialogHeader>
+              <DialogTitle className="text-white text-2xl">🔒 Приватный фонд</DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Введите пароль для входа в фонд
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <Input
+                type="text"
+                maxLength={6}
+                placeholder="••••"
+                value={passwordInput}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '');
+                  setPasswordInput(digits);
+                  setPasswordError("");
+                }}
+                className="bg-white/5 border-gray-700 text-white text-center text-3xl font-bold tracking-widest"
+                autoFocus
+              />
+              {passwordError && (
+                <p className="text-red-400 text-sm text-center">{passwordError}</p>
+              )}
+              <Button
+                onClick={() => {
+                  // After closing the modal, trigger the submission again with the password
+                  setShowPasswordModal(false);
+                  submitPredictions();
+                }}
+                disabled={!passwordInput || passwordInput.length < 4}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3"
+              >
+                Войти в фонд
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <Button
           variant="ghost"
           onClick={() => navigate(createPageUrl("Home"))}
@@ -304,7 +376,10 @@ export default function FundDetails() {
         <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
           <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-6">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white mb-3">{fund.title}</h1>
+              <h1 className="text-3xl font-bold text-white mb-3 flex items-center gap-2">
+                {fund.visibility === "private" && <span>🔒</span>}
+                {fund.title}
+              </h1>
               <div className="flex flex-wrap gap-3">
                 <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
                   {fund.credits_per_player || 12} Кредитов
@@ -323,6 +398,11 @@ export default function FundDetails() {
                    fund.status === "in_progress" ? "В процессе" :
                    fund.status === "finished" ? "Завершён" : fund.status}
                 </Badge>
+                {fund.visibility === "private" && (
+                  <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
+                    Приватный
+                  </Badge>
+                )}
               </div>
             </div>
             <div className="text-right">
@@ -851,7 +931,7 @@ export default function FundDetails() {
             <div className="sticky bottom-0 bg-[#0C1523] pt-4">
               <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
                 <Button
-                  onClick={submitPredictions}
+                  onClick={handleJoinPrivateFund}
                   disabled={!allPredictionsValid() || isSubmitting || !user || user.total_balance < fund.entry_fee}
                   className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6 text-lg"
                 >
@@ -861,9 +941,9 @@ export default function FundDetails() {
                       Отправка...
                     </span>
                   ) : user && user.total_balance < fund.entry_fee ? (
-                    `Недостаточно средств`
+                    `Недостаточно баллов`
                   ) : (
-                    `Присоединиться к фонду и отправить прогнозы (${totalCredits}/12 кредитов)`
+                    `Войти в фонд и отправить прогнозы (${totalCredits}/12 кредитов)`
                   )}
                 </Button>
 

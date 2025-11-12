@@ -86,7 +86,7 @@ export default function Home() {
     setIsLoading(false);
   };
 
-  const openFunds = funds.filter(f => f.status === "open");
+  const openFunds = funds.filter(f => f.status === "open" && f.visibility === "public");
 
   const stats = [
     { 
