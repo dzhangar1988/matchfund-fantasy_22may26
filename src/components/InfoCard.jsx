@@ -41,66 +41,68 @@ export default function InfoCard() {
         {!isCollapsed && (
           <div className="space-y-3 text-sm text-gray-300">
             <p className="text-gray-400 mb-3">
-              <strong className="text-white">1 кредит = 1 прогноз.</strong> Вы получаете очки в зависимости от типа прогноза:
+              <strong className="text-white">У вас 10-20 кредитов на 10 матчей.</strong> Максимум 2 прогноза на матч:
             </p>
 
             <div className="flex items-start gap-2">
               <span className="text-orange-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Bold прогноз</strong> (победа/ничья/поражение): 
-                <span className="text-orange-400 font-bold ml-1">3 очка</span>
+                <span className="text-orange-400 font-bold ml-1">3 очка (1 кр)</span>
               </div>
             </div>
-            
+
             <div className="flex items-start gap-2">
-              <span className="text-orange-400 font-bold">•</span>
+              <span className="text-blue-400 font-bold">•</span>
               <div>
-                <strong className="text-white">Точный счёт</strong>: 
-                <span className="text-orange-400 font-bold ml-1">9 очков</span>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-2">
-              <span className="text-orange-400 font-bold">•</span>
-              <div>
-                <strong className="text-white">Больше голов / Обе забьют</strong>: 
-                <span className="text-orange-400 font-bold ml-1">2 очка</span>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-2">
-              <span className="text-orange-400 font-bold">•</span>
-              <div>
-                <strong className="text-white">Неиспользованные кредиты</strong>: 
-                <span className="text-orange-400 font-bold ml-1">0.5 очка каждый</span>
+                <strong className="text-white">Обе забьют</strong> (Да/Нет): 
+                <span className="text-blue-400 font-bold ml-1">2 очка (1 кр)</span>
               </div>
             </div>
 
             <div className="flex items-start gap-2">
               <span className="text-purple-400 font-bold">•</span>
               <div>
-                <strong className="text-white">Hedge стратегия</strong> (2 прогноза на исход): 
-                <span className="text-purple-400 font-bold ml-1">1.5 очка</span>
-                <p className="text-xs text-gray-400 mt-1">
-                  Например: Победа 1 + Ничья. Если не угадали — получите 1.5 очка утешения
-                </p>
+                <strong className="text-white">ТБ/ТМ 2.5 голов</strong>: 
+                <span className="text-purple-400 font-bold ml-1">2.5 очка (1 кр)</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="text-cyan-400 font-bold">•</span>
+              <div>
+                <strong className="text-white">Фора ±1</strong> (П1 -1 / П2 +1): 
+                <span className="text-cyan-400 font-bold ml-1">2.5 очка (1 кр)</span>
               </div>
             </div>
 
             <div className="flex items-start gap-2">
               <span className="text-green-400 font-bold">•</span>
               <div>
-                <strong className="text-white">Полное покрытие</strong> (3 прогноза на исход): 
-                <span className="text-green-400 font-bold ml-1">3 очка гарантированно</span>
-                <p className="text-xs text-gray-400 mt-1">
-                  Победа 1 + Ничья + Победа 2 = всегда угадаете один исход
-                </p>
+                <strong className="text-white">Победа с нулём</strong>: 
+                <span className="text-green-400 font-bold ml-1">4.5 очка (1.5 кр)</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="text-yellow-400 font-bold">•</span>
+              <div>
+                <strong className="text-white">Точный счёт</strong>: 
+                <span className="text-yellow-400 font-bold ml-1">9 очков (3 кр)</span>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="text-gray-400 font-bold">•</span>
+              <div>
+                <strong className="text-white">Неиспользованные кредиты</strong>: 
+                <span className="text-gray-400 font-bold ml-1">0.5 очка каждый</span>
               </div>
             </div>
 
             <div className="mt-3 p-2 rounded bg-blue-500/10 border border-blue-500/20">
               <p className="text-xs text-blue-300">
-                💡 <strong>Совет:</strong> Используйте все 12 кредитов для максимального потенциала набрать очки!
+                💡 <strong>Совет:</strong> Используйте все 20 кредитов стратегически!
               </p>
             </div>
           </div>
