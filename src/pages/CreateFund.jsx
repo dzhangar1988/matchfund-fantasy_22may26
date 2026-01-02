@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -43,7 +42,7 @@ export default function CreateFund() {
     min_participants: 2,
     visibility: "public",
     password: "",
-    credits_per_player: 12
+    credits_per_player: 20
   });
 
   useEffect(() => {
@@ -198,21 +197,45 @@ export default function CreateFund() {
   };
 
   const getTotalCredits = () => {
-    return Object.values(predictions).reduce((sum, opts) => sum + opts.length, 0);
+    let total = 0;
+    for (const matchId in predictions) {
+      const opts = predictions[matchId] || [];
+      for (const opt of opts) {
+        if (opt === 'home_clean_sheet_win' || opt === 'away_clean_sheet_win') {
+          total += 1.5;
+        } else if (opt === 'exact_score') {
+          total += 3;
+        } else {
+          total += 1;
+        }
+      }
+    }
+    return total;
   };
 
   const getMatchCredits = (matchId) => {
-    return (predictions[matchId] || []).length;
+    const opts = predictions[matchId] || [];
+    let total = 0;
+    for (const opt of opts) {
+      if (opt === 'home_clean_sheet_win' || opt === 'away_clean_sheet_win') {
+        total += 1.5;
+      } else if (opt === 'exact_score') {
+        total += 3;
+      } else {
+        total += 1;
+      }
+    }
+    return total;
   };
 
   const allPredictionsValid = () => {
     if (selectedMatches.length < 10) return false;
     const totalCredits = getTotalCredits();
-    if (totalCredits < 10 || totalCredits > 12) return false;
+    if (totalCredits < 10 || totalCredits > 20) return false;
 
     for (const match of selectedMatches) {
       const opts = predictions[match.id] || [];
-      if (opts.length === 0 || opts.length > 3) return false; // Changed from 6 to 3
+      if (opts.length === 0 || opts.length > 2) return false;
     }
     return true;
   };
@@ -235,7 +258,7 @@ export default function CreateFund() {
         throw new Error("Please select at least 10 matches");
       }
       if (!allPredictionsValid()) {
-        throw new Error("Invalid predictions. Use 10-12 credits total, 1-3 per match."); // Updated message
+        throw new Error("Invalid predictions. Use 10-20 credits total, max 2 options per match.");
       }
       if (fundData.visibility === "private" && (!fundData.password || fundData.password.length < 4)) {
         throw new Error("Private funds require a password of at least 4 digits.");
@@ -252,7 +275,7 @@ export default function CreateFund() {
         entry_fee: 100,
         max_participants: fundData.max_participants,
         min_participants: fundData.min_participants,
-        credits_per_player: 12,
+        credits_per_player: 20,
         visibility: fundData.visibility,
         password: fundData.password || null,
         status: "open",
@@ -286,11 +309,26 @@ export default function CreateFund() {
 
       for (const match of selectedMatches) {
         const opts = predictions[match.id] || [];
+        const exactScoreData = exactScores[match.id];
+        
+        let creditsSpent = 0;
+        for (const opt of opts) {
+          if (opt === 'home_clean_sheet_win' || opt === 'away_clean_sheet_win') {
+            creditsSpent += 1.5;
+          } else if (opt === 'exact_score') {
+            creditsSpent += 3;
+          } else {
+            creditsSpent += 1;
+          }
+        }
+        
         await base44.entities.Prediction.create({
           participation_id: participation.id,
           match_id: match.id,
           selected_options: opts,
-          credits_spent: opts.length
+          predicted_home_goals: exactScoreData?.home !== undefined && exactScoreData?.home !== "" ? parseInt(exactScoreData.home) : null,
+          predicted_away_goals: exactScoreData?.away !== undefined && exactScoreData?.away !== "" ? parseInt(exactScoreData.away) : null,
+          credits_spent: creditsSpent
         });
       }
 
@@ -482,7 +520,7 @@ export default function CreateFund() {
 
               <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                 <p className="text-blue-300 text-sm">
-                  <strong>📊 Система кредитов:</strong> Вы получите 12 кредитов на 10 матчей. Стратегические прогнозы приносят 1.5-8 очков за матч!
+                  <strong>📊 Система кредитов:</strong> Вы получите 10-20 кредитов на 10 матчей. Максимум 2 прогноза на матч!
                 </p>
               </div>
 
@@ -586,7 +624,7 @@ export default function CreateFund() {
                   <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                       <Target className="w-6 h-6 text-orange-400" />
-                      Распределите 12 кредитов
+                      Распределите 10-20 кредитов
                     </h2>
                     {isQuickCreate && (
                       <p className="text-sm text-gray-400 mt-1">
@@ -595,28 +633,26 @@ export default function CreateFund() {
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white">{totalCredits}/12</div>
+                    <div className="text-3xl font-bold text-white">{totalCredits}/20</div>
                     <div className="text-sm text-gray-400">кредитов</div>
                   </div>
                 </div>
 
-                <Alert variant={totalCredits < 10 ? "destructive" : totalCredits > 12 ? "destructive" : "default"}
-                  className={totalCredits < 10 ? "bg-red-500/10 border-red-500/30" : totalCredits > 12 ? "bg-red-500/10 border-red-500/30" : "bg-green-500/10 border-green-500/30"}>
-                  <AlertDescription className={totalCredits < 10 || totalCredits > 12 ? "text-red-400" : "text-green-400"}>
+                <Alert variant={totalCredits < 10 ? "destructive" : totalCredits > 20 ? "destructive" : "default"}
+                  className={totalCredits < 10 ? "bg-red-500/10 border-red-500/30" : totalCredits > 20 ? "bg-red-500/10 border-red-500/30" : "bg-green-500/10 border-green-500/30"}>
+                  <AlertDescription className={totalCredits < 10 || totalCredits > 20 ? "text-red-400" : "text-green-400"}>
                     {totalCredits < 10 ? (
-                      "⚠️ Необходимо сделать прогноз на каждый матч тура"
-                    ) : totalCredits > 12 ? (
-                      "❌ Максимум 12 кредитов"
-                    ) : totalCredits < 12 ? (
+                      "⚠️ Минимум 10 кредитов (минимум 1 прогноз на матч)"
+                    ) : totalCredits > 20 ? (
+                      "❌ Максимум 20 кредитов"
+                    ) : totalCredits < 20 ? (
                       <>
-                        💡 У вас {12 - totalCredits} неиспользованных {12 - totalCredits === 1 ? 'кредит' : 'кредита'}
+                        💡 У вас {20 - totalCredits} неиспользованных кредитов
                         <br />
-                        <span className="text-sm">→ {12 - totalCredits === 1 ? 'Стоит' : 'Стоят'} по 0.5 очка = {(12 - totalCredits) * 0.5} бонусных очков</span>
-                        <br />
-                        <span className="text-sm text-green-300">Совет: Используйте все кредиты для большего потенциала!</span>
+                        <span className="text-sm">→ Стоят по 0.5 очка = {(20 - totalCredits) * 0.5} бонусных очков</span>
                       </>
                     ) : (
-                      `✅ Кредиты: ${totalCredits}/12 • Все кредиты распределены!`
+                      `✅ Кредиты: ${totalCredits}/20 • Все кредиты распределены!`
                     )}
                   </AlertDescription>
                 </Alert>
@@ -648,12 +684,12 @@ export default function CreateFund() {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="text-sm text-gray-400 cursor-help flex items-center gap-1">
-                                Матч: {matchCredits}/3
+                                {matchCredits} кр
                                 <span className="text-gray-500">ⓘ</span>
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Можно использовать 1-3 кредита на матч</p>
+                              <p>Макс 2 прогноза на матч</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -667,45 +703,15 @@ export default function CreateFund() {
                         </p>
                       </div>
 
-                      <div className="space-y-4">
-                        {/* Match Result Section */}
+                      <div className="space-y-3">
+                        {/* Bold Predictions (3 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Исход матча:</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Bold исход (3 очка, 1 кр):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'home_win', label: match.home_team },
-                              { value: 'draw', label: 'Ничья' },
-                              { value: 'away_win', label: match.away_team }
-                            ].map((option) => {
-                              const isSelected = opts.includes(option.value);
-                              return (
-                                <Button
-                                  key={option.value}
-                                  type="button"
-                                  variant={isSelected ? "default" : "outline"}
-                                  className={`flex items-center gap-2 ${
-                                    isSelected
-                                      ? "bg-orange-500 hover:bg-orange-600 text-white font-bold border-orange-500"
-                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
-                                  }`}
-                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
-                                >
-                                  {isSelected && <span>✓</span>}
-                                  <span>{option.label}</span>
-                                </Button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Goals Section */}
-                        <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Голы:</p>
-                          <div className="flex gap-2 flex-wrap">
-                            {[
-                              { value: 'over_1_5', label: 'Больше 1.5 голов' },
-                              { value: 'over_2_5', label: 'Больше 2.5 голов' },
-                              { value: 'btts_yes', label: 'Обе забьют' }
+                              { value: 'home_win', label: 'П1', team: match.home_team },
+                              { value: 'draw', label: 'X' },
+                              { value: 'away_win', label: 'П2', team: match.away_team }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               return (
@@ -714,12 +720,13 @@ export default function CreateFund() {
                                   type="button"
                                   variant={isSelected ? "default" : "outline"}
                                   size="sm"
-                                  className={`flex items-center gap-2 ${
+                                  className={`flex items-center gap-1 ${
                                     isSelected
-                                      ? "bg-blue-500 hover:bg-blue-600 text-white font-bold border-blue-500"
+                                      ? "bg-orange-500 hover:bg-orange-600 text-white font-bold"
                                       : "border-gray-600 text-gray-300 hover:bg-white/5"
                                   }`}
                                   onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                  disabled={!isSelected && opts.length >= 2}
                                 >
                                   {isSelected && <span>✓</span>}
                                   <span>{option.label}</span>
@@ -729,23 +736,148 @@ export default function CreateFund() {
                           </div>
                         </div>
 
-                        {/* Exact Score Section */}
+                        {/* BTTS (2 pts, 1 cr) */}
+                        <div>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Обе забьют (2 очка, 1 кр):</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'btts_yes', label: 'Да' },
+                              { value: 'btts_no', label: 'Нет' }
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-blue-500 hover:bg-blue-600 text-white font-bold"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                  disabled={!isSelected && opts.length >= 2}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Over/Under 2.5 (2.5 pts, 1 cr) */}
+                        <div>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">ТБ/ТМ 2.5 (2.5 очка, 1 кр):</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'over_2_5', label: 'Больше 2.5' },
+                              { value: 'under_2_5', label: 'Меньше 2.5' }
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-purple-500 hover:bg-purple-600 text-white font-bold"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                  disabled={!isSelected && opts.length >= 2}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Handicap (2.5 pts, 1 cr) */}
+                        <div>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Фора (2.5 очка, 1 кр):</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'home_handicap_minus1', label: 'П1 Фора -1' },
+                              { value: 'away_handicap_plus1', label: 'П2 Фора +1' }
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-cyan-500 hover:bg-cyan-600 text-white font-bold"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                  disabled={!isSelected && opts.length >= 2}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Win to Nil (4.5 pts, 1.5 cr) */}
+                        <div>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Победа с нулём (4.5 очка, 1.5 кр):</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'home_clean_sheet_win', label: 'П1 с нулём' },
+                              { value: 'away_clean_sheet_win', label: 'П2 с нулём' }
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-green-500 hover:bg-green-600 text-white font-bold"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                  disabled={!isSelected && opts.length >= 2}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Exact Score Section (9 pts, 3 cr) */}
                         {!showExact ? (
                           <Button
                             type="button"
                             variant="outline"
                             onClick={() => toggleExactScore(match.id)}
                             className="w-full border-gray-600 text-gray-300 hover:bg-white/5 flex items-center justify-center gap-2"
+                            disabled={opts.length >= 2}
                           >
                             <span className="text-lg">🎯</span>
-                            <span>Добавить точный счет</span>
+                            <span>Точный счёт (9 очков, 3 кр)</span>
                           </Button>
                         ) : (
                           <div className="p-4 rounded-lg bg-white/5 border border-gray-700">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">🎯</span>
-                                <span className="text-white font-semibold">Точный счет (1кр→9оч)</span>
+                                <span className="text-white font-semibold">Точный счёт (9 очков, 3 кр)</span>
                               </div>
                               <Button
                                 type="button"
