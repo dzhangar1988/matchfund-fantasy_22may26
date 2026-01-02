@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User } from "@/entities/User";
+import { base44 } from "@/api/base44Client";
 import { Trophy, Plus, Home, User as UserIcon, Crown, LogOut, HelpCircle, Settings } from "lucide-react";
 import {
   Sidebar,
@@ -42,7 +42,7 @@ export default function Layout({ children, currentPageName }) {
 
   const loadUser = async () => {
     try {
-      const currentUser = await User.me();
+      const currentUser = await base44.auth.me();
       
       // ✅ Проверяем username
       if (!currentUser.username || currentUser.username.trim() === "") {
@@ -62,7 +62,7 @@ export default function Layout({ children, currentPageName }) {
     }
     
     try {
-      await User.update(user.id, { username: username.trim() });
+      await base44.entities.User.update(user.id, { username: username.trim() });
       setShowUsernameModal(false);
       await loadUser();
     } catch (error) {
@@ -71,7 +71,7 @@ export default function Layout({ children, currentPageName }) {
   };
 
   const handleLogout = async () => {
-    await User.logout();
+    await base44.auth.logout();
   };
 
   const allNavigationItems = user?.is_admin
@@ -210,7 +210,7 @@ export default function Layout({ children, currentPageName }) {
               </div>
             ) : (
               <Button
-                onClick={() => User.login()}
+                onClick={() => base44.auth.redirectToLogin()}
                 className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold shadow-lg shadow-orange-500/30"
               >
                 Войти
