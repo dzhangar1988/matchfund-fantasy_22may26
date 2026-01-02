@@ -47,8 +47,8 @@ export default function InfoCard() {
             <div className="flex items-start gap-2">
               <span className="text-orange-400 font-bold">•</span>
               <div>
-                <strong className="text-white">Bold прогноз</strong> (победа/ничья/поражение): 
-                <span className="text-orange-400 font-bold ml-1">3 очка (1 кр)</span>
+                <strong className="text-white">Исход матча</strong> (П1/Х/П2): 
+                <span className="text-orange-400 font-bold ml-1">3 очка (1 кредит)</span>
               </div>
             </div>
 
@@ -56,31 +56,31 @@ export default function InfoCard() {
               <span className="text-blue-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Обе забьют</strong> (Да/Нет): 
-                <span className="text-blue-400 font-bold ml-1">2 очка (1 кр)</span>
+                <span className="text-blue-400 font-bold ml-1">2 очка (1 кредит)</span>
               </div>
             </div>
 
             <div className="flex items-start gap-2">
               <span className="text-purple-400 font-bold">•</span>
               <div>
-                <strong className="text-white">ТБ/ТМ 2.5 голов</strong>: 
-                <span className="text-purple-400 font-bold ml-1">2.5 очка (1 кр)</span>
+                <strong className="text-white">Больше/Меньше 2.5 голов</strong>: 
+                <span className="text-purple-400 font-bold ml-1">2.5 очка (1 кредит)</span>
               </div>
             </div>
 
             <div className="flex items-start gap-2">
               <span className="text-cyan-400 font-bold">•</span>
               <div>
-                <strong className="text-white">Фора ±1</strong> (П1 -1 / П2 +1): 
-                <span className="text-cyan-400 font-bold ml-1">2.5 очка (1 кр)</span>
+                <strong className="text-white">Фора</strong> (П1 с разницей 2+ / П2 не более -1): 
+                <span className="text-cyan-400 font-bold ml-1">2.5 очка (1 кредит)</span>
               </div>
             </div>
 
             <div className="flex items-start gap-2">
               <span className="text-green-400 font-bold">•</span>
               <div>
-                <strong className="text-white">Победа с нулём</strong>: 
-                <span className="text-green-400 font-bold ml-1">4.5 очка (1.5 кр)</span>
+                <strong className="text-white">Сухая победа</strong> (П1/П2): 
+                <span className="text-green-400 font-bold ml-1">4.5 очка (1.5 кредита)</span>
               </div>
             </div>
 
@@ -88,7 +88,7 @@ export default function InfoCard() {
               <span className="text-yellow-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Точный счёт</strong>: 
-                <span className="text-yellow-400 font-bold ml-1">9 очков (3 кр)</span>
+                <span className="text-yellow-400 font-bold ml-1">9 очков (3 кредита)</span>
               </div>
             </div>
 
