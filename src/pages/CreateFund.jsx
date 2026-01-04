@@ -200,32 +200,14 @@ export default function CreateFund() {
     let total = 0;
     for (const matchId in predictions) {
       const opts = predictions[matchId] || [];
-      for (const opt of opts) {
-        if (opt === 'home_clean_sheet_win' || opt === 'away_clean_sheet_win') {
-          total += 1.5;
-        } else if (opt === 'exact_score') {
-          total += 3;
-        } else {
-          total += 1;
-        }
-      }
+      total += opts.length; // All predictions = 1 credit
     }
     return total;
   };
 
   const getMatchCredits = (matchId) => {
     const opts = predictions[matchId] || [];
-    let total = 0;
-    for (const opt of opts) {
-      if (opt === 'home_clean_sheet_win' || opt === 'away_clean_sheet_win') {
-        total += 1.5;
-      } else if (opt === 'exact_score') {
-        total += 3;
-      } else {
-        total += 1;
-      }
-    }
-    return total;
+    return opts.length; // All predictions = 1 credit
   };
 
   const allPredictionsValid = () => {
@@ -310,18 +292,10 @@ export default function CreateFund() {
       for (const match of selectedMatches) {
         const opts = predictions[match.id] || [];
         const exactScoreData = exactScores[match.id];
-        
-        let creditsSpent = 0;
-        for (const opt of opts) {
-          if (opt === 'home_clean_sheet_win' || opt === 'away_clean_sheet_win') {
-            creditsSpent += 1.5;
-          } else if (opt === 'exact_score') {
-            creditsSpent += 3;
-          } else {
-            creditsSpent += 1;
-          }
-        }
-        
+
+        // All predictions = 1 credit each
+        const creditsSpent = opts.length;
+
         await base44.entities.Prediction.create({
           participation_id: participation.id,
           match_id: match.id,
@@ -769,11 +743,11 @@ export default function CreateFund() {
 
                         {/* Over/Under 2.5 (2.5 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">ТБ/ТМ 2.5 (2.5 очка, 1 кредит):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Количество голов (2.5 очка, 1 кредит):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'over_2_5', label: 'Больше 2.5' },
-                              { value: 'under_2_5', label: 'Меньше 2.5' }
+                              { value: 'over_2_5', label: '3+ голов' },
+                              { value: 'under_2_5', label: '0-2 гола' }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               return (
@@ -798,13 +772,13 @@ export default function CreateFund() {
                           </div>
                         </div>
 
-                        {/* Handicap (2.5 pts, 1 cr) */}
+                        {/* Blowout (2.5 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Фора (2.5 очка, 1 кредит):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Будет ли разгром? (2.5 очка, 1 кредит):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'home_handicap_minus1', label: `${match.home_team} с разницей 2+` },
-                              { value: 'away_handicap_plus1', label: `${match.away_team} удержит счёт` }
+                              { value: 'blowout_yes', label: 'Да (разница 3+)' },
+                              { value: 'blowout_no', label: 'Нет' }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               return (
@@ -829,13 +803,13 @@ export default function CreateFund() {
                           </div>
                         </div>
 
-                        {/* Win to Nil (4.5 pts, 1.5 cr) */}
+                        {/* Win to Nil (4 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Сухая победа (4.5 очка, 1.5 кредита):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Победа всухую (4 очка, 1 кредит):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'home_clean_sheet_win', label: `${match.home_team} выиграет с нулём` },
-                              { value: 'away_clean_sheet_win', label: `${match.away_team} выиграет с нулём` }
+                              { value: 'home_clean_sheet_win', label: `${match.home_team} всухую` },
+                              { value: 'away_clean_sheet_win', label: `${match.away_team} всухую` }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               return (
@@ -860,7 +834,7 @@ export default function CreateFund() {
                           </div>
                         </div>
 
-                        {/* Exact Score Section (9 pts, 3 cr) */}
+                        {/* Exact Score Section (6 pts, 1 cr) */}
                         {!showExact ? (
                           <Button
                             type="button"
@@ -870,14 +844,14 @@ export default function CreateFund() {
                             disabled={opts.length >= 2}
                           >
                             <span className="text-lg">🎯</span>
-                            <span>Точный счёт (9 очков, 3 кредита)</span>
+                            <span>Точный счёт (6 очков, 1 кредит)</span>
                           </Button>
                         ) : (
                           <div className="p-4 rounded-lg bg-white/5 border border-gray-700">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">🎯</span>
-                                <span className="text-white font-semibold">Точный счёт (9 очков, 3 кредита)</span>
+                                <span className="text-white font-semibold">Точный счёт (6 очков, 1 кредит)</span>
                               </div>
                               <Button
                                 type="button"
