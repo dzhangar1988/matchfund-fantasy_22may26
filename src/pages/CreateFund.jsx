@@ -709,9 +709,9 @@ export default function CreateFund() {
                           <p className="text-xs text-gray-400 mb-2 font-semibold">Исход матча (3 очка, 1 кредит):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'home_win', label: 'П1', team: match.home_team },
-                              { value: 'draw', label: 'X' },
-                              { value: 'away_win', label: 'П2', team: match.away_team }
+                              { value: 'home_win', label: match.home_team },
+                              { value: 'draw', label: 'Ничья' },
+                              { value: 'away_win', label: match.away_team }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               return (
@@ -803,8 +803,8 @@ export default function CreateFund() {
                           <p className="text-xs text-gray-400 mb-2 font-semibold">Фора (2.5 очка, 1 кредит):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'home_handicap_minus1', label: 'П1 с разницей 2+' },
-                              { value: 'away_handicap_plus1', label: 'П2 не более -1' }
+                              { value: 'home_handicap_minus1', label: `${match.home_team} с разницей 2+` },
+                              { value: 'away_handicap_plus1', label: `${match.away_team} удержит счёт` }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               return (
@@ -834,8 +834,8 @@ export default function CreateFund() {
                           <p className="text-xs text-gray-400 mb-2 font-semibold">Сухая победа (4.5 очка, 1.5 кредита):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'home_clean_sheet_win', label: 'Сухая победа П1' },
-                              { value: 'away_clean_sheet_win', label: 'Сухая победа П2' }
+                              { value: 'home_clean_sheet_win', label: `${match.home_team} выиграет с нулём` },
+                              { value: 'away_clean_sheet_win', label: `${match.away_team} выиграет с нулём` }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               return (
