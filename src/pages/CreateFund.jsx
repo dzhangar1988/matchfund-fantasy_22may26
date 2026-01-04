@@ -658,7 +658,7 @@ export default function CreateFund() {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="text-sm text-gray-400 cursor-help flex items-center gap-1">
-                                {matchCredits} кр
+                                Использовано {matchCredits} из 2
                                 <span className="text-gray-500">ⓘ</span>
                               </div>
                             </TooltipTrigger>
@@ -680,7 +680,7 @@ export default function CreateFund() {
                       <div className="space-y-3">
                         {/* Bold Predictions (3 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Исход матча (3 очка, 1 кредит):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Исход матча (3 очка):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'home_win', label: match.home_team },
@@ -712,7 +712,7 @@ export default function CreateFund() {
 
                         {/* BTTS (2 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Обе забьют (2 очка, 1 кредит):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Обе забьют (2 очка):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'btts_yes', label: 'Да' },
@@ -743,7 +743,7 @@ export default function CreateFund() {
 
                         {/* Over/Under 2.5 (2.5 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Количество голов (2.5 очка, 1 кредит):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Количество голов (2.5 очка):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'over_2_5', label: '3+ голов' },
@@ -774,7 +774,7 @@ export default function CreateFund() {
 
                         {/* Blowout (2.5 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Будет ли разгром? (2.5 очка, 1 кредит):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Будет ли разгром? (2.5 очка):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'blowout_yes', label: 'Да (разница 3+)' },
@@ -805,7 +805,7 @@ export default function CreateFund() {
 
                         {/* Win to Nil (4 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Победа всухую (4 очка, 1 кредит):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Победа всухую (4 очка):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'home_clean_sheet_win', label: `${match.home_team} всухую` },
@@ -834,7 +834,7 @@ export default function CreateFund() {
                           </div>
                         </div>
 
-                        {/* Exact Score Section (6 pts, 1 cr) */}
+                        {/* Exact Score Section (9 pts, 1 cr) */}
                         {!showExact ? (
                           <Button
                             type="button"
@@ -844,14 +844,14 @@ export default function CreateFund() {
                             disabled={opts.length >= 2}
                           >
                             <span className="text-lg">🎯</span>
-                            <span>Точный счёт (6 очков, 1 кредит)</span>
+                            <span>Точный счёт (9 очков)</span>
                           </Button>
                         ) : (
                           <div className="p-4 rounded-lg bg-white/5 border border-gray-700">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">🎯</span>
-                                <span className="text-white font-semibold">Точный счёт (6 очков, 1 кредит)</span>
+                                <span className="text-white font-semibold">Точный счёт (9 очков)</span>
                               </div>
                               <Button
                                 type="button"

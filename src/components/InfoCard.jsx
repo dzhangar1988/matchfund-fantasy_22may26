@@ -48,7 +48,7 @@ export default function InfoCard() {
               <span className="text-orange-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Исход матча</strong>: 
-                <span className="text-orange-400 font-bold ml-1">3 очка (1 кредит)</span>
+                <span className="text-orange-400 font-bold ml-1">3 очка</span>
               </div>
             </div>
 
@@ -56,7 +56,7 @@ export default function InfoCard() {
               <span className="text-blue-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Обе забьют</strong>: 
-                <span className="text-blue-400 font-bold ml-1">2 очка (1 кредит)</span>
+                <span className="text-blue-400 font-bold ml-1">2 очка</span>
               </div>
             </div>
 
@@ -64,7 +64,7 @@ export default function InfoCard() {
               <span className="text-purple-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Количество голов</strong> (3+ / 0-2): 
-                <span className="text-purple-400 font-bold ml-1">2.5 очка (1 кредит)</span>
+                <span className="text-purple-400 font-bold ml-1">2.5 очка</span>
               </div>
             </div>
 
@@ -72,7 +72,7 @@ export default function InfoCard() {
               <span className="text-orange-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Будет ли разгром?</strong> (разница 3+): 
-                <span className="text-orange-400 font-bold ml-1">2.5 очка (1 кредит)</span>
+                <span className="text-orange-400 font-bold ml-1">2.5 очка</span>
               </div>
             </div>
 
@@ -80,7 +80,7 @@ export default function InfoCard() {
               <span className="text-green-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Победа всухую</strong>: 
-                <span className="text-green-400 font-bold ml-1">4 очка (1 кредит)</span>
+                <span className="text-green-400 font-bold ml-1">4 очка</span>
               </div>
             </div>
 
@@ -88,7 +88,7 @@ export default function InfoCard() {
               <span className="text-yellow-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Точный счёт</strong>: 
-                <span className="text-yellow-400 font-bold ml-1">6 очков (1 кредит)</span>
+                <span className="text-yellow-400 font-bold ml-1">9 очков</span>
               </div>
             </div>
 
