@@ -112,6 +112,121 @@ export default function CreateFund() {
     });
   };
 
+  const getConflictingOptions = (matchId, selectedOptions) => {
+    const conflicts = new Set();
+
+    selectedOptions.forEach(option => {
+      // Всухую конфликтует с "Обе забьют: Да"
+      if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win') {
+        conflicts.add('btts_yes');
+      }
+
+      // Обе забьют Да конфликтует с Всухую
+      if (option === 'btts_yes') {
+        conflicts.add('home_clean_sheet_win');
+        conflicts.add('away_clean_sheet_win');
+      }
+
+      // Всухую хозяев конфликтует с Ничьей и Победой гостей
+      if (option === 'home_clean_sheet_win') {
+        conflicts.add('draw');
+        conflicts.add('away_win');
+      }
+
+      // Всухую гостей конфликтует с Ничьей и Победой хозяев
+      if (option === 'away_clean_sheet_win') {
+        conflicts.add('draw');
+        conflicts.add('home_win');
+      }
+
+      // Победа хозяев конфликтует с Всухую гостей
+      if (option === 'home_win') {
+        conflicts.add('away_clean_sheet_win');
+      }
+
+      // Победа гостей конфликтует с Всухую хозяев
+      if (option === 'away_win') {
+        conflicts.add('home_clean_sheet_win');
+      }
+
+      // Ничья конфликтует с Всухую
+      if (option === 'draw') {
+        conflicts.add('home_clean_sheet_win');
+        conflicts.add('away_clean_sheet_win');
+        conflicts.add('blowout_yes'); // Ничья + Разгром = противоречие
+      }
+
+      // 0-2 гола конфликтует с Разгром Да
+      if (option === 'under_2_5') {
+        conflicts.add('blowout_yes');
+      }
+
+      // Разгром Да конфликтует с 0-2 гола и Ничьей
+      if (option === 'blowout_yes') {
+        conflicts.add('under_2_5');
+        conflicts.add('draw');
+      }
+    });
+
+    return conflicts;
+  };
+
+  const isOptionDisabled = (matchId, option) => {
+    const current = predictions[matchId] || [];
+    const conflicts = getConflictingOptions(matchId, current);
+    return conflicts.has(option);
+  };
+
+  const getDisabledReason = (option, matchId) => {
+    const current = predictions[matchId] || [];
+
+    if (current.includes('home_clean_sheet_win') || current.includes('away_clean_sheet_win')) {
+      if (option === 'btts_yes') return 'Несовместимо с "Победа всухую"';
+    }
+
+    if (current.includes('btts_yes')) {
+      if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win') {
+        return 'Несовместимо с "Обе забьют: Да"';
+      }
+    }
+
+    if (current.includes('home_clean_sheet_win')) {
+      if (option === 'draw') return 'Всухую означает победу, не ничью';
+      if (option === 'away_win') return 'Обе команды не могут выиграть';
+    }
+
+    if (current.includes('away_clean_sheet_win')) {
+      if (option === 'draw') return 'Всухую означает победу, не ничью';
+      if (option === 'home_win') return 'Обе команды не могут выиграть';
+    }
+
+    if (current.includes('draw')) {
+      if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win') {
+        return 'Всухую означает победу, не ничью';
+      }
+      if (option === 'blowout_yes') return 'При ничьей разница голов = 0';
+    }
+
+    if (current.includes('home_win') && option === 'away_clean_sheet_win') {
+      return 'Обе команды не могут выиграть';
+    }
+
+    if (current.includes('away_win') && option === 'home_clean_sheet_win') {
+      return 'Обе команды не могут выиграть';
+    }
+
+    if (current.includes('under_2_5') && option === 'blowout_yes') {
+      return 'При 0-2 голах невозможна разница 3+';
+    }
+
+    if (current.includes('blowout_yes')) {
+      if (option === 'under_2_5') return 'Разгром требует минимум 3 гола';
+      if (option === 'draw') return 'При разгроме разница 3+, не ничья';
+    }
+
+    return '';
+  };
+
   const handleSetPrediction = (matchId, option, checked) => {
     setPredictions(prev => {
       const current = prev[matchId] || [];
@@ -688,23 +803,37 @@ export default function CreateFund() {
                               { value: 'away_win', label: match.away_team }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
+                              const disabledReason = getDisabledReason(option.value, match.id);
+                              
                               return (
-                                <Button
-                                  key={option.value}
-                                  type="button"
-                                  variant={isSelected ? "default" : "outline"}
-                                  size="sm"
-                                  className={`flex items-center gap-1 ${
-                                    isSelected
-                                      ? "bg-orange-500 hover:bg-orange-600 text-white font-bold"
-                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
-                                  }`}
-                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
-                                  disabled={!isSelected && opts.length >= 2}
-                                >
-                                  {isSelected && <span>✓</span>}
-                                  <span>{option.label}</span>
-                                </Button>
+                                <Tooltip key={option.value}>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant={isSelected ? "default" : "outline"}
+                                      size="sm"
+                                      className={`flex items-center gap-1 ${
+                                        isSelected
+                                          ? "bg-orange-500 hover:bg-orange-600 text-white font-bold"
+                                          : isDisabled
+                                          ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50"
+                                          : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                      }`}
+                                      onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                      disabled={isDisabled}
+                                    >
+                                      {isSelected && <span>✓</span>}
+                                      {isDisabled && !isSelected && <span>🔒</span>}
+                                      <span>{option.label}</span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  {isDisabled && disabledReason && (
+                                    <TooltipContent>
+                                      <p>{disabledReason}</p>
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
                               );
                             })}
                           </div>
@@ -719,23 +848,37 @@ export default function CreateFund() {
                               { value: 'btts_no', label: 'Нет' }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
+                              const disabledReason = getDisabledReason(option.value, match.id);
+                              
                               return (
-                                <Button
-                                  key={option.value}
-                                  type="button"
-                                  variant={isSelected ? "default" : "outline"}
-                                  size="sm"
-                                  className={`flex items-center gap-1 ${
-                                    isSelected
-                                      ? "bg-blue-500 hover:bg-blue-600 text-white font-bold"
-                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
-                                  }`}
-                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
-                                  disabled={!isSelected && opts.length >= 2}
-                                >
-                                  {isSelected && <span>✓</span>}
-                                  <span>{option.label}</span>
-                                </Button>
+                                <Tooltip key={option.value}>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant={isSelected ? "default" : "outline"}
+                                      size="sm"
+                                      className={`flex items-center gap-1 ${
+                                        isSelected
+                                          ? "bg-blue-500 hover:bg-blue-600 text-white font-bold"
+                                          : isDisabled
+                                          ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50"
+                                          : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                      }`}
+                                      onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                      disabled={isDisabled}
+                                    >
+                                      {isSelected && <span>✓</span>}
+                                      {isDisabled && !isSelected && <span>🔒</span>}
+                                      <span>{option.label}</span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  {isDisabled && disabledReason && (
+                                    <TooltipContent>
+                                      <p>{disabledReason}</p>
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
                               );
                             })}
                           </div>
@@ -750,23 +893,37 @@ export default function CreateFund() {
                               { value: 'under_2_5', label: '0-2 гола' }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
+                              const disabledReason = getDisabledReason(option.value, match.id);
+                              
                               return (
-                                <Button
-                                  key={option.value}
-                                  type="button"
-                                  variant={isSelected ? "default" : "outline"}
-                                  size="sm"
-                                  className={`flex items-center gap-1 ${
-                                    isSelected
-                                      ? "bg-purple-500 hover:bg-purple-600 text-white font-bold"
-                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
-                                  }`}
-                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
-                                  disabled={!isSelected && opts.length >= 2}
-                                >
-                                  {isSelected && <span>✓</span>}
-                                  <span>{option.label}</span>
-                                </Button>
+                                <Tooltip key={option.value}>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant={isSelected ? "default" : "outline"}
+                                      size="sm"
+                                      className={`flex items-center gap-1 ${
+                                        isSelected
+                                          ? "bg-purple-500 hover:bg-purple-600 text-white font-bold"
+                                          : isDisabled
+                                          ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50"
+                                          : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                      }`}
+                                      onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                      disabled={isDisabled}
+                                    >
+                                      {isSelected && <span>✓</span>}
+                                      {isDisabled && !isSelected && <span>🔒</span>}
+                                      <span>{option.label}</span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  {isDisabled && disabledReason && (
+                                    <TooltipContent>
+                                      <p>{disabledReason}</p>
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
                               );
                             })}
                           </div>
@@ -781,23 +938,37 @@ export default function CreateFund() {
                               { value: 'blowout_no', label: 'Нет' }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
+                              const disabledReason = getDisabledReason(option.value, match.id);
+                              
                               return (
-                                <Button
-                                  key={option.value}
-                                  type="button"
-                                  variant={isSelected ? "default" : "outline"}
-                                  size="sm"
-                                  className={`flex items-center gap-1 ${
-                                    isSelected
-                                      ? "bg-cyan-500 hover:bg-cyan-600 text-white font-bold"
-                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
-                                  }`}
-                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
-                                  disabled={!isSelected && opts.length >= 2}
-                                >
-                                  {isSelected && <span>✓</span>}
-                                  <span>{option.label}</span>
-                                </Button>
+                                <Tooltip key={option.value}>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant={isSelected ? "default" : "outline"}
+                                      size="sm"
+                                      className={`flex items-center gap-1 ${
+                                        isSelected
+                                          ? "bg-orange-500 hover:bg-orange-600 text-white font-bold"
+                                          : isDisabled
+                                          ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50"
+                                          : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                      }`}
+                                      onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                      disabled={isDisabled}
+                                    >
+                                      {isSelected && <span>✓</span>}
+                                      {isDisabled && !isSelected && <span>🔒</span>}
+                                      <span>{option.label}</span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  {isDisabled && disabledReason && (
+                                    <TooltipContent>
+                                      <p>{disabledReason}</p>
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
                               );
                             })}
                           </div>
@@ -812,23 +983,37 @@ export default function CreateFund() {
                               { value: 'away_clean_sheet_win', label: `${match.away_team} всухую` }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
+                              const disabledReason = getDisabledReason(option.value, match.id);
+                              
                               return (
-                                <Button
-                                  key={option.value}
-                                  type="button"
-                                  variant={isSelected ? "default" : "outline"}
-                                  size="sm"
-                                  className={`flex items-center gap-1 ${
-                                    isSelected
-                                      ? "bg-green-500 hover:bg-green-600 text-white font-bold"
-                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
-                                  }`}
-                                  onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
-                                  disabled={!isSelected && opts.length >= 2}
-                                >
-                                  {isSelected && <span>✓</span>}
-                                  <span>{option.label}</span>
-                                </Button>
+                                <Tooltip key={option.value}>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant={isSelected ? "default" : "outline"}
+                                      size="sm"
+                                      className={`flex items-center gap-1 ${
+                                        isSelected
+                                          ? "bg-green-500 hover:bg-green-600 text-white font-bold"
+                                          : isDisabled
+                                          ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50"
+                                          : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                      }`}
+                                      onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                      disabled={isDisabled}
+                                    >
+                                      {isSelected && <span>✓</span>}
+                                      {isDisabled && !isSelected && <span>🔒</span>}
+                                      <span>{option.label}</span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  {isDisabled && disabledReason && (
+                                    <TooltipContent>
+                                      <p>{disabledReason}</p>
+                                    </TooltipContent>
+                                  )}
+                                </Tooltip>
                               );
                             })}
                           </div>
