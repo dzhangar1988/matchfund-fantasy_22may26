@@ -27,7 +27,6 @@ export default function CreateFund() {
   const [step, setStep] = useState(1);
   const [user, setUser] = useState(null);
   const [matches, setMatches] = useState([]);
-  const [selectedMatches, setSelectedMatches] = useState([]);
   const [predictions, setPredictions] = useState({});
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -53,8 +52,8 @@ export default function CreateFund() {
     // Handle pre-fill from Quick Create
     if (preFillData && preFillData.isQuickCreate) {
       setFundData(preFillData.fundSetup);
-      setSelectedMatches(preFillData.selectedMatches);
-      setStep(preFillData.step || 3);
+      setMatches(preFillData.selectedMatches);
+      setStep(2);
     }
   }, [preFillData]);
 
@@ -78,7 +77,10 @@ export default function CreateFund() {
           uniqueMatches.push(match);
         }
       }
-      setMatches(uniqueMatches);
+
+      // Automatically select first 10 matches
+      const first10Matches = uniqueMatches.slice(0, 10);
+      setMatches(first10Matches);
     } catch (error) {
       setError("Failed to load data: " + error.message);
     } finally {
@@ -86,31 +88,7 @@ export default function CreateFund() {
     }
   };
 
-  const toggleMatch = (match) => {
-    const matchId = match.id;
-    setSelectedMatches(prev => {
-      if (prev.find(m => m.id === matchId)) {
-        setPredictions(current => {
-          const updated = { ...current };
-          delete updated[matchId];
-          return updated;
-        });
-        setShowExactScore(current => {
-          const updated = { ...current };
-          delete updated[matchId];
-          return updated;
-        });
-        setExactScores(current => {
-          const updated = { ...current };
-          delete updated[matchId];
-          return updated;
-        });
-        return prev.filter(m => m.id !== matchId);
-      } else {
-        return [...prev, match];
-      }
-    });
-  };
+
 
   const getConflictingOptions = (matchId, selectedOptions) => {
     const conflicts = new Set();
@@ -383,11 +361,11 @@ export default function CreateFund() {
   };
 
   const allPredictionsValid = () => {
-    if (selectedMatches.length < 10) return false;
+    if (matches.length < 10) return false;
     const totalCredits = getTotalCredits();
     if (totalCredits < 10 || totalCredits > 20) return false;
 
-    for (const match of selectedMatches) {
+    for (const match of matches) {
       const opts = predictions[match.id] || [];
       if (opts.length === 0 || opts.length > 2) return false;
     }
@@ -408,8 +386,8 @@ export default function CreateFund() {
       if (userBalance < fundData.entry_fee) {
         throw new Error(`Insufficient balance! You need ${fundData.entry_fee} points but have ${userBalance} points.`);
       }
-      if (selectedMatches.length < 10) {
-        throw new Error("Please select at least 10 matches");
+      if (matches.length < 10) {
+        throw new Error("Need at least 10 matches");
       }
       if (!allPredictionsValid()) {
         throw new Error("Invalid predictions. Use 10-20 credits total, max 2 options per match.");
@@ -418,7 +396,7 @@ export default function CreateFund() {
         throw new Error("Private funds require a password of at least 4 digits.");
       }
 
-      const sortedMatches = [...selectedMatches].sort((a, b) =>
+      const sortedMatches = [...matches].sort((a, b) =>
         new Date(a.match_date) - new Date(b.match_date)
       );
 
@@ -434,16 +412,16 @@ export default function CreateFund() {
         password: fundData.password || null,
         status: "open",
         total_pool: 100, // Initial pool from creator
-        total_matches: selectedMatches.length,
+        total_matches: matches.length,
         first_match_starts_at: sortedMatches[0]?.match_date,
         last_match_ends_at: sortedMatches[sortedMatches.length - 1]?.match_date,
         published_at: new Date().toISOString()
       });
 
-      for (let i = 0; i < selectedMatches.length; i++) {
+      for (let i = 0; i < matches.length; i++) {
         await base44.entities.FundMatch.create({
           fund_id: newFund.id,
-          match_id: selectedMatches[i].id,
+          match_id: matches[i].id,
           position: i + 1
         });
       }
@@ -461,7 +439,7 @@ export default function CreateFund() {
         predictions_completed_at: new Date().toISOString()
       });
 
-      for (const match of selectedMatches) {
+      for (const match of matches) {
         const opts = predictions[match.id] || [];
         const exactScoreData = exactScores[match.id];
 
@@ -561,7 +539,7 @@ export default function CreateFund() {
 
         {!isQuickCreate && (
           <div className="flex gap-4 mb-8">
-            {[1, 2, 3].map((s) => (
+            {[1, 2].map((s) => (
               <div
                 key={s}
                 className={`flex-1 h-2 rounded-full transition-all duration-300 ${
@@ -675,94 +653,18 @@ export default function CreateFund() {
                 disabled={
                   !fundData.title || 
                   fundData.max_participants < 2 ||
-                  (fundData.visibility === "private" && (!fundData.password || fundData.password.length < 4))
+                  (fundData.visibility === "private" && (!fundData.password || fundData.password.length < 4)) ||
+                  matches.length < 10
                 }
                 className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6"
               >
-                Далее: Выбрать матчи
+                Далее: Сделать прогнозы ({matches.length} матчей)
               </Button>
             </div>
           </Card>
         )}
 
         {step === 2 && (
-          <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <Calendar className="w-6 h-6 text-orange-400" />
-              Выберите 10 матчей
-            </h2>
-
-            <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-              <p className="text-sm text-blue-300">
-                <strong>Выбрано: {selectedMatches.length}/10</strong>
-              </p>
-            </div>
-
-            {matches.length === 0 ? (
-              <div className="text-center py-12">
-                <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                <p className="text-gray-400">Нет доступных матчей</p>
-              </div>
-            ) : (
-              <div className="space-y-3 mb-6 max-h-96 overflow-y-auto">
-                {matches.map((match) => {
-                  const isSelected = selectedMatches.find(m => m.id === match.id);
-                  return (
-                    <div
-                      key={match.id}
-                      onClick={() => toggleMatch(match)}
-                      className={`p-4 rounded-lg border transition-all cursor-pointer ${
-                        isSelected
-                          ? "border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/30"
-                          : "border-gray-700 bg-white/5 hover:border-orange-500/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                          isSelected ? "border-orange-500 bg-orange-500" : "border-gray-600"
-                        }`}>
-                          {isSelected && <span className="text-white text-sm font-bold">✓</span>}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-white font-semibold">
-                            {match.home_team} vs {match.away_team}
-                          </p>
-                          <p className="text-sm text-gray-400">
-                            GW{match.matchweek} • {new Date(match.match_date).toLocaleString("ru-RU", {
-                              month: "short",
-                              day: "numeric",
-                              hour: "2-digit",
-                              minute: "2-digit"
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="flex gap-4">
-              <Button
-                variant="outline"
-                onClick={() => setStep(1)}
-                className="flex-1 border-gray-700 text-gray-300 hover:bg-white/5"
-              >
-                Назад
-              </Button>
-              <Button
-                onClick={() => setStep(3)}
-                disabled={selectedMatches.length !== 10}
-                className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6"
-              >
-                Далее: Распределить кредиты ({selectedMatches.length}/10)
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {step === 3 && (
           <div>
             <div className="sticky top-0 z-10 bg-[#0C1523] pb-4 mb-6">
               <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
@@ -810,7 +712,7 @@ export default function CreateFund() {
 
             <TooltipProvider>
               <div className="space-y-4 mb-6">
-                {selectedMatches.map((match) => {
+                {matches.map((match) => {
                   const opts = predictions[match.id] || [];
                   const matchCredits = getMatchCredits(match.id);
                   const showExact = showExactScore[match.id];
@@ -1184,7 +1086,7 @@ export default function CreateFund() {
                   {!isQuickCreate && (
                     <Button
                       variant="outline"
-                      onClick={() => setStep(2)}
+                      onClick={() => setStep(1)}
                       className="flex-1 border-gray-700 text-gray-300 hover:bg-white/5"
                       disabled={isCreating}
                     >
