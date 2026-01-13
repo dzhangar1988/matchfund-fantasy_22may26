@@ -115,6 +115,27 @@ export default function CreateFund() {
   const getConflictingOptions = (matchId, selectedOptions) => {
     const conflicts = new Set();
 
+    // Check if there's an exact score prediction
+    const exactScorePrediction = selectedOptions.find(o => o.startsWith('exact_'));
+    let exactScoreTotalGoals = null;
+
+    if (exactScorePrediction) {
+      const scoreMatch = exactScorePrediction.match(/exact_(\d+)-(\d+)/);
+      if (scoreMatch) {
+        const home = parseInt(scoreMatch[1]);
+        const away = parseInt(scoreMatch[2]);
+        exactScoreTotalGoals = home + away;
+
+        // Exact score conflicts with goal predictions
+        if (exactScoreTotalGoals > 2) {
+          conflicts.add('under_2_5');
+        }
+        if (exactScoreTotalGoals <= 2) {
+          conflicts.add('over_2_5');
+        }
+      }
+    }
+
     selectedOptions.forEach(option => {
       // Всухую конфликтует с "Обе забьют: Да"
       if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win') {
@@ -179,6 +200,31 @@ export default function CreateFund() {
 
   const getDisabledReason = (option, matchId) => {
     const current = predictions[matchId] || [];
+
+    // Check for exact score conflicts
+    const exactScorePrediction = current.find(o => o.startsWith('exact_'));
+    if (exactScorePrediction) {
+      const scoreMatch = exactScorePrediction.match(/exact_(\d+)-(\d+)/);
+      if (scoreMatch) {
+        const home = parseInt(scoreMatch[1]);
+        const away = parseInt(scoreMatch[2]);
+        const totalGoals = home + away;
+
+        if (option === 'under_2_5' && totalGoals > 2) {
+          return `Точный счёт ${home}:${away} (${totalGoals} голов) > 2`;
+        }
+        if (option === 'over_2_5' && totalGoals <= 2) {
+          return `Точный счёт ${home}:${away} (${totalGoals} голов) ≤ 2`;
+        }
+      }
+    }
+
+    if (current.includes('under_2_5') && option.startsWith('exact_')) {
+      return 'Несовместимо с "0-2 гола"';
+    }
+    if (current.includes('over_2_5') && option.startsWith('exact_')) {
+      return 'Несовместимо с "3+ голов"';
+    }
 
     if (current.includes('home_clean_sheet_win') || current.includes('away_clean_sheet_win')) {
       if (option === 'btts_yes') return 'Несовместимо с "Победа всухую"';
@@ -258,10 +304,21 @@ export default function CreateFund() {
       return;
     }
 
+    const totalGoals = homeScore + awayScore;
     const exactOption = `exact_${homeScore}-${awayScore}`;
+
     setPredictions(prev => {
       const current = prev[matchId] || [];
-      const withoutExact = current.filter(o => !o.startsWith('exact_'));
+      let withoutExact = current.filter(o => !o.startsWith('exact_'));
+
+      // Remove conflicting "Количество голов" predictions
+      if (totalGoals > 2 && withoutExact.includes('under_2_5')) {
+        withoutExact = withoutExact.filter(o => o !== 'under_2_5');
+      }
+      if (totalGoals <= 2 && withoutExact.includes('over_2_5')) {
+        withoutExact = withoutExact.filter(o => o !== 'over_2_5');
+      }
+
       return { ...prev, [matchId]: [...withoutExact, exactOption] };
     });
   };
@@ -1021,16 +1078,30 @@ export default function CreateFund() {
 
                         {/* Exact Score Section (9 pts, 1 cr) */}
                         {!showExact ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => toggleExactScore(match.id)}
-                            className="w-full border-gray-600 text-gray-300 hover:bg-white/5 flex items-center justify-center gap-2"
-                            disabled={opts.length >= 2}
-                          >
-                            <span className="text-lg">🎯</span>
-                            <span>Точный счёт (9 очков)</span>
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => toggleExactScore(match.id)}
+                                className={`w-full flex items-center justify-center gap-2 ${
+                                  opts.length >= 2
+                                    ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50"
+                                    : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                }`}
+                                disabled={opts.length >= 2}
+                              >
+                                {opts.length >= 2 && <span>🔒</span>}
+                                <span className="text-lg">🎯</span>
+                                <span>Точный счёт (9 очков)</span>
+                              </Button>
+                            </TooltipTrigger>
+                            {opts.length >= 2 && (
+                              <TooltipContent>
+                                <p>Максимум 2 прогноза на матч</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
                         ) : (
                           <div className="p-4 rounded-lg bg-white/5 border border-gray-700">
                             <div className="flex items-center justify-between mb-3">
