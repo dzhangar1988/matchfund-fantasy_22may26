@@ -71,7 +71,7 @@ export default function InfoCard() {
             <div className="flex items-start gap-2">
               <span className="text-orange-400 font-bold">•</span>
               <div>
-                <strong className="text-white">Будет ли разгром?</strong> (разница 3+): 
+                <strong className="text-white">Будет ли разгром</strong> (победа одной из команд с разницей 3 и более мячей): 
                 <span className="text-orange-400 font-bold ml-1">2.5 очка</span>
               </div>
             </div>

@@ -931,7 +931,7 @@ export default function CreateFund() {
 
                         {/* Blowout (2.5 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Будет ли разгром? (2.5 очка):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Будет ли разгром (победа одной из команд с разницей 3 и более мячей)? (2.5 очка):</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'blowout_yes', label: 'Да (разница 3+)' },
