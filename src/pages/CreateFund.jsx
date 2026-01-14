@@ -45,20 +45,20 @@ export default function CreateFund() {
   });
 
   useEffect(() => {
-    loadData();
+    // Handle pre-fill from Quick Create first
+    if (preFillData && preFillData.isQuickCreate) {
+      loadUser().then(() => {
+        setFundData(preFillData.fundSetup);
+        setMatches(preFillData.selectedMatches);
+        setStep(2);
+        setIsLoading(false);
+      });
+    } else {
+      loadData();
+    }
   }, []);
 
-  useEffect(() => {
-    // Handle pre-fill from Quick Create
-    if (preFillData && preFillData.isQuickCreate) {
-      setFundData(preFillData.fundSetup);
-      setMatches(preFillData.selectedMatches);
-      setStep(2);
-    }
-  }, [preFillData]);
-
-  const loadData = async () => {
-    setIsLoading(true);
+  const loadUser = async () => {
     try {
       const currentUser = await base44.auth.me();
       if (currentUser.total_balance === undefined || currentUser.total_balance === null) {
@@ -66,6 +66,15 @@ export default function CreateFund() {
         currentUser.total_balance = 500;
       }
       setUser(currentUser);
+    } catch (error) {
+      setError("Failed to load user: " + error.message);
+    }
+  };
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      await loadUser();
 
       const upcomingMatches = await base44.entities.Match.filter({ status: "upcoming" }, "match_date", 50);
       const uniqueMatches = [];
