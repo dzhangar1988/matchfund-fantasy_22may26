@@ -691,7 +691,7 @@ export default function CreateFund() {
                     </h2>
                     {isQuickCreate && (
                       <p className="text-sm text-gray-400 mt-1">
-                        {fundData.title} • {selectedMatches.length} матчей
+                        {fundData.title} • {matches.length} матчей
                       </p>
                     )}
                   </div>
