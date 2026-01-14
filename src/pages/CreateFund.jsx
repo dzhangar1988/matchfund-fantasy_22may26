@@ -47,10 +47,15 @@ export default function CreateFund() {
   useEffect(() => {
     // Handle pre-fill from Quick Create first
     if (preFillData && preFillData.isQuickCreate) {
+      console.log("Quick Create mode detected", preFillData);
       loadUser().then(() => {
         setFundData(preFillData.fundSetup);
         setMatches(preFillData.selectedMatches);
         setStep(2);
+        setIsLoading(false);
+      }).catch(error => {
+        console.error("Error in Quick Create:", error);
+        setError("Ошибка загрузки: " + error.message);
         setIsLoading(false);
       });
     } else {
@@ -484,7 +489,8 @@ export default function CreateFund() {
       <div className="min-h-screen flex items-center justify-center bg-[#0C1523]">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-orange-500 animate-spin mx-auto mb-4" />
-          <p className="text-white text-lg">Loading...</p>
+          <p className="text-white text-lg">Загрузка...</p>
+          {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
         </div>
       </div>
     );
