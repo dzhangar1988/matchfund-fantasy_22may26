@@ -5,12 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Trophy, Calendar, ChevronDown, ChevronUp, Zap, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
+import { ru, enUS } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function GameweekCard({ gameweek, matches, user }) {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
   const [isExpanded, setIsExpanded] = useState(false);
   const [fundTitle, setFundTitle] = useState("");
   
@@ -27,9 +29,10 @@ export default function GameweekCard({ gameweek, matches, user }) {
   // Group matches by date for better display
   const startDate = new Date(matches[0].match_date);
   const endDate = new Date(matches[matches.length - 1].match_date);
+  const dateLocale = language === "ru" ? ru : enUS;
   const dateRange = startDate.toDateString() === endDate.toDateString() 
-    ? format(startDate, "d MMM", { locale: ru })
-    : `${format(startDate, "d", { locale: ru })}-${format(endDate, "d MMM", { locale: ru })}`;
+    ? format(startDate, "d MMM", { locale: dateLocale })
+    : `${format(startDate, "d", { locale: dateLocale })}-${format(endDate, "d MMM", { locale: dateLocale })}`;
 
   const competition = matches[0].competition || "Premier League";
   
@@ -46,7 +49,7 @@ export default function GameweekCard({ gameweek, matches, user }) {
       step: 3, // Skip to predictions
       fundSetup: {
         title: fundTitle.trim(),
-        description: `${competition} • GW${gameweek} • ${matches.length} матчей`,
+        description: `${competition} • GW${gameweek} • ${matches.length} ${t("matches")}`,
         entry_fee: 100,
         max_participants: 10,
         min_participants: 2,
@@ -70,7 +73,7 @@ export default function GameweekCard({ gameweek, matches, user }) {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              Быстрое создание фонда
+              {t("quick_create_fund")}
             </h2>
             <div className="flex items-center gap-2 text-sm text-gray-400 mt-1">
               <Trophy className="w-4 h-4" />
@@ -83,7 +86,7 @@ export default function GameweekCard({ gameweek, matches, user }) {
       <CardContent className="p-6">
         {/* Fund Title Input */}
         <div className="mb-6 p-4 rounded-lg bg-white/5 border border-gray-700">
-          <Label className="text-gray-300 mb-2 block">Название фонда</Label>
+          <Label className="text-gray-300 mb-2 block">{t("fund_name")}</Label>
           <Input
             value={fundTitle}
             onChange={(e) => setFundTitle(e.target.value)}
@@ -91,7 +94,7 @@ export default function GameweekCard({ gameweek, matches, user }) {
             className="bg-white/10 border-gray-600 text-white text-lg font-semibold placeholder:text-gray-500"
           />
           <p className="text-xs text-gray-500 mt-2">
-            Можете изменить название или оставить как есть
+            {t("fund_name_hint")}
           </p>
         </div>
 
@@ -100,7 +103,7 @@ export default function GameweekCard({ gameweek, matches, user }) {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2 text-gray-400">
               <Calendar className="w-5 h-5" />
-              <span className="font-semibold">{dateRange} • {matches.length} матчей</span>
+              <span className="font-semibold">{dateRange} • {matches.length} {t("matches")}</span>
             </div>
           </div>
 
@@ -128,7 +131,7 @@ export default function GameweekCard({ gameweek, matches, user }) {
                 className="w-full text-gray-400 hover:text-white hover:bg-white/5 text-sm"
               >
                 <ChevronDown className="w-4 h-4 mr-2" />
-                Ещё {hiddenCount} матчей
+                +{hiddenCount} {t("matches")}
               </Button>
             )}
 
@@ -139,7 +142,7 @@ export default function GameweekCard({ gameweek, matches, user }) {
                 className="w-full text-gray-400 hover:text-white hover:bg-white/5 text-sm"
               >
                 <ChevronUp className="w-4 h-4 mr-2" />
-                Свернуть
+                {t("collapse")}
               </Button>
             )}
           </div>
@@ -152,16 +155,16 @@ export default function GameweekCard({ gameweek, matches, user }) {
             disabled={!fundTitle.trim()}
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6 text-lg shadow-2xl shadow-orange-500/30"
           >
-            Продолжить к прогнозам
+            {t("continue_to_predictions")}
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
 
           <div className="text-center">
             <p className="text-sm text-gray-400">
-              ⚡ Матчи и настройки уже выбраны
+              ⚡ {t("matches_preselected")}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              12 кредитов • 10 матчей • 100 баллов взнос
+              {t("gameweek_card_hint")}
             </p>
           </div>
         </div>

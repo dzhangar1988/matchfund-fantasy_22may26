@@ -63,6 +63,26 @@ const translations = {
     my_predictions: "Мои прогнозы",
     join_fund: "Присоединиться к фонду",
     fund_closed: "Фонд закрыт",
+    // Sport Selection extras
+    sport_epl: "Английская Премьер-Лига",
+    sport_epl_short: "АПЛ",
+    sport_esports: "Киберспорт",
+    sport_ucl: "Лига Чемпионов УЕФА",
+    more_sports_coming: "Больше спортов и турниров добавляются в ближайшее время",
+    // GameweekCard
+    quick_create_fund: "Быстрое создание фонда",
+    fund_name: "Название фонда",
+    fund_name_hint: "Можете изменить название или оставить как есть",
+    collapse: "Свернуть",
+    continue_to_predictions: "Продолжить к прогнозам",
+    matches_preselected: "Матчи и настройки уже выбраны",
+    gameweek_card_hint: "12 кредитов • 10 матчей • 100 баллов взнос",
+    // OpenFundsPreview
+    show_all_funds: "Показать все открытые фонды",
+    be_first_to_create: "Станьте первым, кто создаст пул прогнозов!",
+    // FundCard
+    joined: "Участвуете",
+    view_details: "Смотреть детали",
     // Username modal
     choose_username: "Выберите имя пользователя",
     username_hint: "Это имя будет отображаться в таблице лидеров и фондах",
@@ -132,6 +152,26 @@ const translations = {
     my_predictions: "My Predictions",
     join_fund: "Join Fund",
     fund_closed: "Fund Closed",
+    // Sport Selection extras
+    sport_epl: "English Premier League",
+    sport_epl_short: "EPL",
+    sport_esports: "Esports",
+    sport_ucl: "UEFA Champions League",
+    more_sports_coming: "More sports and tournaments coming soon",
+    // GameweekCard
+    quick_create_fund: "Quick Create Fund",
+    fund_name: "Fund Name",
+    fund_name_hint: "You can change the name or leave it as is",
+    collapse: "Collapse",
+    continue_to_predictions: "Continue to Predictions",
+    matches_preselected: "Matches and settings already selected",
+    gameweek_card_hint: "12 credits • 10 matches • 100 points entry",
+    // OpenFundsPreview
+    show_all_funds: "Show all open funds",
+    be_first_to_create: "Be the first to create a prediction pool!",
+    // FundCard
+    joined: "Joined",
+    view_details: "View Details",
     // Username modal
     choose_username: "Choose a username",
     username_hint: "This name will appear in the leaderboard and funds",

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Plus, Trophy } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import GameweekCard from "../components/GameweekCard";
 import OpenFundsPreview from "../components/OpenFundsPreview";
@@ -13,6 +14,7 @@ import SportSelection from "../components/SportSelection";
 import { ArrowLeft } from "lucide-react";
 
 export default function Home() {
+  const { t } = useLanguage();
   const [funds, setFunds] = useState([]);
   const [matches, setMatches] = useState([]);
   const [user, setUser] = useState(null);
@@ -92,7 +94,7 @@ export default function Home() {
 
   const stats = [
     { 
-      label: "Баланс",
+      label: t("balance"),
       value: user?.total_balance || 0,
       icon: Trophy,
       color: "from-yellow-500 to-orange-500"
@@ -122,7 +124,7 @@ export default function Home() {
             className="mb-4 text-gray-400 hover:text-white hover:bg-white/5"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Назад к выбору спорта
+            {t("back_to_sports")}
           </Button>
 
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -133,12 +135,12 @@ export default function Home() {
                 </span>
                 Fantasy
               </h1>
-              <p className="text-gray-400 text-lg">Английская Премьер-Лига • Пулы прогнозов</p>
+              <p className="text-gray-400 text-lg">{t("home_subtitle")}</p>
             </div>
             <Link to={createPageUrl("CreateFund")}>
               <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-6 py-6 text-lg shadow-2xl shadow-orange-500/30">
                 <Plus className="w-5 h-5 mr-2" />
-                Создать фонд
+                {t("create_fund")}
               </Button>
             </Link>
           </div>

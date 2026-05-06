@@ -5,8 +5,10 @@ import { DollarSign, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import FundCard from "./FundCard";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function OpenFundsPreview({ funds, totalCount }) {
+  const { t } = useLanguage();
   const displayFunds = funds.slice(0, 3);
 
   return (
@@ -14,7 +16,7 @@ export default function OpenFundsPreview({ funds, totalCount }) {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-3xl font-bold text-white flex items-center gap-3">
           <DollarSign className="w-8 h-8 text-orange-400" />
-          Открытые фонды {totalCount > 0 && `(${totalCount})`}
+          {t("open_funds")} {totalCount > 0 && `(${totalCount})`}
         </h2>
       </div>
 
@@ -33,7 +35,7 @@ export default function OpenFundsPreview({ funds, totalCount }) {
                   variant="outline"
                   className="border-gray-700 text-gray-300 hover:bg-white/5 hover:text-white"
                 >
-                  Показать все открытые фонды ({totalCount})
+                  {t("show_all_funds")} ({totalCount})
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
@@ -45,14 +47,14 @@ export default function OpenFundsPreview({ funds, totalCount }) {
           <CardContent className="p-12 text-center">
             <DollarSign className="w-16 h-16 mx-auto mb-4 text-gray-600" />
             <h3 className="text-xl font-semibold text-white mb-2">
-              Нет открытых фондов
+              {t("no_funds")}
             </h3>
             <p className="text-gray-400 mb-6">
-              Станьте первым, кто создаст пул прогнозов!
+              {t("be_first_to_create")}
             </p>
             <Link to={createPageUrl("CreateFund")}>
               <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
-                Создать фонд
+                {t("create_fund")}
               </Button>
             </Link>
           </CardContent>
