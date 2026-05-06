@@ -9,8 +9,10 @@ import { createPageUrl } from "@/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import TransactionHistory from "../components/TransactionHistory";
 import ReferralCard from "../components/ReferralCard";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Profile() {
+  const { t } = useLanguage();
   const [user, setUser] = useState(null);
   const [participations, setParticipations] = useState([]);
   const [funds, setFunds] = useState([]);
@@ -40,7 +42,6 @@ export default function Profile() {
         userFunds.some(f => f.id === p.fund_id)
       );
       setParticipations(validParticipations);
-
     } catch (error) {
       console.error("Error loading profile data:", error);
     } finally {
@@ -61,25 +62,25 @@ export default function Profile() {
 
   const stats = [
     {
-      label: "Баланс",
+      label: t("balance"),
       value: user?.total_balance ?? 0,
       icon: Trophy,
       color: "from-yellow-500 to-orange-500"
     },
     {
-      label: "Всего прогнозов",
+      label: t("total_predictions"),
       value: user?.total_predictions || 0,
       icon: Target,
       color: "from-blue-500 to-cyan-500"
     },
     {
-      label: "Побед",
+      label: t("total_wins"),
       value: user?.total_wins || 0,
       icon: Award,
       color: "from-green-500 to-emerald-500"
     },
     {
-      label: "Процент побед",
+      label: t("win_rate"),
       value: user?.total_participations ? Math.round(((user.total_wins || 0) / user.total_participations) * 100) : 0,
       suffix: "%",
       icon: TrendingUp,
@@ -92,8 +93,8 @@ export default function Profile() {
       <div className="max-w-6xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Мой профиль</h1>
-            <p className="text-gray-400">Статистика и достижения</p>
+            <h1 className="text-4xl font-bold text-white mb-2">{t("my_profile")}</h1>
+            <p className="text-gray-400">{t("stats_subtitle")}</p>
           </div>
           <Button
             onClick={() => loadData(true)}
@@ -102,7 +103,7 @@ export default function Profile() {
             className="border-gray-700 text-gray-300 hover:bg-white/5 flex items-center gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Обновить
+            {t("refresh")}
           </Button>
         </div>
 
@@ -117,7 +118,6 @@ export default function Profile() {
           </div>
         ) : (
           <>
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {stats.map((stat, index) => (
                 <Card
@@ -140,23 +140,20 @@ export default function Profile() {
               ))}
             </div>
 
-            {/* Transaction History */}
             {user && (
               <div className="mb-8">
                 <TransactionHistory userId={user.id} limit={5} />
               </div>
             )}
 
-            {/* Referral Card */}
             {user && (
               <div className="mb-8">
                 <ReferralCard user={user} onUserUpdate={() => loadData(true)} />
               </div>
             )}
 
-            {/* My Funds with Tabs */}
             <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-              <h2 className="text-2xl font-bold text-white mb-6">Мои фонды</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">{t("my_funds")}</h2>
               
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="bg-[#0F1E35] border border-gray-800 mb-6">
@@ -164,13 +161,13 @@ export default function Profile() {
                     value="active"
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white"
                   >
-                    Активные ({activeFunds.length})
+                    {t("active_tab")} ({activeFunds.length})
                   </TabsTrigger>
                   <TabsTrigger 
                     value="finished"
                     className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white"
                   >
-                    Завершённые ({finishedFunds.length})
+                    {t("finished_tab")} ({finishedFunds.length})
                   </TabsTrigger>
                 </TabsList>
 
@@ -180,7 +177,6 @@ export default function Profile() {
                       {activeFunds.map((participation) => {
                         const fund = funds.find(f => f.id === participation.fund_id);
                         if (!fund) return null;
-                        
                         return (
                           <Link 
                             key={participation.id} 
@@ -189,11 +185,9 @@ export default function Profile() {
                             <div className="p-4 rounded-lg bg-white/5 border border-gray-700 hover:border-orange-500/50 transition-all cursor-pointer">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <p className="text-white font-semibold">
-                                    {fund.title}
-                                  </p>
+                                  <p className="text-white font-semibold">{fund.title}</p>
                                   <p className="text-sm text-gray-400">
-                                    Взнос: ${participation.entry_paid} • Матчей: {fund.total_matches || 0}
+                                    {t("entry_paid")}: {participation.entry_paid} • {t("matches")}: {fund.total_matches || 0}
                                   </p>
                                 </div>
                                 <div className="text-right">
@@ -202,8 +196,8 @@ export default function Profile() {
                                     fund.status === 'closed' ? 'bg-yellow-500/20 text-yellow-400' :
                                     'bg-blue-500/20 text-blue-400'
                                   }`}>
-                                    {fund.status === 'open' ? 'Открыт' : 
-                                     fund.status === 'closed' ? 'Закрыт' : 'В процессе'}
+                                    {fund.status === 'open' ? t("status_open_label") : 
+                                     fund.status === 'closed' ? t("status_closed_label") : t("in_progress_label")}
                                   </span>
                                 </div>
                               </div>
@@ -215,10 +209,10 @@ export default function Profile() {
                   ) : (
                     <div className="text-center py-12">
                       <Target className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                      <p className="text-gray-400">Нет активных фондов</p>
+                      <p className="text-gray-400">{t("no_active_funds")}</p>
                       <Link to={createPageUrl("Home")}>
                         <button className="mt-4 px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700">
-                          Найти фонд
+                          {t("find_fund")}
                         </button>
                       </Link>
                     </div>
@@ -231,7 +225,6 @@ export default function Profile() {
                       {finishedFunds.map((participation) => {
                         const fund = funds.find(f => f.id === participation.fund_id);
                         if (!fund) return null;
-                        
                         return (
                           <Link 
                             key={participation.id} 
@@ -240,23 +233,21 @@ export default function Profile() {
                             <div className="p-4 rounded-lg bg-white/5 border border-gray-700 hover:border-orange-500/50 transition-all cursor-pointer">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <p className="text-white font-semibold">
-                                    {fund.title}
-                                  </p>
+                                  <p className="text-white font-semibold">{fund.title}</p>
                                   <p className="text-sm text-gray-400">
-                                    Взнос: ${participation.entry_paid} • Выигрыш: ${participation.final_payout || 0}
+                                    {t("entry_paid")}: {participation.entry_paid} • {t("winnings")}: {participation.final_payout || 0}
                                   </p>
                                 </div>
                                 <div className="text-right">
                                   {participation.status === "winner" ? (
                                     <div className="flex items-center gap-2 text-green-400">
                                       <Trophy className="w-5 h-5" />
-                                      <span className="font-bold">Победа!</span>
+                                      <span className="font-bold">{t("winner_label")}</span>
                                     </div>
                                   ) : participation.status === "refunded" ? (
-                                    <span className="text-yellow-400">Возврат</span>
+                                    <span className="text-yellow-400">{t("refunded_label")}</span>
                                   ) : (
-                                    <span className="text-gray-500">Завершён</span>
+                                    <span className="text-gray-500">{t("finished_label")}</span>
                                   )}
                                 </div>
                               </div>
@@ -268,7 +259,7 @@ export default function Profile() {
                   ) : (
                     <div className="text-center py-12">
                       <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-                      <p className="text-gray-400">Нет завершённых фондов</p>
+                      <p className="text-gray-400">{t("no_finished_funds")}</p>
                     </div>
                   )}
                 </TabsContent>

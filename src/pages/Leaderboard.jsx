@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { User } from "@/entities/User";
-import { Participation } from "@/entities/Participation";
+import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Crown, Trophy, Medal, TrendingUp, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function Leaderboard() {
+  const { t } = useLanguage();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -14,8 +15,8 @@ export default function Leaderboard() {
   }, []);
 
   const loadLeaderboard = async () => {
-    const allUsers = await User.list();
-    const allParticipations = await Participation.list();
+    const allUsers = await base44.entities.User.list();
+    const allParticipations = await base44.entities.Participation.list();
     
     const usersWithStats = allUsers.map(user => {
       const userParticipations = allParticipations.filter(p => p.user_id === user.id);
@@ -42,12 +43,8 @@ export default function Leaderboard() {
     });
     
     const sorted = usersWithStats.sort((a, b) => {
-      if (b.total_winnings !== a.total_winnings) {
-        return b.total_winnings - a.total_winnings;
-      }
-      if (b.total_participations !== a.total_participations) {
-        return b.total_participations - a.total_participations;
-      }
+      if (b.total_winnings !== a.total_winnings) return b.total_winnings - a.total_winnings;
+      if (b.total_participations !== a.total_participations) return b.total_participations - a.total_participations;
       return (b.total_balance || 0) - (a.total_balance || 0);
     });
     
@@ -76,8 +73,8 @@ export default function Leaderboard() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 mb-4">
             <Crown className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2">Таблица лидеров</h1>
-          <p className="text-gray-400">Лучшие игроки MatchFund Fantasy</p>
+          <h1 className="text-4xl font-bold text-white mb-2">{t("leaderboard_title")}</h1>
+          <p className="text-gray-400">{t("leaderboard_subtitle")}</p>
         </div>
 
         <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
@@ -120,7 +117,7 @@ export default function Leaderboard() {
                         <div className="flex items-center gap-2">
                           <span className="text-gray-400 font-bold text-lg">#{index + 1}</span>
                           <h3 className="text-white font-bold text-lg">
-                            {user.username || user.full_name || "Игрок"}
+                            {user.username || user.full_name || t("player_default")}
                           </h3>
                         </div>
                         <div className="flex items-center gap-4 mt-1 flex-wrap">
@@ -128,21 +125,19 @@ export default function Leaderboard() {
                             <>
                               <div className="flex items-center gap-1 text-sm text-gray-400">
                                 <Trophy className="w-4 h-4 text-yellow-500" />
-                                <span>{user.total_wins || 0} побед</span>
+                                <span>{user.total_wins || 0} {t("wins")}</span>
                               </div>
                               <div className="flex items-center gap-1 text-sm text-gray-400">
                                 <Target className="w-4 h-4 text-blue-500" />
-                                <span>{user.total_participations || 0} фондов</span>
+                                <span>{user.total_participations || 0} {t("funds_count")}</span>
                               </div>
                               <div className="flex items-center gap-1 text-sm text-gray-400">
                                 <TrendingUp className="w-4 h-4 text-green-500" />
-                                <span>{user.win_rate || 0}% побед</span>
+                                <span>{user.win_rate || 0}% {t("win_rate_pct")}</span>
                               </div>
                             </>
                           ) : (
-                            <div className="text-sm text-gray-500">
-                              Еще не участвовал в фондах
-                            </div>
+                            <div className="text-sm text-gray-500">{t("no_participants_yet")}</div>
                           )}
                         </div>
                       </div>
@@ -152,7 +147,7 @@ export default function Leaderboard() {
                       <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
                         {user.total_winnings || 0}
                       </div>
-                      <div className="text-sm text-gray-400">баллов выиграно</div>
+                      <div className="text-sm text-gray-400">{t("points_won")}</div>
                     </div>
                   </div>
                 </div>
@@ -161,7 +156,7 @@ export default function Leaderboard() {
           ) : (
             <div className="text-center py-12">
               <Crown className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-              <p className="text-gray-400">Пока нет пользователей</p>
+              <p className="text-gray-400">{t("no_users_yet")}</p>
             </div>
           )}
         </Card>

@@ -18,8 +18,10 @@ import {
 } from "@/components/ui/tooltip";
 import InfoCard from "../components/InfoCard";
 import { Switch } from "@/components/ui/switch";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function CreateFund() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const preFillData = location.state;
@@ -489,7 +491,7 @@ export default function CreateFund() {
       <div className="min-h-screen flex items-center justify-center bg-[#0C1523]">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-orange-500 animate-spin mx-auto mb-4" />
-          <p className="text-white text-lg">Загрузка...</p>
+          <p className="text-white text-lg">{t("loading")}</p>
           {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
         </div>
       </div>
@@ -522,23 +524,23 @@ export default function CreateFund() {
           className="mb-6 text-gray-400 hover:text-white hover:bg-white/5"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Назад
+          {t("back")}
         </Button>
 
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-2">
             {isQuickCreate && <Zap className="w-8 h-8 text-orange-400" />}
-            {isQuickCreate ? "Быстрое создание фонда" : "Создать новый фонд"}
+            {isQuickCreate ? t("quick_create_title") : t("create_new_fund")}
           </h1>
           <p className="text-gray-400">
             {isQuickCreate 
-              ? "Матчи выбраны автоматически • Сделайте прогнозы" 
-              : "Credit-based prediction pool • 12 credits for 10 matches"}
+              ? t("matches_auto_selected")
+              : t("credit_system_info")}
           </p>
 
           <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500/10 border border-orange-500/30">
             <Trophy className="w-5 h-5 text-orange-400" />
-            <span className="text-white font-semibold">Ваш баланс: {userBalance || 0} баллов</span>
+            <span className="text-white font-semibold">{t("your_balance_label")}: {userBalance || 0} {t("points")}</span>
           </div>
         </div>
 
@@ -546,7 +548,7 @@ export default function CreateFund() {
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-red-400 font-semibold">Ошибка</p>
+              <p className="text-red-400 font-semibold">{t("error_label")}</p>
               <p className="text-red-300 text-sm">{error}</p>
             </div>
           </div>
@@ -567,11 +569,11 @@ export default function CreateFund() {
 
         {step === 1 && (
           <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-            <h2 className="text-2xl font-bold text-white mb-6">Настройки фонда</h2>
+            <h2 className="text-2xl font-bold text-white mb-6">{t("fund_settings")}</h2>
 
             <div className="space-y-6">
               <div>
-                <Label className="text-gray-300 mb-2">Название фонда</Label>
+                <Label className="text-gray-300 mb-2">{t("fund_name")}</Label>
                 <Input
                   value={fundData.title}
                   onChange={(e) => setFundData({ ...fundData, title: e.target.value })}
@@ -581,25 +583,25 @@ export default function CreateFund() {
               </div>
 
               <div>
-                <Label className="text-gray-300 mb-2">Описание (необязательно)</Label>
+                <Label className="text-gray-300 mb-2">{t("description_optional")}</Label>
                 <Textarea
                   value={fundData.description}
                   onChange={(e) => setFundData({ ...fundData, description: e.target.value })}
-                  placeholder="Опишите ваш фонд..."
+                  placeholder={t("description_placeholder")}
                   className="bg-white/5 border-gray-700 text-white placeholder:text-gray-500"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-gray-300 mb-2">Взнос</Label>
+                  <Label className="text-gray-300 mb-2">{t("entry_fee_label")}</Label>
                   <div className="p-3 rounded-lg bg-white/5 border border-gray-700 text-white font-bold text-lg">
-                    100 баллов
+                    100 {t("points")}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Фиксированный взнос</p>
+                  <p className="text-xs text-gray-500 mt-1">{t("entry_fixed")}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-300 mb-2">Макс. игроков</Label>
+                  <Label className="text-gray-300 mb-2">{t("max_players")}</Label>
                   <Input
                     type="number"
                     min="2"
@@ -618,8 +620,8 @@ export default function CreateFund() {
               <div className="space-y-4 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Label className="text-gray-300 text-base">Приватный фонд</Label>
-                    <p className="text-xs text-gray-500 mt-1">Доступен только по ссылке и паролю</p>
+                    <Label className="text-gray-300 text-base">{t("private_fund")}</Label>
+                    <p className="text-xs text-gray-500 mt-1">{t("private_fund_hint")}</p>
                   </div>
                   <Switch 
                     checked={fundData.visibility === "private"}
@@ -635,7 +637,7 @@ export default function CreateFund() {
                 
                 {fundData.visibility === "private" && (
                   <div className="pt-2">
-                    <Label className="text-gray-300 mb-2">Пароль (4-6 цифр)</Label>
+                    <Label className="text-gray-300 mb-2">{t("password_label")}</Label>
                     <Input
                       type="text"
                       maxLength={6}
@@ -648,10 +650,10 @@ export default function CreateFund() {
                       className="bg-white/5 border-gray-700 text-white text-center text-2xl font-bold tracking-widest"
                     />
                     {fundData.password && fundData.password.length < 4 && (
-                      <p className="text-xs text-red-400 mt-1">Пароль должен содержать не менее 4 цифр.</p>
+                      <p className="text-xs text-red-400 mt-1">{t("password_error")}</p>
                     )}
                     <p className="text-xs text-purple-300 mt-2 flex items-center gap-1">
-                      💡 Поделитесь ссылкой и паролем с друзьями после создания
+                      {t("password_hint")}
                     </p>
                   </div>
                 )}
@@ -659,7 +661,7 @@ export default function CreateFund() {
 
               <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                 <p className="text-blue-300 text-sm">
-                  <strong>📊 Система кредитов:</strong> Вы получите 10-20 кредитов на 10 матчей. Максимум 2 прогноза на матч!
+                  {t("credit_system_info")}
                 </p>
               </div>
 
@@ -673,7 +675,7 @@ export default function CreateFund() {
                 }
                 className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6"
               >
-                Далее: Сделать прогнозы ({matches.length} матчей)
+                {t("next_predictions")} ({matches.length} {t("matches")})
               </Button>
             </div>
           </Card>
@@ -687,7 +689,7 @@ export default function CreateFund() {
                   <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                       <Target className="w-6 h-6 text-orange-400" />
-                      Распределите 10-20 кредитов
+                      {t("distribute_credits")}
                     </h2>
                     {isQuickCreate && (
                       <p className="text-sm text-gray-400 mt-1">
@@ -697,7 +699,7 @@ export default function CreateFund() {
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-white">{totalCredits}/20</div>
-                    <div className="text-sm text-gray-400">кредитов</div>
+                    <div className="text-sm text-gray-400">{t("credits_label")}</div>
                   </div>
                 </div>
 
@@ -705,17 +707,17 @@ export default function CreateFund() {
                   className={totalCredits < 10 ? "bg-red-500/10 border-red-500/30" : totalCredits > 20 ? "bg-red-500/10 border-red-500/30" : "bg-green-500/10 border-green-500/30"}>
                   <AlertDescription className={totalCredits < 10 || totalCredits > 20 ? "text-red-400" : "text-green-400"}>
                     {totalCredits < 10 ? (
-                      "⚠️ Минимум 10 кредитов (минимум 1 прогноз на матч)"
+                      t("credits_min_warning")
                     ) : totalCredits > 20 ? (
-                      "❌ Максимум 20 кредитов"
+                      t("credits_max_warning")
                     ) : totalCredits < 20 ? (
                       <>
-                        💡 У вас {20 - totalCredits} неиспользованных кредитов
+                        💡 {20 - totalCredits} {t("unused_credits_info")}
                         <br />
-                        <span className="text-sm">→ Стоят по 0.5 очка = {(20 - totalCredits) * 0.5} бонусных очков</span>
+                        <span className="text-sm">→ {t("unused_credits_bonus")} = {(20 - totalCredits) * 0.5} {t("bonus_points")}</span>
                       </>
                     ) : (
-                      `✅ Кредиты: ${totalCredits}/20 • Все кредиты распределены!`
+                      `✅ ${t("credits_label")}: ${totalCredits}/20 • ${t("credits_full")}`
                     )}
                   </AlertDescription>
                 </Alert>
@@ -747,12 +749,12 @@ export default function CreateFund() {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="text-sm text-gray-400 cursor-help flex items-center gap-1">
-                                Использовано {matchCredits} из 2
+                                {t("used_of")} {matchCredits} {t("of_two")}
                                 <span className="text-gray-500">ⓘ</span>
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Макс 2 прогноза на матч</p>
+                              <p>{t("max_2_per_match")}</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
@@ -769,11 +771,11 @@ export default function CreateFund() {
                       <div className="space-y-3">
                         {/* Bold Predictions (3 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Исход матча (3 очка):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">{t("match_outcome")}</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'home_win', label: match.home_team },
-                              { value: 'draw', label: 'Ничья' },
+                              { value: 'draw', label: t("draw") },
                               { value: 'away_win', label: match.away_team }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
@@ -815,11 +817,11 @@ export default function CreateFund() {
 
                         {/* BTTS (2 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Обе забьют (2 очка):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">{t("btts")}</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'btts_yes', label: 'Да' },
-                              { value: 'btts_no', label: 'Нет' }
+                              { value: 'btts_yes', label: t("yes") },
+                              { value: 'btts_no', label: t("no") }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
@@ -860,11 +862,11 @@ export default function CreateFund() {
 
                         {/* Over/Under 2.5 (2.5 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Количество голов (2.5 очка):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">{t("goals")}</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'over_2_5', label: '3+ голов' },
-                              { value: 'under_2_5', label: '0-2 гола' }
+                              { value: 'over_2_5', label: t("over_goals") },
+                              { value: 'under_2_5', label: t("under_goals") }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
@@ -905,11 +907,11 @@ export default function CreateFund() {
 
                         {/* Blowout (2.5 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Будет ли разгром (победа одной из команд с разницей 3 и более мячей)? (2.5 очка):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">{t("blowout")}</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'blowout_yes', label: 'Да (разница 3+)' },
-                              { value: 'blowout_no', label: 'Нет' }
+                              { value: 'blowout_yes', label: t("blowout_yes") },
+                              { value: 'blowout_no', label: t("no") }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
@@ -950,11 +952,11 @@ export default function CreateFund() {
 
                         {/* Win to Nil (4 pts, 1 cr) */}
                         <div>
-                          <p className="text-xs text-gray-400 mb-2 font-semibold">Победа всухую (4 очка):</p>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">{t("clean_sheet")}</p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'home_clean_sheet_win', label: `${match.home_team} всухую` },
-                              { value: 'away_clean_sheet_win', label: `${match.away_team} всухую` }
+                              { value: 'home_clean_sheet_win', label: `${match.home_team} ${t("clean_sheet_suffix")}` },
+                              { value: 'away_clean_sheet_win', label: `${match.away_team} ${t("clean_sheet_suffix")}` }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
@@ -1010,12 +1012,12 @@ export default function CreateFund() {
                               >
                                 {opts.length >= 2 && <span>🔒</span>}
                                 <span className="text-lg">🎯</span>
-                                <span>Точный счёт (9 очков)</span>
+                                <span>{t("exact_score")}</span>
                               </Button>
                             </TooltipTrigger>
                             {opts.length >= 2 && (
                               <TooltipContent>
-                                <p>Максимум 2 прогноза на матч</p>
+                                <p>{t("max_2_tooltip")}</p>
                               </TooltipContent>
                             )}
                           </Tooltip>
@@ -1024,7 +1026,7 @@ export default function CreateFund() {
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">🎯</span>
-                                <span className="text-white font-semibold">Точный счёт (9 очков)</span>
+                                <span className="text-white font-semibold">{t("exact_score")}</span>
                               </div>
                               <Button
                                 type="button"
@@ -1033,7 +1035,7 @@ export default function CreateFund() {
                                 onClick={() => toggleExactScore(match.id)}
                                 className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                               >
-                                ❌ Убрать
+                                {t("exact_score_remove")}
                               </Button>
                             </div>
                             <div className="flex items-center justify-center gap-3 mb-3">
@@ -1073,15 +1075,15 @@ export default function CreateFund() {
                              exactScores[match.id]?.away !== undefined && exactScores[match.id]?.away !== "" ? (
                               <div className="text-center p-2 rounded bg-green-500/20 border border-green-500/30">
                                 <span className="text-green-400 font-semibold">
-                                  ✅ Ваш прогноз: {exactScores[match.id].home}-{exactScores[match.id].away} (9 очков если верно)
-                                </span>
+                                    {t("exact_score_confirmed")}: {exactScores[match.id].home}-{exactScores[match.id].away} (9 {t("if_correct")})
+                                  </span>
                               </div>
                             ) : (
                               (exactScores[match.id]?.home !== undefined && exactScores[match.id]?.home !== "") ||
                               (exactScores[match.id]?.away !== undefined && exactScores[match.id]?.away !== "") ? (
                                 <div className="text-center p-2 rounded bg-yellow-500/20 border border-yellow-500/30">
                                   <span className="text-yellow-400 text-sm">
-                                    ⚠️ Введите оба счета
+                                    {t("exact_score_both")}
                                   </span>
                                 </div>
                               ) : null
@@ -1105,7 +1107,7 @@ export default function CreateFund() {
                       className="flex-1 border-gray-700 text-gray-300 hover:bg-white/5"
                       disabled={isCreating}
                     >
-                      Назад
+                      {t("back")}
                     </Button>
                   )}
                   <Button
@@ -1115,10 +1117,10 @@ export default function CreateFund() {
                   >
                     {isCreating ? (
                       <span className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" /> Создание...
+                        <Loader2 className="w-4 h-4 animate-spin" /> {t("creating")}
                       </span>
                     ) : (
-                      `Создать фонд и отправить прогнозы`
+                      t("create_fund_btn")
                     )}
                   </Button>
                 </div>

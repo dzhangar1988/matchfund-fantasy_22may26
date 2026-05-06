@@ -1,106 +1,99 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Target, Trophy, TrendingUp, Users, Shield, Lock, HelpCircle } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
 export default function FAQ() {
+  const { t } = useLanguage();
+
   const faqs = [
     {
       icon: Target,
-      question: "Как работает система кредитов?",
+      question: t("faq_q1"),
       answer: (
         <>
-          <p className="mb-3">Каждый фонд даёт вам <strong>10-20 кредитов</strong> на <strong>10 матчей</strong>. Максимум <strong>2 прогноза на матч</strong>.</p>
+          <p className="mb-3">{t("faq_q1_p1")}</p>
           <ul className="list-disc pl-6 space-y-2 mb-3">
-            <li><strong>Исход матча (3 очка):</strong> Кто выиграет или ничья.</li>
-            <li><strong>Обе забьют (2 очка):</strong> Да или Нет.</li>
-            <li><strong>Количество голов (2.5 очка):</strong> 3+ голов или 0-2 гола.</li>
-            <li><strong>Будет ли разгром (победа одной из команд с разницей 3 и более мячей)? (2.5 очка):</strong> Да или Нет.</li>
-            <li><strong>Победа всухую (4 очка):</strong> Команда выиграет, не пропустив.</li>
-            <li><strong>Точный счёт (9 очков):</strong> Угадайте точный итоговый счёт.</li>
+            <li><strong>{t("faq_q1_l1")}</strong></li>
+            <li><strong>{t("faq_q1_l2")}</strong></li>
+            <li><strong>{t("faq_q1_l3")}</strong></li>
+            <li><strong>{t("faq_q1_l4")}</strong></li>
+            <li><strong>{t("faq_q1_l5")}</strong></li>
+            <li><strong>{t("faq_q1_l6")}</strong></li>
           </ul>
-          <p className="font-semibold text-orange-400">Минимум: 10 кредитов • Максимум: 20 кредитов • Макс 2 прогноза на матч</p>
+          <p className="font-semibold text-orange-400">{t("faq_q1_note")}</p>
         </>
       )
     },
     {
       icon: Trophy,
-      question: "Что делать с неиспользованными кредитами?",
+      question: t("faq_q2"),
       answer: (
         <>
-          <p className="mb-3">Вы можете сохранить до <strong>10 неиспользованных кредитов</strong> (20 всего - минимум 10).</p>
-          <p className="mb-3">Каждый неиспользованный кредит даёт <strong>0.5 бонусных очка</strong>.</p>
-          <p className="text-sm text-gray-400">
-            Пример: Используете только 15 кредитов = 5 неиспользованных = +2.5 бонусных очка
-          </p>
+          <p className="mb-3">{t("faq_q2_p1")}</p>
+          <p className="mb-3">{t("faq_q2_p2")}</p>
+          <p className="text-sm text-gray-400">{t("faq_q2_example")}</p>
         </>
       )
     },
     {
       icon: Shield,
-      question: "Можно ли делать несколько прогнозов на один матч?",
+      question: t("faq_q3"),
       answer: (
         <>
-          <p className="mb-3"><strong>Да!</strong> Но максимум <strong>2 прогноза на матч</strong>.</p>
-          <p className="mb-3">Например: Bold прогноз (3 очка, 1 кр) + Обе забьют (2 очка, 1 кр) = 2 кредита на матч.</p>
-          <p className="text-sm text-gray-400">
-            💡 Стратегия: комбинируйте разные типы прогнозов для максимизации очков!
-          </p>
+          <p className="mb-3">{t("faq_q3_p1")}</p>
+          <p className="mb-3">{t("faq_q3_p2")}</p>
+          <p className="text-sm text-gray-400">{t("faq_q3_tip")}</p>
         </>
       )
     },
     {
       icon: TrendingUp,
-      question: "Как распределяется призовой фонд?",
+      question: t("faq_q4"),
       answer: (
         <>
-          <p className="mb-3">Призовой фонд распределяется следующим образом:</p>
+          <p className="mb-3">{t("faq_q4_p1")}</p>
           <ul className="list-disc pl-6 space-y-2 mb-3">
-            <li><strong>7% комиссия платформы</strong> (на развитие сервиса)</li>
-            <li><strong>1% бонус создателю фонда</strong> (за организацию)</li>
-            <li><strong>92% призовой фонд</strong> делится между победителями</li>
+            <li><strong>{t("faq_q4_l1")}</strong></li>
+            <li><strong>{t("faq_q4_l2")}</strong></li>
+            <li><strong>{t("faq_q4_l3")}</strong></li>
           </ul>
-          
-          <p className="font-semibold text-orange-400 mt-4 mb-2">Как делятся 92% призового фонда:</p>
+          <p className="font-semibold text-orange-400 mt-4 mb-2">{t("faq_q4_h2")}</p>
           <ul className="list-disc pl-6 space-y-2 mb-3">
-            <li><strong>1-3 участника:</strong> 100% победителю (1 место)</li>
-            <li><strong>4-9 участников:</strong> 70% первому, 30% второму</li>
-            <li><strong>10+ участников:</strong> 50% первому, 30% второму, 20% третьему</li>
+            <li><strong>{t("faq_q4_d1")}</strong></li>
+            <li><strong>{t("faq_q4_d2")}</strong></li>
+            <li><strong>{t("faq_q4_d3")}</strong></li>
           </ul>
-          
-          <p className="text-sm text-gray-400">
-            Пример: 10 человек × 100 баллов = 1000 → 920 призовых → 1 место: 460, 2 место: 276, 3 место: 184
-          </p>
+          <p className="text-sm text-gray-400">{t("faq_q4_example")}</p>
         </>
       )
     },
     {
       icon: Users,
-      question: "Что происходит если не набралось минимум участников?",
+      question: t("faq_q5"),
       answer: (
         <>
-          <p className="mb-3">Если к началу первого матча в фонде меньше участников чем указано в <strong>min_participants</strong>:</p>
+          <p className="mb-3">{t("faq_q5_p1")}</p>
           <ul className="list-disc pl-6 space-y-2">
-            <li>Фонд автоматически отменяется</li>
-            <li>Всем участникам возвращается полный взнос (100%)</li>
-            <li>Никто не теряет деньги</li>
+            <li>{t("faq_q5_l1")}</li>
+            <li>{t("faq_q5_l2")}</li>
+            <li>{t("faq_q5_l3")}</li>
           </ul>
         </>
       )
     },
     {
       icon: Lock,
-      question: "Когда закрываются прогнозы?",
+      question: t("faq_q6"),
       answer: (
         <>
-          <p className="mb-3">Прогнозы закрываются автоматически:</p>
+          <p className="mb-3">{t("faq_q6_p1")}</p>
           <ul className="list-disc pl-6 space-y-2">
-            <li><strong>За 5 минут до начала первого матча</strong> в фонде</li>
-            <li>После этого новые игроки не могут присоединиться</li>
-            <li>Существующие участники не могут изменить свои прогнозы</li>
+            <li><strong>{t("faq_q6_l1")}</strong></li>
+            <li>{t("faq_q6_l2")}</li>
+            <li>{t("faq_q6_l3")}</li>
           </ul>
-          <p className="text-sm text-yellow-400 mt-3">
-            ⚠️ Успейте сделать прогнозы заранее!
-          </p>
+          <p className="text-sm text-yellow-400 mt-3">{t("faq_q6_warning")}</p>
         </>
       )
     }
@@ -110,8 +103,8 @@ export default function FAQ() {
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Часто задаваемые вопросы</h1>
-          <p className="text-gray-400">Всё что нужно знать о MatchFund Fantasy</p>
+          <h1 className="text-4xl font-bold text-white mb-2">{t("faq_heading")}</h1>
+          <p className="text-gray-400">{t("faq_desc")}</p>
         </div>
 
         <div className="space-y-6">
@@ -137,13 +130,11 @@ export default function FAQ() {
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
                   <HelpCircle className="w-5 h-5 text-white" />
                 </div>
-                Остались вопросы?
+                {t("faq_still_questions")}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-300 mb-4">
-                Свяжитесь с нами через кнопку обратной связи на боковой панели
-              </p>
+              <p className="text-gray-300 mb-4">{t("faq_contact")}</p>
             </CardContent>
           </Card>
         </div>
