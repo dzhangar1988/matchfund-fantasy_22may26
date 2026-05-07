@@ -170,6 +170,10 @@ export default function CreateFund() {
 
   const isOptionDisabled = (matchId, option) => {
     const current = predictions[matchId] || [];
+    // Block if total predictions across all matches would exceed allowed
+    const totalUsed = getTotalPredictions();
+    const alreadySelected = current.includes(option);
+    if (!alreadySelected && totalUsed >= allowedPredictions) return true;
     return getConflictingOptions(matchId, current).has(option);
   };
 
@@ -945,8 +949,8 @@ export default function CreateFund() {
                               <Button
                                 type="button" variant="outline"
                                 onClick={() => toggleExactScore(match.id)}
-                                className={`w-full flex items-center justify-center gap-2 ${opts.length >= 2 ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50" : "border-gray-600 text-gray-300 hover:bg-white/5"}`}
-                                disabled={opts.length >= 2}
+                                className={`w-full flex items-center justify-center gap-2 ${(opts.length >= 2 || (totalPredictions >= allowedPredictions && !opts.some(o => o.startsWith('exact_')))) ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50" : "border-gray-600 text-gray-300 hover:bg-white/5"}`}
+                                disabled={opts.length >= 2 || (totalPredictions >= allowedPredictions && !opts.some(o => o.startsWith('exact_')))}
                               >
                                 {opts.length >= 2 && <span>🔒</span>}
                                 <span className="text-lg">🎯</span>
