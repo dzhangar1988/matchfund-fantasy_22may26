@@ -85,7 +85,7 @@ export default function CreateFund() {
         setFundData(prev => ({ ...prev, ...preFillData.fundSetup }));
         setMatches(preFillData.selectedMatches);
         setAllMatches(preFillData.selectedMatches);
-        setStep(4); // skip straight to predictions
+        setStep(2); // skip straight to predictions
         setIsLoading(false);
       }).catch(err => {
         setError("Ошибка загрузки: " + err.message);
@@ -412,7 +412,7 @@ export default function CreateFund() {
 
   const isQuickCreate = preFillData?.isQuickCreate;
   const TOTAL_STEPS = 4;
-  const stepLabels = ["Settings", "Prize", "Matches", "Predictions"];
+  const stepLabels = ["Matches", "Predictions", "Settings", "Prize"];
 
   return (
     <div className="min-h-screen p-4 md:p-8 bg-[#0C1523]">
@@ -471,173 +471,8 @@ export default function CreateFund() {
           </div>
         )}
 
-        {/* ── STEP 1: Fund Settings ──────────────────────────────────────── */}
+        {/* ── STEP 1: Match Selection ───────────────────────────────────── */}
         {step === 1 && (
-          <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-            <h2 className="text-2xl font-bold text-white mb-6">{t("fund_settings")}</h2>
-            <div className="space-y-6">
-              <div>
-                <Label className="text-gray-300 mb-2">{t("fund_name")}</Label>
-                <Input
-                  value={fundData.title}
-                  onChange={(e) => setFundData({ ...fundData, title: e.target.value })}
-                  placeholder="Arsenal Fans GW23"
-                  className="bg-white/5 border-gray-700 text-white placeholder:text-gray-500"
-                />
-              </div>
-
-              <div>
-                <Label className="text-gray-300 mb-2">{t("description_optional")}</Label>
-                <Textarea
-                  value={fundData.description}
-                  onChange={(e) => setFundData({ ...fundData, description: e.target.value })}
-                  placeholder={t("description_placeholder")}
-                  className="bg-white/5 border-gray-700 text-white placeholder:text-gray-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-gray-300 mb-2">{t("entry_fee_label")}</Label>
-                  <Input
-                    type="number"
-                    min="10"
-                    step="1"
-                    value={fundData.entry_fee}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value) || 10;
-                      setFundData({ ...fundData, entry_fee: Math.max(10, val) });
-                    }}
-                    className="bg-white/5 border-gray-700 text-white"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">{t("points")} (min 10)</p>
-                </div>
-                <div>
-                  <Label className="text-gray-300 mb-2">{t("max_players")}</Label>
-                  <Input
-                    type="number"
-                    min="2"
-                    max="10"
-                    value={fundData.max_participants}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value) || 0;
-                      setFundData({ ...fundData, max_participants: Math.min(10, Math.max(2, val)) });
-                    }}
-                    className="bg-white/5 border-gray-700 text-white"
-                  />
-                </div>
-              </div>
-
-              {/* Private fund */}
-              <div className="space-y-4 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-gray-300 text-base">{t("private_fund")}</Label>
-                    <p className="text-xs text-gray-500 mt-1">{t("private_fund_hint")}</p>
-                  </div>
-                  <Switch
-                    checked={fundData.visibility === "private"}
-                    onCheckedChange={(checked) =>
-                      setFundData({ ...fundData, visibility: checked ? "private" : "public", password: checked ? fundData.password : "" })
-                    }
-                  />
-                </div>
-                {fundData.visibility === "private" && (
-                  <div className="pt-2">
-                    <Label className="text-gray-300 mb-2">{t("password_label")}</Label>
-                    <Input
-                      type="text"
-                      maxLength={6}
-                      placeholder="1234"
-                      value={fundData.password}
-                      onChange={(e) => setFundData({ ...fundData, password: e.target.value.replace(/\D/g, '') })}
-                      className="bg-white/5 border-gray-700 text-white text-center text-2xl font-bold tracking-widest"
-                    />
-                    {fundData.password && fundData.password.length < 4 && (
-                      <p className="text-xs text-red-400 mt-1">{t("password_error")}</p>
-                    )}
-                    <p className="text-xs text-purple-300 mt-2">{t("password_hint")}</p>
-                  </div>
-                )}
-              </div>
-
-              <Button
-                onClick={() => setStep(2)}
-                disabled={
-                  !fundData.title ||
-                  fundData.max_participants < 2 ||
-                  fundData.entry_fee < 10 ||
-                  (fundData.visibility === "private" && (!fundData.password || fundData.password.length < 4))
-                }
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6"
-              >
-                Next: Prize Distribution →
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* ── STEP 2: Prize Distribution ────────────────────────────────── */}
-        {step === 2 && (
-          <div className="space-y-6">
-            <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-              <h2 className="text-2xl font-bold text-white mb-2">Prize Distribution</h2>
-              <p className="text-gray-400 mb-6">How should the prize pool be split among winners?</p>
-
-              <div className="space-y-4">
-                {PRIZE_OPTIONS.map((opt) => {
-                  const isSelected = JSON.stringify(fundData.prize_distribution) === JSON.stringify(opt.distribution);
-                  return (
-                    <button
-                      key={opt.key}
-                      onClick={() => setFundData({ ...fundData, prize_distribution: opt.distribution })}
-                      className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 ${
-                        isSelected
-                          ? "border-orange-500 bg-orange-500/10"
-                          : "border-gray-700 bg-white/5 hover:border-gray-500"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-white font-semibold text-lg">{opt.label}</span>
-                        {isSelected && <Check className="w-5 h-5 text-orange-400" />}
-                      </div>
-
-                      {/* Stacked bar */}
-                      <div className="flex rounded-full overflow-hidden h-4 mb-3 gap-0.5">
-                        {opt.distribution.map((pct, idx) => (
-                          <div
-                            key={idx}
-                            className={`${opt.colors[idx]} h-full transition-all`}
-                            style={{ width: `${pct}%` }}
-                          />
-                        ))}
-                      </div>
-
-                      {/* Labels */}
-                      <div className="flex gap-4">
-                        {opt.distribution.map((pct, idx) => (
-                          <span key={idx} className="text-sm text-gray-300">
-                            {PLACE_LABELS[idx]}: <span className="font-bold text-white">{pct}%</span>
-                          </span>
-                        ))}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </Card>
-
-            <Button
-              onClick={() => setStep(3)}
-              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6"
-            >
-              Next: Select Matches →
-            </Button>
-          </div>
-        )}
-
-        {/* ── STEP 3: Match Selection ───────────────────────────────────── */}
-        {step === 3 && (
           <div className="space-y-6">
             <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
               <div className="flex items-center justify-between">
@@ -698,7 +533,7 @@ export default function CreateFund() {
 
             <div className="sticky bottom-0 bg-[#0C1523] pt-4">
               <Button
-                onClick={() => setStep(4)}
+                onClick={() => setStep(2)}
                 disabled={matches.length < 1}
                 className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6 text-lg disabled:opacity-50"
               >
@@ -708,8 +543,8 @@ export default function CreateFund() {
           </div>
         )}
 
-        {/* ── STEP 4: Predictions ───────────────────────────────────────── */}
-        {step === 4 && (
+        {/* ── STEP 2: Predictions ───────────────────────────────────────── */}
+        {step === 2 && (
           <div>
             <div className="sticky top-0 z-10 bg-[#0C1523] pb-4 mb-6">
               <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
@@ -1020,28 +855,204 @@ export default function CreateFund() {
                   {!isQuickCreate && (
                     <Button
                       variant="outline"
-                      onClick={() => setStep(3)}
+                      onClick={() => setStep(1)}
                       className="flex-1 border-gray-700 text-gray-300 hover:bg-white/5"
-                      disabled={isCreating}
                     >
                       {t("back")}
                     </Button>
                   )}
                   <Button
-                    onClick={createFund}
-                    disabled={!canCreate}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6 text-lg"
+                    onClick={() => setStep(3)}
+                    disabled={!allPredictionsValid()}
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6 text-lg disabled:opacity-50"
                   >
-                    {isCreating ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" /> {t("creating")}
-                      </span>
-                    ) : (
-                      t("create_fund_btn")
-                    )}
+                    Next: Fund Settings →
                   </Button>
                 </div>
               </Card>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 3: Fund Settings ──────────────────────────────────────── */}
+        {step === 3 && (
+          <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
+            <h2 className="text-2xl font-bold text-white mb-6">{t("fund_settings")}</h2>
+            <div className="space-y-6">
+              <div>
+                <Label className="text-gray-300 mb-2">{t("fund_name")}</Label>
+                <Input
+                  value={fundData.title}
+                  onChange={(e) => setFundData({ ...fundData, title: e.target.value })}
+                  placeholder="Arsenal Fans GW23"
+                  className="bg-white/5 border-gray-700 text-white placeholder:text-gray-500"
+                />
+              </div>
+
+              <div>
+                <Label className="text-gray-300 mb-2">{t("description_optional")}</Label>
+                <Textarea
+                  value={fundData.description}
+                  onChange={(e) => setFundData({ ...fundData, description: e.target.value })}
+                  placeholder={t("description_placeholder")}
+                  className="bg-white/5 border-gray-700 text-white placeholder:text-gray-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-gray-300 mb-2">{t("entry_fee_label")}</Label>
+                  <Input
+                    type="number"
+                    min="10"
+                    step="1"
+                    value={fundData.entry_fee}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 10;
+                      setFundData({ ...fundData, entry_fee: Math.max(10, val) });
+                    }}
+                    className="bg-white/5 border-gray-700 text-white"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{t("points")} (min 10)</p>
+                </div>
+                <div>
+                  <Label className="text-gray-300 mb-2">{t("max_players")}</Label>
+                  <Input
+                    type="number"
+                    min="2"
+                    max="10"
+                    value={fundData.max_participants}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      setFundData({ ...fundData, max_participants: Math.min(10, Math.max(2, val)) });
+                    }}
+                    className="bg-white/5 border-gray-700 text-white"
+                  />
+                </div>
+              </div>
+
+              {/* Private fund */}
+              <div className="space-y-4 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-gray-300 text-base">{t("private_fund")}</Label>
+                    <p className="text-xs text-gray-500 mt-1">{t("private_fund_hint")}</p>
+                  </div>
+                  <Switch
+                    checked={fundData.visibility === "private"}
+                    onCheckedChange={(checked) =>
+                      setFundData({ ...fundData, visibility: checked ? "private" : "public", password: checked ? fundData.password : "" })
+                    }
+                  />
+                </div>
+                {fundData.visibility === "private" && (
+                  <div className="pt-2">
+                    <Label className="text-gray-300 mb-2">{t("password_label")}</Label>
+                    <Input
+                      type="text"
+                      maxLength={6}
+                      placeholder="1234"
+                      value={fundData.password}
+                      onChange={(e) => setFundData({ ...fundData, password: e.target.value.replace(/\D/g, '') })}
+                      className="bg-white/5 border-gray-700 text-white text-center text-2xl font-bold tracking-widest"
+                    />
+                    {fundData.password && fundData.password.length < 4 && (
+                      <p className="text-xs text-red-400 mt-1">{t("password_error")}</p>
+                    )}
+                    <p className="text-xs text-purple-300 mt-2">{t("password_hint")}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(2)}
+                  className="flex-1 border-gray-700 text-gray-300 hover:bg-white/5"
+                >
+                  {t("back")}
+                </Button>
+                <Button
+                  onClick={() => setStep(4)}
+                  disabled={
+                    !fundData.title ||
+                    fundData.max_participants < 2 ||
+                    fundData.entry_fee < 10 ||
+                    (fundData.visibility === "private" && (!fundData.password || fundData.password.length < 4))
+                  }
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6"
+                >
+                  Next: Prize Distribution →
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* ── STEP 4: Prize Distribution ────────────────────────────────── */}
+        {step === 4 && (
+          <div className="space-y-6">
+            <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
+              <h2 className="text-2xl font-bold text-white mb-2">Prize Distribution</h2>
+              <p className="text-gray-400 mb-6">How should the prize pool be split among winners?</p>
+
+              <div className="space-y-4">
+                {PRIZE_OPTIONS.map((opt) => {
+                  const isSelected = JSON.stringify(fundData.prize_distribution) === JSON.stringify(opt.distribution);
+                  return (
+                    <button
+                      key={opt.key}
+                      onClick={() => setFundData({ ...fundData, prize_distribution: opt.distribution })}
+                      className={`w-full text-left p-5 rounded-xl border-2 transition-all duration-200 ${
+                        isSelected
+                          ? "border-orange-500 bg-orange-500/10"
+                          : "border-gray-700 bg-white/5 hover:border-gray-500"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-white font-semibold text-lg">{opt.label}</span>
+                        {isSelected && <Check className="w-5 h-5 text-orange-400" />}
+                      </div>
+                      <div className="flex rounded-full overflow-hidden h-4 mb-3 gap-0.5">
+                        {opt.distribution.map((pct, idx) => (
+                          <div key={idx} className={`${opt.colors[idx]} h-full transition-all`} style={{ width: `${pct}%` }} />
+                        ))}
+                      </div>
+                      <div className="flex gap-4">
+                        {opt.distribution.map((pct, idx) => (
+                          <span key={idx} className="text-sm text-gray-300">
+                            {PLACE_LABELS[idx]}: <span className="font-bold text-white">{pct}%</span>
+                          </span>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={() => setStep(3)}
+                className="flex-1 border-gray-700 text-gray-300 hover:bg-white/5"
+                disabled={isCreating}
+              >
+                {t("back")}
+              </Button>
+              <Button
+                onClick={createFund}
+                disabled={!canCreate || isCreating}
+                className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-6 text-lg"
+              >
+                {isCreating ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" /> {t("creating")}
+                  </span>
+                ) : (
+                  t("create_fund_btn")
+                )}
+              </Button>
             </div>
           </div>
         )}
