@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Crown, Trophy, Medal, TrendingUp, Target } from "lucide-react";
@@ -15,39 +16,65 @@ export default function Leaderboard() {
   }, []);
 
   const loadLeaderboard = async () => {
-    const allUsers = await base44.entities.User.list();
-    const allParticipations = await base44.entities.Participation.list();
-    
+    const [allUsers, allParticipations, allFunds] = await Promise.all([
+      base44.entities.User.list(),
+      base44.entities.Participation.list(),
+      base44.entities.MatchFund.list(),
+    ]);
+
+    const fundMap = {};
+    for (const f of allFunds) fundMap[f.id] = f;
+
     const usersWithStats = allUsers.map(user => {
       const userParticipations = allParticipations.filter(p => p.user_id === user.id);
       const finishedParticipations = userParticipations.filter(
         p => p.status === 'winner' || p.status === 'loser'
       );
-      
+
       const wins = userParticipations.filter(p => p.status === 'winner').length;
       const totalWinnings = userParticipations
         .filter(p => p.status === 'winner')
         .reduce((sum, p) => sum + (p.final_payout || 0), 0);
-      
-      const winRate = finishedParticipations.length > 0 
-        ? Math.round((wins / finishedParticipations.length) * 100) 
+
+      // Total prediction points earned across all participations
+      const totalPoints = userParticipations.reduce((sum, p) => sum + (p.total_points || 0), 0);
+
+      // Potential prize: sum of what this user could win from active funds
+      const potentialPrize = userParticipations
+        .filter(p => p.status === 'active' || p.status === 'pending')
+        .reduce((sum, p) => {
+          const fund = fundMap[p.fund_id];
+          if (!fund || !fund.prize_distribution) return sum;
+          const pool = (fund.total_pool || 0) * (1 - ((fund.platform_fee_percent || 7) / 100));
+          const topPrize = pool * ((fund.prize_distribution[0] || 100) / 100);
+          return sum + topPrize;
+        }, 0);
+
+      const winRate = finishedParticipations.length > 0
+        ? Math.round((wins / finishedParticipations.length) * 100)
         : 0;
-      
+
       return {
         ...user,
         total_wins: wins,
         total_winnings: totalWinnings,
+        total_points: totalPoints,
+        potential_prize: Math.round(potentialPrize),
         total_participations: finishedParticipations.length,
+        active_participations: userParticipations.filter(p => p.status === 'active' || p.status === 'pending').length,
         win_rate: winRate
       };
     });
-    
-    const sorted = usersWithStats.sort((a, b) => {
-      if (b.total_winnings !== a.total_winnings) return b.total_winnings - a.total_winnings;
-      if (b.total_participations !== a.total_participations) return b.total_participations - a.total_participations;
-      return (b.total_balance || 0) - (a.total_balance || 0);
-    });
-    
+
+    // Sort by total prediction points, then by winnings, then by balance
+    const sorted = usersWithStats
+      .filter(u => u.total_points > 0 || u.total_participations > 0 || u.active_participations > 0)
+      .sort((a, b) => {
+        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
+        if (b.total_winnings !== a.total_winnings) return b.total_winnings - a.total_winnings;
+        return (b.total_balance || 0) - (a.total_balance || 0);
+      });
+
     setUsers(sorted);
     setIsLoading(false);
   };
@@ -121,7 +148,7 @@ export default function Leaderboard() {
                           </h3>
                         </div>
                         <div className="flex items-center gap-4 mt-1 flex-wrap">
-                          {user.total_participations > 0 ? (
+                          {(user.total_participations > 0 || user.active_participations > 0) ? (
                             <>
                               <div className="flex items-center gap-1 text-sm text-gray-400">
                                 <Trophy className="w-4 h-4 text-yellow-500" />
@@ -129,12 +156,19 @@ export default function Leaderboard() {
                               </div>
                               <div className="flex items-center gap-1 text-sm text-gray-400">
                                 <Target className="w-4 h-4 text-blue-500" />
-                                <span>{user.total_participations || 0} {t("funds_count")}</span>
+                                <span>{(user.total_participations || 0) + (user.active_participations || 0)} {t("funds_count")}</span>
                               </div>
-                              <div className="flex items-center gap-1 text-sm text-gray-400">
-                                <TrendingUp className="w-4 h-4 text-green-500" />
-                                <span>{user.win_rate || 0}% {t("win_rate_pct")}</span>
-                              </div>
+                              {user.win_rate > 0 && (
+                                <div className="flex items-center gap-1 text-sm text-gray-400">
+                                  <TrendingUp className="w-4 h-4 text-green-500" />
+                                  <span>{user.win_rate}% {t("win_rate_pct")}</span>
+                                </div>
+                              )}
+                              {user.potential_prize > 0 && (
+                                <div className="flex items-center gap-1 text-sm text-green-400">
+                                  <span>🏆 Potential: {user.potential_prize} pts</span>
+                                </div>
+                              )}
                             </>
                           ) : (
                             <div className="text-sm text-gray-500">{t("no_participants_yet")}</div>
@@ -145,9 +179,12 @@ export default function Leaderboard() {
                     
                     <div className="text-right">
                       <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                        {user.total_winnings || 0}
+                        {user.total_points || 0}
                       </div>
-                      <div className="text-sm text-gray-400">{t("points_won")}</div>
+                      <div className="text-sm text-gray-400">pts earned</div>
+                      {user.total_winnings > 0 && (
+                        <div className="text-xs text-green-400 mt-1">+{user.total_winnings} won</div>
+                      )}
                     </div>
                   </div>
                 </div>
