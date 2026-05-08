@@ -288,9 +288,11 @@ export default function CreateFund() {
   const allPredictionsValid = () => {
     if (matches.length < 1) return false;
     if (totalPredictions > allowedPredictions) return false;
+    // At least one prediction total, and no match has more than 2
+    if (totalPredictions < 1) return false;
     for (const match of matches) {
       const opts = predictions[match.id] || [];
-      if (opts.length === 0 || opts.length > 2) return false;
+      if (opts.length > 2) return false;
     }
     return true;
   };
@@ -721,7 +723,7 @@ export default function CreateFund() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white">{totalPredictions}<span className="text-gray-500 text-lg">/{allowedPredictions}</span></div>
+                    <div className="text-3xl font-bold text-white">{totalPredictions}<span className="text-gray-500 text-lg"> / {allowedPredictions}</span></div>
                     <div className="text-sm text-gray-400">predictions used</div>
                   </div>
                 </div>
