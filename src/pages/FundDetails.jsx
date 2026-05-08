@@ -23,6 +23,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Helper to turn stored option keys into readable labels
+function formatOption(opt, homeTeam, awayTeam) {
+  if (opt.startsWith('exact_')) return 'Score: ' + opt.replace('exact_', '').replace('-', ' - ');
+  const labels = {
+    home_win: `${homeTeam} Win`,
+    away_win: `${awayTeam} Win`,
+    draw: 'Draw',
+    btts_yes: 'BTTS: Yes',
+    btts_no: 'BTTS: No',
+    over_2_5: '3+ Goals',
+    under_2_5: '0-2 Goals',
+    blowout_yes: 'Blowout (3+ diff)',
+    blowout_no: 'No Blowout',
+    home_clean_sheet_win: `${homeTeam} to Nil`,
+    away_clean_sheet_win: `${awayTeam} to Nil`,
+  };
+  return labels[opt] || opt;
+}
+
 export default function FundDetails() {
   const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
@@ -327,9 +346,9 @@ export default function FundDetails() {
         <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
           <DialogContent className="bg-[#0F1E35] border-gray-800">
             <DialogHeader>
-              <DialogTitle className="text-white text-2xl">🔒 Приватный фонд</DialogTitle>
+              <DialogTitle className="text-white text-2xl">🔒 Private Fund</DialogTitle>
               <DialogDescription className="text-gray-400">
-                Введите пароль для входа в фонд
+                Enter the password to join this fund
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -351,14 +370,13 @@ export default function FundDetails() {
               )}
               <Button
                 onClick={() => {
-                  // After closing the modal, trigger the submission again with the password
                   setShowPasswordModal(false);
                   submitPredictions();
                 }}
                 disabled={!passwordInput || passwordInput.length < 4}
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3"
               >
-                Войти в фонд
+                Join Fund
               </Button>
             </div>
           </DialogContent>
@@ -370,7 +388,7 @@ export default function FundDetails() {
           className="mb-6 text-gray-400 hover:text-white hover:bg-white/5"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Назад
+          Back
         </Button>
 
         <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
@@ -382,7 +400,7 @@ export default function FundDetails() {
               </h1>
               <div className="flex flex-wrap gap-3">
                 <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                  {fund.credits_per_player || 12} Кредитов
+                  {fund.credits_per_player || 12} Predictions
                 </Badge>
                 <Badge className={`${
                   fund.status === "open" 
@@ -393,25 +411,25 @@ export default function FundDetails() {
                     ? "bg-blue-500/20 text-blue-400 border-blue-500/30"
                     : "bg-gray-500/20 text-gray-400 border-gray-500/30"
                 }`}>
-                  {fund.status === "open" ? "Открыт" : 
-                   fund.status === "closed" ? "Закрыт" :
-                   fund.status === "in_progress" ? "В процессе" :
-                   fund.status === "finished" ? "Завершён" : fund.status}
+                  {fund.status === "open" ? "Open" : 
+                   fund.status === "closed" ? "Closed" :
+                   fund.status === "in_progress" ? "In Progress" :
+                   fund.status === "finished" ? "Finished" : fund.status}
                 </Badge>
                 {fund.visibility === "private" && (
                   <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30">
-                    Приватный
+                    Private
                   </Badge>
                 )}
               </div>
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-400 mb-1">Призовой фонд</div>
+              <div className="text-sm text-gray-400 mb-1">Prize Pool</div>
               <div className="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
                 ${prizePool}
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                7% комиссия платформы при выплате
+                7% platform fee on payout
               </div>
             </div>
           </div>
@@ -420,28 +438,28 @@ export default function FundDetails() {
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="w-4 h-4 text-orange-400" />
-                <span className="text-xs text-gray-400">Взнос</span>
+                <span className="text-xs text-gray-400">Entry Fee</span>
               </div>
               <div className="text-2xl font-bold text-white">${fund.entry_fee}</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-center gap-2 mb-2">
                 <Users className="w-4 h-4 text-blue-400" />
-                <span className="text-xs text-gray-400">Макс. игроков</span>
+                <span className="text-xs text-gray-400">Max Players</span>
               </div>
               <div className="text-2xl font-bold text-white">{fund.max_participants}</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-center gap-2 mb-2">
                 <Target className="w-4 h-4 text-purple-400" />
-                <span className="text-xs text-gray-400">Матчей</span>
+                <span className="text-xs text-gray-400">Matches</span>
               </div>
               <div className="text-2xl font-bold text-white">{matches.length}</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="w-4 h-4 text-yellow-400" />
-                <span className="text-xs text-gray-400">Начало</span>
+                <span className="text-xs text-gray-400">Starts</span>
               </div>
               <div className="text-sm font-bold text-white">
                 {fund.first_match_starts_at ? format(new Date(fund.first_match_starts_at), "MMM d, HH:mm") : "—"}
@@ -455,7 +473,7 @@ export default function FundDetails() {
             <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
               <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                 <CheckCircle className="w-6 h-6 text-green-400" />
-                Ваши прогнозы
+                Your Predictions
               </h2>
               
               {myPredictions.length > 0 ? (
@@ -492,38 +510,19 @@ export default function FundDetails() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="text-center p-4 bg-white/5 rounded-lg">
-                            <span className="text-gray-400 text-sm">Ваши прогнозы ({prediction?.credits_spent || 0} кр):</span>
+                            <span className="text-gray-400 text-sm">Your picks ({prediction?.credits_spent || 0}):</span>
                             <div className="mt-2 flex flex-wrap gap-2 justify-center">
-                              {(prediction?.selected_options || []).map((opt, idx) => {
-                                let displayText = opt;
-                                if (opt.startsWith('exact_')) {
-                                  displayText = opt.replace('exact_', 'Счёт: ');
-                                } else if (opt === 'home_win') {
-                                  displayText = 'Победа хозяев';
-                                } else if (opt === 'away_win') {
-                                  displayText = 'Победа гостей';
-                                } else if (opt === 'draw') {
-                                  displayText = 'Ничья';
-                                } else if (opt === 'over_1_5') {
-                                  displayText = 'Больше 1.5';
-                                } else if (opt === 'over_2_5') {
-                                  displayText = 'Больше 2.5';
-                                } else if (opt === 'btts_yes') {
-                                  displayText = 'Обе забьют';
-                                }
-                                
-                                return (
-                                  <Badge key={idx} className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                                    {displayText}
-                                  </Badge>
-                                );
-                              })}
+                              {(prediction?.selected_options || []).map((opt, idx) => (
+                                <Badge key={idx} className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                                  {formatOption(opt, match.home_team, match.away_team)}
+                                </Badge>
+                              ))}
                             </div>
                           </div>
 
                           {isFinished && (
                             <div className="text-center p-4 bg-white/5 rounded-lg">
-                              <span className="text-gray-400 text-sm">Итоговый результат:</span>
+                              <span className="text-gray-400 text-sm">Final Result:</span>
                               <div className="mt-2">
                                 <Badge className={`${
                                   points > 0
@@ -544,7 +543,7 @@ export default function FundDetails() {
                               : "bg-red-500/20 text-red-400"
                           }`}>
                             <span className="font-bold text-xl">
-                              {points > 0 ? `+${points} очков` : "0 очков"}
+                              {points > 0 ? `+${points} pts` : "0 pts"}
                             </span>
                           </div>
                         )}
@@ -554,7 +553,7 @@ export default function FundDetails() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-400">Загрузка ваших прогнозов...</p>
+                  <p className="text-gray-400">Loading your predictions...</p>
                 </div>
               )}
             </Card>
@@ -563,7 +562,7 @@ export default function FundDetails() {
               <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                   <Trophy className="w-6 h-6 text-yellow-400" />
-                  Победители
+                  Winners
                 </h2>
                 
                 {participants.filter(p => p.status === 'winner').length > 0 ? (
@@ -582,15 +581,15 @@ export default function FundDetails() {
                             </div>
                             <div>
                               <p className="text-white font-bold text-lg">
-                                {winner.user_id === user?.id ? "Вы" : `Игрок ${winner.user_id.slice(0, 8)}`}
-                                {winner.is_creator && (
-                                  <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
-                                    Создатель
-                                  </Badge>
-                                )}
-                              </p>
-                              <p className="text-sm text-gray-400">
-                                {winner.total_points || 0} очков • {winner.credits_used || 0} кредитов использовано
+                                {winner.user_id === user?.id ? "You" : `Player ${winner.user_id.slice(0, 8)}`}
+                                  {winner.is_creator && (
+                                    <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
+                                      Creator
+                                    </Badge>
+                                  )}
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  {winner.total_points || 0} pts • {winner.credits_used || 0} predictions used
                               </p>
                             </div>
                           </div>
@@ -604,7 +603,7 @@ export default function FundDetails() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-gray-400">Пока нет победителей или фонд возвращён</p>
+                    <p className="text-gray-400">No winners yet or fund refunded</p>
                   </div>
                 )}
               </Card>
@@ -613,7 +612,7 @@ export default function FundDetails() {
             <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
               <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                 <Users className="w-6 h-6 text-blue-400" />
-                Участники
+                Participants
               </h2>
               
               {participants.length > 0 ? (
@@ -658,41 +657,40 @@ export default function FundDetails() {
                         </div>
                         <div>
                           <p className="text-white font-semibold">
-                            {participant.user_id === user.id ? "Вы" : `Игрок ${participant.user_id.slice(0, 8)}`}
+                            {participant.user_id === user.id ? "You" : `Player ${participant.user_id.slice(0, 8)}`}
                             {participant.is_creator && (
                               <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
-                                Создатель
+                                Creator
                               </Badge>
                             )}
                           </p>
                           <p className="text-sm text-gray-400">
-                            Кредиты: {participant.credits_used || 0}/12
+                            Predictions: {participant.credits_used || 0}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-white">
-                          {participant.total_points || 0} оч
+                          {participant.total_points || 0} pts
                         </p>
                         {participant.final_payout > 0 && (
                           <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs mt-1">
-                            Выигрыш: ${participant.final_payout}
+                            Won: ${participant.final_payout}
                           </Badge>
                         )}
                         {participant.status === 'refunded' && (
                           <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs mt-1">
-                            Возврат: ${participant.final_payout || participant.entry_paid}
+                            Refunded: ${participant.final_payout || participant.entry_paid}
                           </Badge>
                         )}
                         {participant.status === 'loser' && (
                           <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30 text-xs mt-1">
-                            Без приза
+                            No prize
                           </Badge>
                         )}
-                        {/* Show "Calculating..." if fund is in_progress and no final payout determined yet, and not explicitly refunded/loser */}
                         {fund.status === 'in_progress' && !participant.final_payout && participant.status !== 'refunded' && participant.status !== 'loser' && (
                           <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs mt-1">
-                            Расчёт...
+                            Calculating...
                           </Badge>
                         )}
                       </div>
@@ -701,7 +699,7 @@ export default function FundDetails() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-gray-400">Пока нет участников</p>
+                  <p className="text-gray-400">No participants yet</p>
                 </div>
               )}
             </Card>
@@ -714,12 +712,12 @@ export default function FundDetails() {
                   <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                       <Target className="w-6 h-6 text-orange-400" />
-                      Распределите Ваши {fund.credits_per_player || 12} Кредитов
+                      Make Your Predictions
                     </h2>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white">{totalCredits}/12</div>
-                    <div className="text-sm text-gray-400">кредитов использовано</div>
+                    <div className="text-3xl font-bold text-white">{totalCredits}</div>
+                    <div className="text-sm text-gray-400">predictions used</div>
                   </div>
                 </div>
 
@@ -728,38 +726,22 @@ export default function FundDetails() {
                     <AlertDescription className="text-red-400 flex items-start gap-2">
                       <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-semibold">Недостаточно средств</p>
+                        <p className="font-semibold">Insufficient balance</p>
                         <p className="text-sm">
-                          Вам нужно ${fund.entry_fee} для участия, но у вас есть ${user.total_balance}.
+                          You need ${fund.entry_fee} to join but have ${user.total_balance}.
                         </p>
                       </div>
                     </AlertDescription>
                   </Alert>
                 )}
 
-                <Alert variant={totalCredits < 10 ? "destructive" : totalCredits > 12 ? "destructive" : "default"}
-                  className={totalCredits < 10 ? "bg-red-500/10 border-red-500/30" : totalCredits > 12 ? "bg-red-500/10 border-red-500/30" : "bg-green-500/10 border-green-500/30"}>
-                  <AlertDescription className={totalCredits < 10 || totalCredits > 12 ? "text-red-400" : "text-green-400"}>
-                    {totalCredits < 10 ? (
-                      <>
-                        ⚠️ Вам нужно минимум 10 кредитов (минимум 1 за матч)
-                        <br />
-                        <span className="text-sm">Осталось {12 - totalCredits} неиспользованных = 0 очков</span>
-                      </>
-                    ) : totalCredits > 12 ? (
-                      "❌ Разрешено максимум 12 кредитов"
-                    ) : totalCredits < 12 ? (
-                      <>
-                        💡 У вас есть {12 - totalCredits} неиспользованных кредитов
-                        <br />
-                        <span className="text-sm">→ Стоимость 0.5 очка каждый = {(12 - totalCredits) * 0.5} очков всего</span>
-                        <br />
-                        <span className="text-sm text-green-300">Совет: Используйте все кредиты для большего потенциала!</span>
-                      </>
-                    ) : (
-                      `✅ Кредиты: ${totalCredits}/12 • Все кредиты распределены!`
-                    )}
-                  </AlertDescription>
+                <Alert className={totalCredits === 0 ? "bg-blue-500/10 border-blue-500/30" : "bg-green-500/10 border-green-500/30"}>
+                <AlertDescription className={totalCredits === 0 ? "text-blue-300" : "text-green-400"}>
+                  {totalCredits === 0
+                    ? "Select at least one prediction per match to proceed."
+                    : `✅ ${totalCredits} prediction${totalCredits !== 1 ? "s" : ""} selected`
+                  }
+                </AlertDescription>
                 </Alert>
               </Card>
             </div>
@@ -768,7 +750,7 @@ export default function FundDetails() {
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-red-400 font-semibold">Ошибка</p>
+                  <p className="text-red-400 font-semibold">Error</p>
                   <p className="text-red-300 text-sm">{error}</p>
                 </div>
               </div>
@@ -796,13 +778,13 @@ export default function FundDetails() {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="text-sm text-gray-400 cursor-help flex items-center gap-1">
-                                Матч: {matchCredits}/3 
-                                <span className="text-gray-500">ⓘ</span>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Вы можете использовать 1-3 кредита за матч</p>
-                            </TooltipContent>
+                                    {matchCredits}/2 picks
+                                    <span className="text-gray-500">ⓘ</span>
+                                  </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Max 2 predictions per match</p>
+                                </TooltipContent>
                           </Tooltip>
                         </div>
                         <p className="text-sm text-gray-400">
@@ -818,9 +800,9 @@ export default function FundDetails() {
                       <div className="space-y-3">
                         <div className="flex gap-2 flex-wrap">
                           {[
-                            { value: 'home_win', label: 'Победа хозяев' },
-                            { value: 'draw', label: 'Ничья' },
-                            { value: 'away_win', label: 'Победа гостей' }
+                            { value: 'home_win', label: `${match.home_team} Win` },
+                            { value: 'draw', label: 'Draw' },
+                            { value: 'away_win', label: `${match.away_team} Win` }
                           ].map((option) => {
                             const isSelected = opts.includes(option.value);
                             return (
@@ -836,7 +818,7 @@ export default function FundDetails() {
                                 onClick={() => handlePredictionChange(match.id, option.value, !isSelected)}
                               >
                                 {isSelected && <span>✓</span>}
-                                <span>{option.label} (1кр→3оч)</span>
+                                <span>{option.label}</span>
                               </Button>
                             );
                           })}
@@ -850,14 +832,14 @@ export default function FundDetails() {
                             className="w-full border-gray-600 text-gray-300 hover:bg-white/5 flex items-center justify-center gap-2"
                           >
                             <span className="text-lg">🎯</span>
-                            <span>Добавить прогноз на точный счёт</span>
+                            <span>Add Exact Score Prediction</span>
                           </Button>
                         ) : (
                           <div className="p-4 rounded-lg bg-white/5 border border-gray-700">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">🎯</span>
-                                <span className="text-white font-semibold">Прогнозировать точный счёт (1кр→9оч)</span>
+                                <span className="text-white font-semibold">Exact Score (9 pts if correct)</span>
                               </div>
                               <Button
                                 type="button"
