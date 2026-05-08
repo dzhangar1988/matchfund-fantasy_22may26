@@ -206,12 +206,9 @@ export default function FundDetails() {
 
   const allPredictionsValid = () => {
     if (matches.length === 0) return false;
-    const totalCredits = getTotalCredits();
-    if (totalCredits < 10 || totalCredits > 12) return false;
-    
     for (const match of matches) {
       const opts = predictions[match.id] || [];
-      if (opts.length === 0 || opts.length > 3) return false;
+      if (opts.length === 0 || opts.length > 2) return false;
     }
     return true;
   };
@@ -738,7 +735,7 @@ export default function FundDetails() {
                 <Alert className={totalCredits === 0 ? "bg-blue-500/10 border-blue-500/30" : "bg-green-500/10 border-green-500/30"}>
                 <AlertDescription className={totalCredits === 0 ? "text-blue-300" : "text-green-400"}>
                   {totalCredits === 0
-                    ? "Select at least one prediction per match to proceed."
+                    ? "Select 1-2 predictions per match to proceed."
                     : `✅ ${totalCredits} prediction${totalCredits !== 1 ? "s" : ""} selected`
                   }
                 </AlertDescription>
@@ -925,17 +922,13 @@ export default function FundDetails() {
                   ) : user && user.total_balance < fund.entry_fee ? (
                     `Недостаточно баллов`
                   ) : (
-                    `Войти в фонд и отправить прогнозы (${totalCredits}/12 кредитов)`
+                    `Войти в фонд и отправить прогнозы (${totalCredits} прогнозов)`
                   )}
                 </Button>
 
                 {!allPredictionsValid() && totalCredits > 0 && (
                   <p className="text-center text-sm text-gray-400 mt-3">
-                    {totalCredits < 10 
-                      ? `⚠️ Используйте минимум 10 кредитов. Сейчас: ${totalCredits}/12`
-                      : totalCredits > 12
-                      ? `❌ Максимум 12 кредитов. Сейчас: ${totalCredits}/12`
-                      : "Используйте всего 10-12 кредитов (1-3 за матч)"}
+                    ⚠️ Select 1-2 predictions per match to proceed
                   </p>
                 )}
               </Card>
