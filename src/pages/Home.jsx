@@ -10,8 +10,6 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import GameweekCard from "../components/GameweekCard";
 import OpenFundsPreview from "../components/OpenFundsPreview";
-import SportSelection from "../components/SportSelection";
-import { ArrowLeft } from "lucide-react";
 
 export default function Home() {
   const { t } = useLanguage();
@@ -20,8 +18,6 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [nextGameweek, setNextGameweek] = useState(null);
-  const [selectedSport, setSelectedSport] = useState(null);
-
   useEffect(() => {
     loadData();
   }, []);
@@ -101,32 +97,11 @@ export default function Home() {
     }
   ];
 
-  // Show sport selection if no sport is selected
-  if (!selectedSport) {
-    return (
-      <div className="min-h-screen p-4 md:p-8">
-        <div className="max-w-7xl mx-auto">
-          <SportSelection onSelectSport={setSelectedSport} />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          {/* Back button */}
-          <Button
-            variant="ghost"
-            onClick={() => setSelectedSport(null)}
-            className="mb-4 text-gray-400 hover:text-white hover:bg-white/5"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {t("back_to_sports")}
-          </Button>
-
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 flex items-center gap-3">

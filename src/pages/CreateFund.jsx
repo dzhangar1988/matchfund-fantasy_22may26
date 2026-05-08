@@ -296,7 +296,7 @@ export default function CreateFund() {
   };
 
   const userBalance = user?.total_balance ?? 0;
-  const canCreate = allPredictionsValid() && !isCreating && user && userBalance >= fundData.entry_fee;
+  const canCreate = allPredictionsValid() && !isCreating && user;
 
   const createFund = async () => {
     if (isCreating) return;
