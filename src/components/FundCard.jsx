@@ -49,7 +49,7 @@ export default function FundCard({ fund }) {
                   {t("joined")}
                 </Badge>
               )}
-              {fund.visibility === "private" && !hasJoined && (
+              {fund.visibility === "private" && (
                 <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs flex items-center gap-1">
                   <Lock className="w-3 h-3" />
                   {t("private")}
