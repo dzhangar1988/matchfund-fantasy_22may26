@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, TrendingDown, Users, Gift, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 
 export default function TransactionHistory({ userId, limit = 10 }) {
   const [transactions, setTransactions] = useState([]);
@@ -46,11 +45,11 @@ export default function TransactionHistory({ userId, limit = 10 }) {
 
   const getTransactionLabel = (type) => {
     const labels = {
-      join_fund: "Вступление в фонд",
-      win: "Выигрыш",
-      refund: "Возврат средств",
-      referral_bonus: "Реферальный бонус",
-      referral_signup_bonus: "Бонус за регистрацию"
+      join_fund: "Joined Fund",
+      win: "Winnings",
+      refund: "Refund",
+      referral_bonus: "Referral Bonus",
+      referral_signup_bonus: "Sign-up Bonus"
     };
     return labels[type] || type;
   };
@@ -60,7 +59,7 @@ export default function TransactionHistory({ userId, limit = 10 }) {
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <DollarSign className="w-6 h-6 text-orange-400" />
-          История транзакций
+          Transaction History
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -97,7 +96,7 @@ export default function TransactionHistory({ userId, limit = 10 }) {
                         {getTransactionLabel(transaction.type)}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {format(new Date(transaction.created_date), "d MMM yyyy, HH:mm", { locale: ru })}
+                        {format(new Date(transaction.created_date), "d MMM yyyy, HH:mm")}
                       </p>
                     </div>
                   </div>
@@ -111,7 +110,7 @@ export default function TransactionHistory({ userId, limit = 10 }) {
         ) : (
           <div className="text-center py-8">
             <DollarSign className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-            <p className="text-gray-400">Пока нет транзакций</p>
+            <p className="text-gray-400">No transactions yet</p>
           </div>
         )}
       </CardContent>

@@ -96,13 +96,13 @@ export default function ReferralCard({ user, onUserUpdate }) {
       <CardHeader>
         <CardTitle className="text-white flex items-center gap-2">
           <Gift className="w-6 h-6 text-orange-400" />
-          Пригласи друзей и заработай
+          Invite Friends & Earn
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Referral Code */}
         <div>
-          <label className="text-sm text-gray-400 mb-2 block">Ваш реферальный код</label>
+          <label className="text-sm text-gray-400 mb-2 block">Your referral code</label>
           <div className="flex gap-2">
             <div className="flex-1 px-4 py-3 bg-white/5 border border-gray-700 rounded-lg text-white font-mono text-lg">
               {referralData.referralCode}
@@ -114,12 +114,12 @@ export default function ReferralCard({ user, onUserUpdate }) {
               {copied ? (
                 <>
                   <Check className="w-4 h-4 mr-2" />
-                  Скопировано!
+                  Copied!
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4 mr-2" />
-                  Скопировать ссылку
+                  Copy Link
                 </>
               )}
             </Button>
@@ -130,16 +130,16 @@ export default function ReferralCard({ user, onUserUpdate }) {
         <div className="p-4 rounded-lg bg-gradient-to-r from-orange-500/10 to-yellow-500/10 border border-orange-500/30">
           <div className="flex items-center gap-2 mb-3">
             <Gift className="w-5 h-5 text-orange-400" />
-            <span className="text-white font-semibold">Награды:</span>
+            <span className="text-white font-semibold">Rewards:</span>
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-gray-300">• Ваш друг получает</span>
-              <span className="text-green-400 font-bold">+ $50 бонус</span>
+              <span className="text-gray-300">• Your friend gets</span>
+              <span className="text-green-400 font-bold">+ $50 bonus</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-gray-300">• Вы получаете</span>
-              <span className="text-orange-400 font-bold">~$25 за друга</span>
+              <span className="text-gray-300">• You get</span>
+              <span className="text-orange-400 font-bold">~$25 per friend</span>
             </div>
           </div>
         </div>
@@ -149,12 +149,12 @@ export default function ReferralCard({ user, onUserUpdate }) {
           <div className="p-4 rounded-lg bg-white/5 border border-gray-700 text-center">
             <Users className="w-8 h-8 mx-auto mb-2 text-blue-400" />
             <div className="text-3xl font-bold text-white">{referralData.friendsInvited}</div>
-            <div className="text-sm text-gray-400">Друзей приглашено</div>
+            <div className="text-sm text-gray-400">Friends invited</div>
           </div>
           <div className="p-4 rounded-lg bg-white/5 border border-gray-700 text-center">
             <DollarSign className="w-8 h-8 mx-auto mb-2 text-green-400" />
             <div className="text-3xl font-bold text-white">${referralData.totalEarned}</div>
-            <div className="text-sm text-gray-400">Всего заработано</div>
+            <div className="text-sm text-gray-400">Total earned</div>
           </div>
         </div>
 
@@ -162,13 +162,13 @@ export default function ReferralCard({ user, onUserUpdate }) {
         <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
           <div className="flex items-center gap-2 mb-3">
             <Lightbulb className="w-5 h-5 text-blue-400" />
-            <span className="text-white font-semibold">Как это работает:</span>
+            <span className="text-white font-semibold">How it works:</span>
           </div>
           <ol className="space-y-2 text-sm text-gray-300">
-            <li>1. Поделитесь реферальной ссылкой с друзьями</li>
-            <li>2. Они регистрируются по вашей ссылке</li>
-            <li>3. Они получают $50 приветственный бонус, вы получаете $25</li>
-            <li>4. Все в выигрыше! 🎉</li>
+            <li>1. Share your referral link with friends</li>
+            <li>2. They sign up using your link</li>
+            <li>3. They get a $50 welcome bonus, you get $25</li>
+            <li>4. Everyone wins! 🎉</li>
           </ol>
         </div>
       </CardContent>
