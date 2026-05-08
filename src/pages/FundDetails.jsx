@@ -62,6 +62,7 @@ export default function FundDetails() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [passwordVerified, setPasswordVerified] = useState(false);
 
   useEffect(() => {
     if (!fundId) {
@@ -109,6 +110,15 @@ export default function FundDetails() {
 
       const myParticipation = allParticipations.find(p => p.user_id === currentUser.id);
       setHasJoined(!!myParticipation);
+      
+      // Auto-verify password for creator or already joined
+      if (myParticipation || selectedFund.visibility !== "private") {
+        setPasswordVerified(true);
+      }
+      // Show password modal immediately for private funds the user hasn't joined
+      if (selectedFund.visibility === "private" && !myParticipation) {
+        setShowPasswordModal(true);
+      }
 
       if (myParticipation) {
         const allPredictions = await base44.entities.Prediction.filter({ participation_id: myParticipation.id });
@@ -217,12 +227,9 @@ export default function FundDetails() {
     if (isSubmitting) return;
     
     // 🔒 Check password for private funds
-    if (fund.visibility === "private" && fund.password) {
-      if (passwordInput !== fund.password) {
-        setPasswordError("Неверный пароль");
-        setShowPasswordModal(true);
-        return;
-      }
+    if (fund.visibility === "private" && fund.password && !passwordVerified) {
+      setShowPasswordModal(true);
+      return;
     }
     
     setIsSubmitting(true);
@@ -296,11 +303,7 @@ export default function FundDetails() {
   };
 
   const handleJoinPrivateFund = () => {
-    if (fund.visibility === "private" && fund.password && !passwordInput) {
-      setShowPasswordModal(true);
-    } else {
-      submitPredictions();
-    }
+    submitPredictions();
   };
 
   const prizePool = participants.length * (fund?.entry_fee || 0);
@@ -367,13 +370,17 @@ export default function FundDetails() {
               )}
               <Button
                 onClick={() => {
+                  if (passwordInput !== fund.password) {
+                    setPasswordError("Неверный пароль");
+                    return;
+                  }
+                  setPasswordVerified(true);
                   setShowPasswordModal(false);
-                  submitPredictions();
                 }}
                 disabled={!passwordInput || passwordInput.length < 4}
                 className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3"
               >
-                Join Fund
+                Confirm Password
               </Button>
             </div>
           </DialogContent>
@@ -795,30 +802,95 @@ export default function FundDetails() {
                       </div>
 
                       <div className="space-y-3">
-                        <div className="flex gap-2 flex-wrap">
-                          {[
-                            { value: 'home_win', label: `${match.home_team} Win` },
-                            { value: 'draw', label: 'Draw' },
-                            { value: 'away_win', label: `${match.away_team} Win` }
-                          ].map((option) => {
-                            const isSelected = opts.includes(option.value);
-                            return (
-                              <Button
-                                key={option.value}
-                                type="button"
-                                variant={isSelected ? "default" : "outline"}
-                                className={`flex items-center gap-2 ${
-                                  isSelected
-                                    ? "bg-orange-500 hover:bg-orange-600 text-white font-bold border-orange-500"
-                                    : "border-gray-600 text-gray-300 hover:bg-white/5"
-                                }`}
-                                onClick={() => handlePredictionChange(match.id, option.value, !isSelected)}
-                              >
-                                {isSelected && <span>✓</span>}
-                                <span>{option.label}</span>
-                              </Button>
-                            );
-                          })}
+                        {/* Result */}
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Result</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'home_win', label: `${match.home_team} Win` },
+                              { value: 'draw', label: 'Draw' },
+                              { value: 'away_win', label: `${match.away_team} Win` }
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-orange-500 hover:bg-orange-600 text-white font-bold border-orange-500"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handlePredictionChange(match.id, option.value, !isSelected)}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        {/* Goals */}
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Goals</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'over_2_5', label: '3+ Goals' },
+                              { value: 'under_2_5', label: '0-2 Goals' },
+                              { value: 'btts_yes', label: 'BTTS Yes' },
+                              { value: 'btts_no', label: 'BTTS No' },
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-blue-500 hover:bg-blue-600 text-white font-bold border-blue-500"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handlePredictionChange(match.id, option.value, !isSelected)}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        {/* Clean Sheet */}
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Clean Sheet Win</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'home_clean_sheet_win', label: `${match.home_team} to Nil` },
+                              { value: 'away_clean_sheet_win', label: `${match.away_team} to Nil` },
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-purple-500 hover:bg-purple-600 text-white font-bold border-purple-500"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handlePredictionChange(match.id, option.value, !isSelected)}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
                         </div>
 
                         {!showExact ? (
