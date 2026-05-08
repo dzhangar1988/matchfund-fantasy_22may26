@@ -49,6 +49,7 @@ function getAllowedPredictions(matchCount) {
   if (matchCount <= 3) return matchCount + 1;
   return matchCount + 2;
 }
+// Formula: ≤3 matches → matches+1, ≥4 matches → matches+2
 
 export default function CreateFund() {
   const { t } = useLanguage();
