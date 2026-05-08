@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { MatchFund } from "@/entities/MatchFund";
-import { Match } from "@/entities/Match";
 import { User } from "@/entities/User";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -8,16 +7,13 @@ import { createPageUrl } from "@/utils";
 import { Plus, Trophy } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
-import GameweekCard from "../components/GameweekCard";
 import OpenFundsPreview from "../components/OpenFundsPreview";
 
 export default function Home() {
   const { t } = useLanguage();
   const [funds, setFunds] = useState([]);
-  const [matches, setMatches] = useState([]);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [nextGameweek, setNextGameweek] = useState(null);
   useEffect(() => {
     loadData();
   }, []);
@@ -44,39 +40,6 @@ export default function Home() {
       console.log("User loaded:", currentUser.email, "Balance:", currentUser.total_balance);
     } catch (error) {
       console.log("User not authenticated");
-    }
-    
-    // Load upcoming matches
-    const upcomingMatches = await Match.filter({ status: "upcoming" }, "match_date", 50);
-    setMatches(upcomingMatches);
-    
-    // Find next gameweek (first upcoming matches)
-    if (upcomingMatches.length > 0) {
-      const gameweekGroups = {};
-      upcomingMatches.forEach(match => {
-        const key = `${match.competition}-${match.matchweek}`;
-        if (!gameweekGroups[key]) {
-          gameweekGroups[key] = {
-            gameweek: match.matchweek,
-            competition: match.competition,
-            matches: []
-          };
-        }
-        gameweekGroups[key].matches.push(match);
-      });
-      
-      // Get first gameweek with 10 matches
-      const gameweekWithEnoughMatches = Object.values(gameweekGroups).find(
-        gw => gw.matches.length >= 10
-      );
-      
-      if (gameweekWithEnoughMatches) {
-        setNextGameweek({
-          gameweek: gameweekWithEnoughMatches.gameweek,
-          competition: gameweekWithEnoughMatches.competition,
-          matches: gameweekWithEnoughMatches.matches.slice(0, 10)
-        });
-      }
     }
     
     console.log("Loading funds...");
@@ -141,21 +104,6 @@ export default function Home() {
             ))}
           </div>
         </div>
-
-        {/* Gameweek Card */}
-        {isLoading ? (
-          <div className="mb-8">
-            <Skeleton className="h-96 w-full rounded-2xl" />
-          </div>
-        ) : nextGameweek ? (
-          <div className="mb-8">
-            <GameweekCard
-              gameweek={nextGameweek.gameweek}
-              matches={nextGameweek.matches}
-              user={user}
-            />
-          </div>
-        ) : null}
 
         {/* Open Funds Preview */}
         {isLoading ? (
