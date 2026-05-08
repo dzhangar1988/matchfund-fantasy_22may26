@@ -49,7 +49,7 @@ export default function Home() {
     setIsLoading(false);
   };
 
-  const openFunds = funds.filter(f => f.status === "open" && (f.visibility === "public" || f.creator_id === user?.id));
+  const openFunds = funds.filter(f => f.status === "open");
 
   const stats = [
     { 
