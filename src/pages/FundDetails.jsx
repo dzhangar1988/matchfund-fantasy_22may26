@@ -483,6 +483,17 @@ export default function FundDetails() {
                   </Badge>
                 )}
               </div>
+              {fund.visibility === "private" && fund.password && fund.created_by === user?.id && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-gray-500">🔒 Fund password: <span className="font-mono text-gray-400">{fund.password}</span></span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(fund.password)}
+                    className="text-xs text-gray-600 hover:text-gray-400 border border-gray-700 rounded px-1.5 py-0.5 transition-colors"
+                  >
+                    Copy
+                  </button>
+                </div>
+              )}
             </div>
             <div className="text-right">
               <div className="text-sm text-gray-400 mb-1">Prize Pool</div>
