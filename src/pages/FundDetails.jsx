@@ -337,6 +337,10 @@ export default function FundDetails() {
   };
 
   const handleJoinPrivateFund = () => {
+    if (fund?.visibility === "private" && !passwordVerified) {
+      setShowPasswordModal(true);
+      return;
+    }
     submitPredictions();
   };
 
