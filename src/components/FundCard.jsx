@@ -42,8 +42,13 @@ export default function FundCard({ fund }) {
       <CardContent className="p-6 relative">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <h3 className="text-xl font-bold text-white truncate">{fund.title}</h3>
+              {fund.status === "in_progress" && (
+                <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs animate-pulse">
+                  🔴 LIVE
+                </Badge>
+              )}
               {hasJoined && (
                 <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
                   {t("joined")}
@@ -90,7 +95,7 @@ export default function FundCard({ fund }) {
 
         <Link to={createPageUrl(`FundDetails?id=${fund.id}`)}>
           <Button
-            disabled={fund.status === "finished" || fund.status === "cancelled"}
+            disabled={fund.status === "finished" || fund.status === "cancelled" || fund.status === "closed"}
             className={`w-full font-semibold ${
               hasJoined
                 ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
@@ -101,6 +106,8 @@ export default function FundCard({ fund }) {
               ? t("status_finished")
               : fund.status === "cancelled"
               ? t("status_cancelled")
+              : fund.status === "in_progress"
+              ? t("view_details")
               : hasJoined 
               ? t("view_details")
               : t("join")
