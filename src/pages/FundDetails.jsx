@@ -30,17 +30,31 @@ function formatOption(opt, homeTeam, awayTeam) {
     home_win: `${homeTeam} Win`,
     away_win: `${awayTeam} Win`,
     draw: 'Draw',
-    btts_yes: 'BTTS: Yes',
-    btts_no: 'BTTS: No',
-    over_2_5: '3+ Goals',
-    under_2_5: '0-2 Goals',
+    both_score_yes: 'Both Teams Score',
+    both_score_no: 'No BTTS',
+    goals_over: '3+ Goals',
+    goals_under: '0-2 Goals',
     blowout_yes: 'Blowout (3+ diff)',
     blowout_no: 'No Blowout',
-    home_clean_sheet_win: `${homeTeam} to Nil`,
-    away_clean_sheet_win: `${awayTeam} to Nil`,
+    clean_sheet_home: `${homeTeam} Win to Nil`,
+    clean_sheet_away: `${awayTeam} Win to Nil`,
   };
   return labels[opt] || opt;
 }
+
+// Mutual exclusivity groups
+const MUTEX_GROUPS = [
+  ['home_win', 'draw', 'away_win'],
+  ['both_score_yes', 'both_score_no'],
+  ['goals_over', 'goals_under'],
+  ['blowout_yes', 'blowout_no'],
+];
+
+// Conflict rules: if A is selected, B cannot be selected
+const CONFLICTS = [
+  ['both_score_yes', 'clean_sheet_home'],
+  ['both_score_yes', 'clean_sheet_away'],
+];
 
 export default function FundDetails() {
   const navigate = useNavigate();
@@ -137,14 +151,34 @@ export default function FundDetails() {
     }
   };
 
-  const handlePredictionChange = (matchId, option, checked) => {
+  const handlePredictionChange = (matchId, option) => {
     setPredictions(prev => {
       const current = prev[matchId] || [];
-      if (checked) {
-        return { ...prev, [matchId]: [...current, option] };
-      } else {
+      const isSelected = current.includes(option);
+
+      if (isSelected) {
+        // Deselect
         return { ...prev, [matchId]: current.filter(o => o !== option) };
       }
+
+      // Remove mutex partners
+      let updated = [...current];
+      for (const group of MUTEX_GROUPS) {
+        if (group.includes(option)) {
+          updated = updated.filter(o => !group.includes(o));
+        }
+      }
+
+      // Remove conflicting options
+      for (const [a, b] of CONFLICTS) {
+        if (option === a) updated = updated.filter(o => o !== b);
+        if (option === b) updated = updated.filter(o => o !== a);
+      }
+
+      // Enforce max 2 per match
+      if (updated.length >= 2) return prev;
+
+      return { ...prev, [matchId]: [...updated, option] };
     });
   };
 
@@ -821,9 +855,9 @@ export default function FundDetails() {
                       </div>
 
                       <div className="space-y-3">
-                        {/* Result */}
+                        {/* Result — 1 pt */}
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Result</p>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Result <span className="normal-case text-gray-600">(1 pt)</span></p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'home_win', label: `${match.home_team} Win` },
@@ -842,7 +876,7 @@ export default function FundDetails() {
                                       ? "bg-orange-500 hover:bg-orange-600 text-white font-bold border-orange-500"
                                       : "border-gray-600 text-gray-300 hover:bg-white/5"
                                   }`}
-                                  onClick={() => handlePredictionChange(match.id, option.value, !isSelected)}
+                                  onClick={() => handlePredictionChange(match.id, option.value)}
                                 >
                                   {isSelected && <span>✓</span>}
                                   <span>{option.label}</span>
@@ -851,15 +885,14 @@ export default function FundDetails() {
                             })}
                           </div>
                         </div>
-                        {/* Goals */}
+
+                        {/* Both Teams to Score — 2 pts */}
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Goals</p>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Both Teams to Score <span className="normal-case text-gray-600">(2 pts)</span></p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'over_2_5', label: '3+ Goals' },
-                              { value: 'under_2_5', label: '0-2 Goals' },
-                              { value: 'btts_yes', label: 'BTTS Yes' },
-                              { value: 'btts_no', label: 'BTTS No' },
+                              { value: 'both_score_yes', label: 'Yes' },
+                              { value: 'both_score_no', label: 'No' },
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               return (
@@ -873,7 +906,7 @@ export default function FundDetails() {
                                       ? "bg-blue-500 hover:bg-blue-600 text-white font-bold border-blue-500"
                                       : "border-gray-600 text-gray-300 hover:bg-white/5"
                                   }`}
-                                  onClick={() => handlePredictionChange(match.id, option.value, !isSelected)}
+                                  onClick={() => handlePredictionChange(match.id, option.value)}
                                 >
                                   {isSelected && <span>✓</span>}
                                   <span>{option.label}</span>
@@ -882,13 +915,74 @@ export default function FundDetails() {
                             })}
                           </div>
                         </div>
-                        {/* Clean Sheet */}
+
+                        {/* Goals Over/Under — 2.5 pts */}
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Clean Sheet Win</p>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Total Goals <span className="normal-case text-gray-600">(2.5 pts)</span></p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'home_clean_sheet_win', label: `${match.home_team} to Nil` },
-                              { value: 'away_clean_sheet_win', label: `${match.away_team} to Nil` },
+                              { value: 'goals_over', label: '3+ Goals' },
+                              { value: 'goals_under', label: '0-2 Goals' },
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-blue-500 hover:bg-blue-600 text-white font-bold border-blue-500"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handlePredictionChange(match.id, option.value)}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Blowout — 2.5 pts */}
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Margin <span className="normal-case text-gray-600">(2.5 pts)</span></p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'blowout_yes', label: 'Blowout (3+ goal diff)' },
+                              { value: 'blowout_no', label: 'No Blowout' },
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-blue-500 hover:bg-blue-600 text-white font-bold border-blue-500"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handlePredictionChange(match.id, option.value)}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Win to Nil — 4 pts */}
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Win to Nil <span className="normal-case text-gray-600">(4 pts)</span></p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'clean_sheet_home', label: `${match.home_team} Win to Nil` },
+                              { value: 'clean_sheet_away', label: `${match.away_team} Win to Nil` },
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               return (
@@ -902,7 +996,7 @@ export default function FundDetails() {
                                       ? "bg-purple-500 hover:bg-purple-600 text-white font-bold border-purple-500"
                                       : "border-gray-600 text-gray-300 hover:bg-white/5"
                                   }`}
-                                  onClick={() => handlePredictionChange(match.id, option.value, !isSelected)}
+                                  onClick={() => handlePredictionChange(match.id, option.value)}
                                 >
                                   {isSelected && <span>✓</span>}
                                   <span>{option.label}</span>
