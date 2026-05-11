@@ -872,7 +872,7 @@ export default function FundDetails() {
                       <div className="space-y-3">
                         {/* Result — 1 pt */}
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Result <span className="normal-case text-gray-600">(1 pt)</span></p>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Result <span className="normal-case text-gray-600">(3 pts)</span></p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'home_win', label: `${match.home_team} Win` },
