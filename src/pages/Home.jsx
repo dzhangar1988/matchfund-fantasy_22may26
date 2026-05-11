@@ -144,7 +144,7 @@ export default function Home() {
                     <span>Entry: <span className="text-white font-semibold">${fund.entry_fee}</span></span>
                     <span>{fund.total_matches || 0} matches</span>
                   </div>
-                  <Link to={createPageUrl(`FundDetails?id=${fund.id}`)}>
+                  <Link to={`/FundDetails?id=${fund.id}`}>
                     <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-sm">
                       View Fund <ArrowRight className="w-4 h-4 ml-1" />
                     </Button>
