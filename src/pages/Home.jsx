@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { MatchFund } from "@/entities/MatchFund";
 import { User } from "@/entities/User";
+import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, Trophy } from "lucide-react";
+import { Plus, Trophy, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import OpenFundsPreview from "../components/OpenFundsPreview";
@@ -13,6 +15,7 @@ export default function Home() {
   const { t } = useLanguage();
   const [funds, setFunds] = useState([]);
   const [user, setUser] = useState(null);
+  const [myActiveFunds, setMyActiveFunds] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     loadData();
@@ -38,6 +41,22 @@ export default function Home() {
       
       setUser(currentUser);
       console.log("User loaded:", currentUser.email, "Balance:", currentUser.total_balance);
+
+      // Load user's active participations
+      const participations = await base44.entities.Participation.filter({ user_id: currentUser.id });
+      const joinedFundIds = participations.map(p => p.fund_id);
+
+      console.log("Loading funds...");
+      const allFunds = await MatchFund.list("-created_date");
+      console.log("Total funds in database:", allFunds.length);
+      setFunds(allFunds);
+
+      const active = allFunds.filter(f =>
+        joinedFundIds.includes(f.id) && (f.status === "open" || f.status === "in_progress")
+      );
+      setMyActiveFunds(active);
+      setIsLoading(false);
+      return;
     } catch (error) {
       console.log("User not authenticated");
     }
@@ -104,6 +123,36 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {/* My Active Funds */}
+        {!isLoading && user && myActiveFunds.length > 0 && (
+          <div className="mb-10">
+            <h2 className="text-xl font-bold text-white mb-4">My Active Funds</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {myActiveFunds.map(fund => (
+                <div key={fund.id} className="p-5 rounded-2xl border border-gray-700 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-white font-bold text-lg leading-tight">{fund.title}</h3>
+                    {fund.status === "in_progress" ? (
+                      <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs animate-pulse shrink-0">🔴 LIVE</Badge>
+                    ) : (
+                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs shrink-0">Open</Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <span>Entry: <span className="text-white font-semibold">${fund.entry_fee}</span></span>
+                    <span>{fund.total_matches || 0} matches</span>
+                  </div>
+                  <Link to={createPageUrl(`FundDetails?id=${fund.id}`)}>
+                    <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-sm">
+                      View Fund <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Open Funds Preview */}
         {isLoading ? (
