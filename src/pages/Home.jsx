@@ -68,7 +68,8 @@ export default function Home() {
     setIsLoading(false);
   };
 
-  const openFunds = funds.filter(f => f.status === "open" || f.status === "in_progress");
+  const myActiveFundIds = new Set(myActiveFunds.map(f => f.id));
+  const openFunds = funds.filter(f => (f.status === "open" || f.status === "in_progress") && !myActiveFundIds.has(f.id));
 
   const stats = [
     { 
