@@ -44,7 +44,6 @@ function formatOption(opt, homeTeam, awayTeam) {
 
 // Mutual exclusivity groups
 const MUTEX_GROUPS = [
-  ['home_win', 'draw', 'away_win'],
   ['both_score_yes', 'both_score_no'],
   ['goals_over', 'goals_under'],
   ['blowout_yes', 'blowout_no'],
