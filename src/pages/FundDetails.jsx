@@ -253,7 +253,7 @@ export default function FundDetails() {
       const opts = predictions[match.id] || [];
       if (opts.length === 0 || opts.length > 2) return false;
     }
-    return true;
+    return getTotalCredits() === maxPredictions;
   };
 
   const submitPredictions = async () => {
@@ -1127,7 +1127,7 @@ export default function FundDetails() {
 
                 {!allPredictionsValid() && totalCredits > 0 && (
                   <p className="text-center text-sm text-gray-400 mt-3">
-                    ⚠️ Select 1-2 predictions per match to proceed
+                    ⚠️ Use all {maxPredictions} predictions to submit ({totalCredits}/{maxPredictions} used)
                   </p>
                 )}
               </Card>
