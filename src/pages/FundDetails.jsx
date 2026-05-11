@@ -310,6 +310,12 @@ export default function FundDetails() {
 
   const totalCredits = getTotalCredits();
 
+  const maxPredictions = matches.length >= 1 && matches.length <= 3
+    ? matches.length + 1
+    : matches.length >= 4
+    ? matches.length + 2
+    : matches.length + 1;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -417,7 +423,7 @@ export default function FundDetails() {
               </h1>
               <div className="flex flex-wrap gap-3">
                 <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                  {fund.credits_per_player || 12} Predictions
+                  {maxPredictions} Predictions
                 </Badge>
                 <Badge className={`${
                   fund.status === "open" 
@@ -527,7 +533,7 @@ export default function FundDetails() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="text-center p-4 bg-white/5 rounded-lg">
-                            <span className="text-gray-400 text-sm">Your picks ({prediction?.credits_spent || 0}):</span>
+                            <span className="text-gray-400 text-sm">Your picks ({prediction?.credits_spent || 0} predictions):</span>
                             <div className="mt-2 flex flex-wrap gap-2 justify-center">
                               {(prediction?.selected_options || []).map((opt, idx) => (
                                 <Badge key={idx} className="bg-orange-500/20 text-orange-400 border-orange-500/30">
@@ -606,7 +612,7 @@ export default function FundDetails() {
                                   )}
                                 </p>
                                 <p className="text-sm text-gray-400">
-                                  {winner.total_points || 0} pts • {winner.credits_used || 0} predictions used
+                                  {winner.total_points || 0} pts • {winner.credits_used || 0} picks
                               </p>
                             </div>
                           </div>
@@ -930,7 +936,7 @@ export default function FundDetails() {
                                 onClick={() => toggleExactScore(match.id)}
                                 className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                               >
-                                ❌ Удалить
+                                ❌ Remove
                               </Button>
                             </div>
                             <div className="flex items-center justify-center gap-3 mb-3">
@@ -970,7 +976,7 @@ export default function FundDetails() {
                              exactScores[match.id]?.away !== undefined && exactScores[match.id]?.away !== "" ? (
                               <div className="text-center p-2 rounded bg-green-500/20 border border-green-500/30">
                                 <span className="text-green-400 font-semibold">
-                                  ✅ Ваш прогноз: {exactScores[match.id].home}-{exactScores[match.id].away} (9 очков, если верно)
+                                  ✅ Your prediction: {exactScores[match.id].home}-{exactScores[match.id].away} (9 pts if correct)
                                 </span>
                               </div>
                             ) : (
@@ -978,7 +984,7 @@ export default function FundDetails() {
                               (exactScores[match.id]?.away !== undefined && exactScores[match.id]?.away !== "") ? (
                                 <div className="text-center p-2 rounded bg-yellow-500/20 border border-yellow-500/30">
                                   <span className="text-yellow-400 text-sm">
-                                    ⚠️ Введите оба счёта, чтобы завершить прогноз
+                                    ⚠️ Enter both scores to complete this prediction
                                   </span>
                                 </div>
                               ) : null
@@ -1002,12 +1008,12 @@ export default function FundDetails() {
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Отправка...
+                      Submitting...
                     </span>
                   ) : user && user.total_balance < fund.entry_fee ? (
-                    `Недостаточно баллов`
+                    `Insufficient balance`
                   ) : (
-                    `Войти в фонд и отправить прогнозы (${totalCredits} прогнозов)`
+                    `Join Fund & Submit Predictions (${totalCredits} predictions)`
                   )}
                 </Button>
 
