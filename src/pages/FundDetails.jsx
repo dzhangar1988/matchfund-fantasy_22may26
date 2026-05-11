@@ -53,6 +53,8 @@ const MUTEX_GROUPS = [
 const CONFLICTS = [
   ['both_score_yes', 'clean_sheet_home'],
   ['both_score_yes', 'clean_sheet_away'],
+  ['draw', 'clean_sheet_home'],
+  ['draw', 'clean_sheet_away'],
 ];
 
 export default function FundDetails() {
