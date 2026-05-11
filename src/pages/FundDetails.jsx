@@ -483,7 +483,7 @@ export default function FundDetails() {
                   </Badge>
                 )}
               </div>
-              {fund.visibility === "private" && fund.password && fund.created_by === user?.id && (
+              {fund.visibility === "private" && fund.password && fund.creator_id === user?.id && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs text-gray-500">🔒 Fund password: <span className="font-mono text-gray-400">{fund.password}</span></span>
                   <button
