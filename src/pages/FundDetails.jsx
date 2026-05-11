@@ -342,16 +342,12 @@ export default function FundDetails() {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        {/* 🔒 PASSWORD MODAL */}
-        <Dialog open={showPasswordModal} onOpenChange={setShowPasswordModal}>
-          <DialogContent className="bg-[#0F1E35] border-gray-800">
-            <DialogHeader>
-              <DialogTitle className="text-white text-2xl">🔒 Private Fund</DialogTitle>
-              <DialogDescription className="text-gray-400">
-                Enter the password to join this fund
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
+        {/* 🔒 PASSWORD MODAL - cannot be dismissed without entering password or going back */}
+        {showPasswordModal && !passwordVerified && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-[#0F1E35] border border-gray-800 rounded-2xl p-8 max-w-sm w-full">
+              <h2 className="text-2xl font-bold text-white mb-2 text-center">🔒 Private Fund</h2>
+              <p className="text-gray-400 text-center mb-6">Enter the password to access this fund</p>
               <Input
                 type="text"
                 maxLength={6}
@@ -362,29 +358,46 @@ export default function FundDetails() {
                   setPasswordInput(digits);
                   setPasswordError("");
                 }}
-                className="bg-white/5 border-gray-700 text-white text-center text-3xl font-bold tracking-widest"
+                className="bg-white/5 border-gray-700 text-white text-center text-3xl font-bold tracking-widest mb-3"
                 autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && passwordInput.length >= 1) {
+                    if (passwordInput !== fund?.password) {
+                      setPasswordError("Неверный пароль");
+                    } else {
+                      setPasswordVerified(true);
+                      setShowPasswordModal(false);
+                    }
+                  }
+                }}
               />
               {passwordError && (
-                <p className="text-red-400 text-sm text-center">{passwordError}</p>
+                <p className="text-red-400 text-sm text-center mb-3">{passwordError}</p>
               )}
               <Button
                 onClick={() => {
-                  if (passwordInput !== fund.password) {
+                  if (passwordInput !== fund?.password) {
                     setPasswordError("Неверный пароль");
                     return;
                   }
                   setPasswordVerified(true);
                   setShowPasswordModal(false);
                 }}
-                disabled={!passwordInput || passwordInput.length < 4}
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3"
+                disabled={!passwordInput}
+                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-semibold py-3 mb-3"
               >
                 Confirm Password
               </Button>
+              <Button
+                variant="ghost"
+                onClick={() => navigate(createPageUrl("Home"))}
+                className="w-full text-gray-400 hover:text-white"
+              >
+                ← Go Back
+              </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        )}
 
         <Button
           variant="ghost"
