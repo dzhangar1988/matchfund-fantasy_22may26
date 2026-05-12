@@ -542,44 +542,28 @@ export default function FundDetails() {
 
           {/* Prize Distribution */}
           {(() => {
-            const split = fund.prize_distribution;
-            const netPool = Math.round(prizePool * (1 - (fund.platform_fee_percent || 7) / 100));
-            let tiers = [];
-            if (!split || split.length === 0 || (split.length === 1 && split[0] === 100)) {
-              tiers = [{ emoji: "🥇", pct: 100, label: "1st" }];
-            } else if (split.length === 2) {
-              tiers = [
-                { emoji: "🥇", pct: split[0], label: "1st" },
-                { emoji: "🥈", pct: split[1], label: "2nd" },
-              ];
-            } else if (split.length >= 3) {
-              tiers = [
-                { emoji: "🥇", pct: split[0], label: "1st" },
-                { emoji: "🥈", pct: split[1], label: "2nd" },
-                { emoji: "🥉", pct: split[2], label: "3rd" },
-              ];
-            }
+            const tiersByType = {
+              winner_takes_all: [{ emoji: "🥇", label: "1st place", pct: 100 }],
+              top2: [{ emoji: "🥇", label: "1st", pct: 60 }, { emoji: "🥈", label: "2nd", pct: 40 }],
+              top3: [{ emoji: "🥇", label: "1st", pct: 50 }, { emoji: "🥈", label: "2nd", pct: 30 }, { emoji: "🥉", label: "3rd", pct: 20 }],
+            };
+            const tiers = tiersByType[fund.prize_split] || [{ emoji: "🥇", label: "1st place", pct: 100 }];
             return (
               <div className="mt-4 p-4 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex items-center gap-2 mb-3">
-                  <Trophy className="w-4 h-4 text-yellow-400" />
+                  <Trophy className="w-4 h-4 text-orange-400" />
                   <span className="text-xs text-gray-400 uppercase tracking-wide">Prize Distribution</span>
                 </div>
-                <div className="flex flex-wrap gap-3">
-                  {tiers.map((tier) => (
-                    <div key={tier.label} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10">
-                      <span className="text-lg">{tier.emoji}</span>
-                      <div>
-                        <span className="text-white font-bold">{tier.pct}%</span>
-                        <span className="text-gray-400 text-sm ml-1">
-                          · <span className="text-yellow-400 font-semibold">${Math.round(netPool * tier.pct / 100)}</span>
-                        </span>
-                      </div>
-                    </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {tiers.map((tier, i) => (
+                    <React.Fragment key={tier.label}>
+                      {i > 0 && <span className="text-gray-600">·</span>}
+                      <span className="text-white font-semibold">
+                        {tier.emoji} {tier.label}: {tier.pct}%{" "}
+                        <span className="text-yellow-400">(${Math.round(prizePool * tier.pct / 100)})</span>
+                      </span>
+                    </React.Fragment>
                   ))}
-                  {prizePool === 0 && (
-                    <span className="text-gray-500 text-sm self-center">amounts shown once players join</span>
-                  )}
                 </div>
               </div>
             );
