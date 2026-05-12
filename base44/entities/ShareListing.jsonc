@@ -1,0 +1,57 @@
+{
+  "name": "ShareListing",
+  "type": "object",
+  "properties": {
+    "fund_id": {
+      "type": "string",
+      "description": "ID of the fund"
+    },
+    "seller_id": {
+      "type": "string",
+      "description": "ID of the participant (user) whose participation shares are being sold"
+    },
+    "participation_id": {
+      "type": "string",
+      "description": "ID of the Participation record"
+    },
+    "shares_available": {
+      "type": "number",
+      "description": "Number of shares still unsold (integer)"
+    },
+    "price_per_share": {
+      "type": "number",
+      "description": "Price per share in points (integer)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "cancelled"
+      ],
+      "default": "active",
+      "description": "Listing status"
+    }
+  },
+  "required": [
+    "fund_id",
+    "seller_id",
+    "participation_id",
+    "shares_available",
+    "price_per_share"
+  ],
+  "rls": {
+    "read": {},
+    "write": {
+      "$or": [
+        {
+          "seller_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

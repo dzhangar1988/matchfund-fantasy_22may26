@@ -5,7 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
-import { Trophy, Target, ArrowRight, TrendingUp, Loader2 } from "lucide-react";
+import { Trophy, Target, ArrowRight, TrendingUp } from "lucide-react";
+
+function calcPotentialPrize(rank, prizePool, prizeSplit) {
+  const pcts = { winner_takes_all: [100], top2: [60, 40], top3: [50, 30, 20] };
+  const arr = pcts[prizeSplit] || [100];
+  return Math.round(prizePool * (arr[rank - 1] ?? 0) / 100);
+}
 
 function StatusBadge({ status }) {
   if (status === "in_progress") return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs animate-pulse">🔴 Live</Badge>;
@@ -18,6 +24,7 @@ function StatusBadge({ status }) {
 export default function Portfolio() {
   const [user, setUser] = useState(null);
   const [fundRows, setFundRows] = useState([]);
+  const [investmentRows, setInvestmentRows] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -83,6 +90,39 @@ export default function Portfolio() {
       rows.sort((a, b) => (order[a.fund.status] ?? 4) - (order[b.fund.status] ?? 4));
 
       setFundRows(rows);
+
+      // ---- My Investments (SharePurchases where I am buyer) ----
+      const [purchases, allParticipationsForInv, allFundsForInv, allUsersForInv] = await Promise.all([
+        base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
+        base44.entities.Participation.list(),
+        base44.entities.MatchFund.list(),
+        base44.entities.User.list(),
+      ]);
+
+      const invRows = purchases.map(purchase => {
+        const fund = allFundsForInv.find(f => f.id === purchase.fund_id);
+        if (!fund) return null;
+        const sellerParticipation = allParticipationsForInv.find(p => p.user_id === purchase.seller_id && p.fund_id === purchase.fund_id);
+        const sellerUser = allUsersForInv.find(u => u.id === purchase.seller_id);
+        const sellerName = sellerUser?.username || sellerUser?.full_name || `Player ${purchase.seller_id.slice(0, 8)}`;
+
+        // Current rank of seller
+        const fundParts = allParticipationsForInv
+          .filter(p => p.fund_id === purchase.fund_id)
+          .sort((a, b) => (b.total_points || 0) - (a.total_points || 0));
+        const sellerRank = fundParts.findIndex(p => p.user_id === purchase.seller_id) + 1;
+        const totalParts = fundParts.length;
+        const pool = totalParts * (fund.entry_fee || 0);
+        const currentPotentialPrize = calcPotentialPrize(sellerRank, pool, fund.prize_split);
+        const currentTheoreticalPerShare = Math.round(currentPotentialPrize / 100);
+        const currentTotalValue = purchase.shares_bought * currentTheoreticalPerShare;
+        const purchaseCost = purchase.total_cost;
+        const pnl = currentTotalValue - purchaseCost;
+
+        return { purchase, fund, sellerName, sellerParticipation, currentTheoreticalPerShare, currentTotalValue, purchaseCost, pnl };
+      }).filter(Boolean);
+
+      setInvestmentRows(invRows);
     } catch (e) {
       console.error("Portfolio load error", e);
     }
@@ -173,13 +213,58 @@ export default function Portfolio() {
             <TrendingUp className="w-5 h-5 text-orange-400" />
             My Investments
           </h2>
-          <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] text-center">
-            <TrendingUp className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-            <p className="text-white font-semibold mb-1">No share investments yet.</p>
-            <p className="text-gray-400 text-sm max-w-md mx-auto">
-              When the fractional market launches, your purchased shares will appear here.
-            </p>
-          </Card>
+
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2].map(i => <Skeleton key={i} className="h-20 w-full rounded-2xl bg-[#0F1E35]" />)}
+            </div>
+          ) : investmentRows.length === 0 ? (
+            <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] text-center">
+              <TrendingUp className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+              <p className="text-white font-semibold mb-1">No share investments yet.</p>
+              <p className="text-gray-400 text-sm max-w-md mx-auto">
+                When the fractional market launches, your purchased shares will appear here.
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {investmentRows.map(({ purchase, fund, sellerName, currentTheoreticalPerShare, currentTotalValue, purchaseCost, pnl }) => (
+                <div
+                  key={purchase.id}
+                  className="p-5 rounded-2xl border border-gray-700 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] flex flex-col md:flex-row md:items-center gap-4"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="text-white font-bold text-base truncate">{fund.title}</h3>
+                      <span className="text-gray-400 text-sm">· {sellerName}'s shares</span>
+                    </div>
+                    <div className="flex flex-wrap gap-3 text-sm text-gray-400">
+                      <span>Shares: <span className="text-white font-semibold">{purchase.shares_bought}</span></span>
+                      <span>Paid: <span className="text-white font-semibold">{purchase.price_per_share} pts/share</span></span>
+                      <span>Current val: <span className="text-orange-400 font-semibold">{currentTheoreticalPerShare} pts/share</span></span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-5 shrink-0 flex-wrap justify-end">
+                    <div className="text-center">
+                      <div className="text-xs text-gray-500 mb-0.5">Total Value</div>
+                      <div className="text-base font-bold text-yellow-400">{currentTotalValue} pts</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-gray-500 mb-0.5">P&amp;L</div>
+                      <div className={`text-base font-bold ${pnl >= 0 ? "text-green-400" : "text-red-400"}`}>
+                        {pnl >= 0 ? "+" : ""}{pnl} pts
+                      </div>
+                    </div>
+                    <Link to={`/FundDetails?id=${fund.id}`}>
+                      <Button size="sm" className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold">
+                        View Fund <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>

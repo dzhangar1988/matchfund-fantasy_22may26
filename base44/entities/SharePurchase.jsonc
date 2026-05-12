@@ -1,0 +1,77 @@
+{
+  "name": "SharePurchase",
+  "type": "object",
+  "properties": {
+    "listing_id": {
+      "type": "string",
+      "description": "ID of the ShareListing"
+    },
+    "fund_id": {
+      "type": "string",
+      "description": "ID of the fund"
+    },
+    "buyer_id": {
+      "type": "string",
+      "description": "ID of the user who bought shares"
+    },
+    "seller_id": {
+      "type": "string",
+      "description": "ID of the participation owner (seller)"
+    },
+    "shares_bought": {
+      "type": "number",
+      "description": "Number of shares purchased (integer)"
+    },
+    "price_per_share": {
+      "type": "number",
+      "description": "Price per share paid (integer, points)"
+    },
+    "total_cost": {
+      "type": "number",
+      "description": "Total points spent (shares_bought * price_per_share)"
+    },
+    "purchased_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the purchase was made"
+    }
+  },
+  "required": [
+    "listing_id",
+    "fund_id",
+    "buyer_id",
+    "seller_id",
+    "shares_bought",
+    "price_per_share",
+    "total_cost"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "buyer_id": "{{user.id}}"
+        },
+        {
+          "seller_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "buyer_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

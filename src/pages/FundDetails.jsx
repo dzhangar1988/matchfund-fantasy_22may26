@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import OrderBook from "@/components/OrderBook";
 import {
   Tooltip,
   TooltipContent,
@@ -78,6 +79,9 @@ export default function FundDetails() {
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordVerified, setPasswordVerified] = useState(false);
+  const [orderBookParticipant, setOrderBookParticipant] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
+  const [shareListings, setShareListings] = useState([]);
 
   useEffect(() => {
     if (!fundId) {
@@ -122,6 +126,14 @@ export default function FundDetails() {
 
       const allParticipations = await base44.entities.Participation.filter({ fund_id: fundId }, "-total_points");
       setParticipants(allParticipations);
+
+      // Load users + share listings for market data
+      const [users, listings] = await Promise.all([
+        base44.entities.User.list(),
+        base44.entities.ShareListing.filter({ fund_id: fundId }),
+      ]);
+      setAllUsers(users);
+      setShareListings(listings.filter(l => l.status === "active"));
 
       const myParticipation = allParticipations.find(p => p.user_id === currentUser.id);
       setHasJoined(!!myParticipation);
@@ -715,96 +727,121 @@ export default function FundDetails() {
               <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                 <Users className="w-6 h-6 text-blue-400" />
                 Participants
+                {fund.status === "in_progress" && (
+                  <span className="text-xs text-gray-400 font-normal ml-2">· tap a row to trade shares</span>
+                )}
               </h2>
-              
-              {participants.length > 0 ? (
-                <div className="space-y-3">
-                  {participants
-                    // Sort participants for display in a leaderboard style
-                    .sort((a, b) => {
-                      // 1. Winners with actual payout first (higher payout first)
-                      const aPayout = a.final_payout || 0;
-                      const bPayout = b.final_payout || 0;
-                      if (aPayout > 0 && bPayout === 0) return -1; // a is winner, b is not
-                      if (aPayout === 0 && bPayout > 0) return 1;  // b is winner, a is not
-                      if (aPayout > 0 && bPayout > 0) {
-                        return bPayout - aPayout; // Both are winners, sort by payout descending
-                      }
 
-                      // 2. Then by total_points (descending)
-                      const aPoints = a.total_points || 0;
-                      const bPoints = b.total_points || 0;
-                      if (bPoints !== aPoints) {
-                        return bPoints - aPoints;
-                      }
+              {(() => {
+                const tierPcts = {
+                  winner_takes_all: [100],
+                  top2: [60, 40],
+                  top3: [50, 30, 20],
+                };
+                const pcts = tierPcts[fund.prize_split] || [100];
+                const liveMatchExists = matches.some(m => m.status === "live");
 
-                      // 3. Then by credits_used (ascending - fewer credits is better for ties)
-                      const aCredits = a.credits_used || 0;
-                      const bCredits = b.credits_used || 0;
-                      if (aCredits !== bCredits) {
-                        return aCredits - bCredits;
-                      }
+                const sorted = [...participants].sort((a, b) => {
+                  const aPayout = a.final_payout || 0;
+                  const bPayout = b.final_payout || 0;
+                  if (aPayout > 0 && bPayout === 0) return -1;
+                  if (aPayout === 0 && bPayout > 0) return 1;
+                  if (aPayout > 0 && bPayout > 0) return bPayout - aPayout;
+                  if ((b.total_points || 0) !== (a.total_points || 0)) return (b.total_points || 0) - (a.total_points || 0);
+                  if ((a.credits_used || 0) !== (b.credits_used || 0)) return (a.credits_used || 0) - (b.credits_used || 0);
+                  return new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime();
+                });
 
-                      // 4. Finally, by joined_at (ascending - earlier join breaks ties)
-                      return new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime();
-                    })
-                    .map((participant, index) => (
-                    <div
-                      key={participant.id}
-                      className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-gray-700"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center font-bold text-white">
-                          #{index + 1}
+                return participants.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-400">No participants yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {sorted.map((participant, index) => {
+                      const rank = index + 1;
+                      const pct = pcts[rank - 1] ?? 0;
+                      const potentialPrize = Math.round(prizePool * pct / 100);
+                      const theoreticalPerShare = Math.round(potentialPrize / 100);
+                      const activeListing = shareListings.find(l => l.seller_id === participant.user_id && l.participation_id === participant.id);
+                      const pUser = allUsers.find(u => u.id === participant.user_id);
+                      const displayName = participant.user_id === user?.id ? "You" : (pUser?.username || pUser?.full_name || `Player ${participant.user_id.slice(0, 8)}`);
+
+                      return (
+                        <div
+                          key={participant.id}
+                          onClick={() => fund.status === "in_progress" && setOrderBookParticipant({ participant, rank, displayName, liveMatchExists })}
+                          className={`p-4 rounded-lg bg-white/5 border border-gray-700 ${fund.status === "in_progress" ? "cursor-pointer hover:border-orange-500/40 hover:bg-orange-500/5 transition-colors" : ""}`}
+                        >
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center font-bold text-white text-sm shrink-0">
+                                #{rank}
+                              </div>
+                              <div>
+                                <p className="text-white font-semibold flex items-center gap-1 flex-wrap">
+                                  {displayName}
+                                  {participant.is_creator && (
+                                    <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">Creator</Badge>
+                                  )}
+                                </p>
+                                <p className="text-xs text-gray-400">Predictions: {participant.credits_used || 0}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-4 text-right flex-wrap justify-end">
+                              <div>
+                                <div className="text-lg font-bold text-white">{participant.total_points || 0} pts</div>
+                                {potentialPrize > 0 && (
+                                  <div className="text-xs text-yellow-400">Prize: ${potentialPrize}</div>
+                                )}
+                              </div>
+                              {fund.status === "in_progress" && (
+                                <div className="text-right">
+                                  <div className="text-xs text-gray-400">Theoretical</div>
+                                  <div className="text-sm font-semibold text-orange-400">{theoreticalPerShare} pts/share</div>
+                                  {activeListing && (
+                                    <div className="text-xs text-green-400 mt-0.5">
+                                      Listed: {activeListing.price_per_share} pts · {activeListing.shares_available} shares
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {participant.final_payout > 0 && (
+                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">Won: ${participant.final_payout}</Badge>
+                              )}
+                              {participant.status === 'refunded' && (
+                                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Refunded</Badge>
+                              )}
+                              {participant.status === 'loser' && (
+                                <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30 text-xs">No prize</Badge>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-white font-semibold">
-                            {participant.user_id === user.id ? "You" : `Player ${participant.user_id.slice(0, 8)}`}
-                            {participant.is_creator && (
-                              <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
-                                Creator
-                              </Badge>
-                            )}
-                          </p>
-                          <p className="text-sm text-gray-400">
-                            Predictions: {participant.credits_used || 0}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-white">
-                          {participant.total_points || 0} pts
-                        </p>
-                        {participant.final_payout > 0 && (
-                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs mt-1">
-                            Won: ${participant.final_payout}
-                          </Badge>
-                        )}
-                        {participant.status === 'refunded' && (
-                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs mt-1">
-                            Refunded: ${participant.final_payout || participant.entry_paid}
-                          </Badge>
-                        )}
-                        {participant.status === 'loser' && (
-                          <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30 text-xs mt-1">
-                            No prize
-                          </Badge>
-                        )}
-                        {fund.status === 'in_progress' && !participant.final_payout && participant.status !== 'refunded' && participant.status !== 'loser' && (
-                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs mt-1">
-                            Calculating...
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-400">No participants yet</p>
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </Card>
+
+            {/* Order Book bottom sheet */}
+            {orderBookParticipant && (
+              <OrderBook
+                isOpen={!!orderBookParticipant}
+                onClose={() => setOrderBookParticipant(null)}
+                participant={orderBookParticipant.participant}
+                participantName={orderBookParticipant.displayName}
+                rank={orderBookParticipant.rank}
+                prizePool={prizePool}
+                prizeSplit={fund.prize_split}
+                fundId={fundId}
+                fundStatus={fund.status}
+                liveMatchExists={orderBookParticipant.liveMatchExists}
+                currentUser={user}
+                onRefresh={loadData}
+              />
+            )}
           </>
         ) : (
           <div>
