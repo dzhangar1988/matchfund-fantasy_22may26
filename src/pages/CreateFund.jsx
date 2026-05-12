@@ -480,9 +480,26 @@ export default function CreateFund() {
                   <h2 className="text-2xl font-bold text-white">Select Matches</h2>
                   <p className="text-gray-400 text-sm mt-1">Tap to select/deselect. Min 1, max 10.</p>
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-white">{matches.length} <span className="text-gray-500 text-lg">/ 10</span></div>
-                  <div className="text-sm text-gray-400">matches selected</div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      const allSelected = allMatches.every(m => matches.some(s => s.id === m.id));
+                      if (allSelected) {
+                        setMatches([]);
+                      } else {
+                        setMatches(allMatches.slice(0, 10));
+                      }
+                    }}
+                    className="border-orange-500/50 text-orange-400 hover:bg-orange-500/10 text-xs"
+                  >
+                    {allMatches.every(m => matches.some(s => s.id === m.id)) ? "Deselect all" : "Select all"}
+                  </Button>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-white">{matches.length} <span className="text-gray-500 text-lg">/ 10</span></div>
+                    <div className="text-sm text-gray-400">matches selected</div>
+                  </div>
                 </div>
               </div>
             </Card>
