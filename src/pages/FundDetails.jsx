@@ -723,14 +723,24 @@ export default function FundDetails() {
               </Card>
             )}
 
+            {(() => {
+              const liveMatchExists = matches.some(m => m.status === "live");
+              const tradingOpen = (fund.status === "open" || fund.status === "in_progress") && !liveMatchExists;
+              const tradingClosed = fund.status === "finished";
+              return (
             <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
               <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                 <Users className="w-6 h-6 text-blue-400" />
                 Participants
-                {fund.status === "in_progress" && (
+                {tradingOpen && (
                   <span className="text-xs text-gray-400 font-normal ml-2">· tap a row to trade shares</span>
                 )}
               </h2>
+              {liveMatchExists && (fund.status === "open" || fund.status === "in_progress") && (
+                <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-semibold flex items-center gap-2">
+                  🔴 Trading locked — match in progress
+                </div>
+              )}
 
               {(() => {
                 const tierPcts = {
@@ -739,7 +749,6 @@ export default function FundDetails() {
                   top3: [50, 30, 20],
                 };
                 const pcts = tierPcts[fund.prize_split] || [100];
-                const liveMatchExists = matches.some(m => m.status === "live");
 
                 const sorted = [...participants].sort((a, b) => {
                   const aPayout = a.final_payout || 0;
@@ -770,8 +779,8 @@ export default function FundDetails() {
                       return (
                         <div
                           key={participant.id}
-                          onClick={() => fund.status === "in_progress" && setOrderBookParticipant({ participant, rank, displayName, liveMatchExists })}
-                          className={`p-4 rounded-lg bg-white/5 border border-gray-700 ${fund.status === "in_progress" ? "cursor-pointer hover:border-orange-500/40 hover:bg-orange-500/5 transition-colors" : ""}`}
+                          onClick={() => tradingOpen && setOrderBookParticipant({ participant, rank, displayName, liveMatchExists })}
+                          className={`p-4 rounded-lg bg-white/5 border border-gray-700 ${tradingOpen ? "cursor-pointer hover:border-orange-500/40 hover:bg-orange-500/5 transition-colors" : ""}`}
                         >
                           <div className="flex items-center justify-between flex-wrap gap-2">
                             <div className="flex items-center gap-3">
@@ -795,7 +804,7 @@ export default function FundDetails() {
                                   <div className="text-xs text-yellow-400">Prize: ${potentialPrize}</div>
                                 )}
                               </div>
-                              {fund.status === "in_progress" && (
+                              {(fund.status === "open" || fund.status === "in_progress") && !tradingClosed && (
                                 <div className="text-right">
                                   <div className="text-xs text-gray-400">Theoretical</div>
                                   <div className="text-sm font-semibold text-orange-400">{theoreticalPerShare} pts/share</div>
@@ -824,6 +833,8 @@ export default function FundDetails() {
                 );
               })()}
             </Card>
+              );
+            })()}
 
             {/* Order Book bottom sheet */}
             {orderBookParticipant && (
