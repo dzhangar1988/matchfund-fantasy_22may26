@@ -255,15 +255,23 @@ export default function OrderBook({
               <div className="space-y-3">
                 {listings.map(listing => (
                   <div key={listing.id} className="p-4 rounded-xl border border-gray-700 bg-white/5">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <span className="text-white font-bold text-base">{listing.price_per_share} pts/share</span>
-                        <span className="text-gray-400 text-sm ml-2">· {listing.shares_available} available</span>
-                      </div>
-                      <span className="text-gray-500 text-sm">
-                        Total if all: <span className="text-white">{listing.shares_available * listing.price_per_share} pts</span>
-                      </span>
-                    </div>
+                    <div className="flex items-center justify-between mb-2">
+                       <div>
+                         <span className="text-white font-bold text-base">{listing.price_per_share} pts/share</span>
+                         <span className="text-gray-400 text-sm ml-2">· {listing.shares_available} available</span>
+                       </div>
+                       <span className="text-gray-500 text-sm">
+                         Total if all: <span className="text-white">{listing.shares_available * listing.price_per_share} pts</span>
+                       </span>
+                     </div>
+                     {(() => {
+                       const profit = theoreticalPerShare - listing.price_per_share;
+                       return profit >= 0 ? (
+                         <p className="text-green-400 text-xs font-semibold mb-2">+{profit} pts profit per share</p>
+                       ) : (
+                         <p className="text-red-400 text-xs font-semibold mb-2">{profit} pts below value per share</p>
+                       );
+                     })()}
                     {tradingOpen && currentUser?.id !== listing.seller_id && (
                       <div className="flex items-center gap-2">
                         <Input
