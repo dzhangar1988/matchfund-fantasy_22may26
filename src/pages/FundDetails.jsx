@@ -10,6 +10,7 @@ import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import OrderBook from "@/components/OrderBook";
+import PlayersPredictions from "@/components/PlayersPredictions";
 import {
   Tooltip,
   TooltipContent,
@@ -82,6 +83,8 @@ export default function FundDetails() {
   const [orderBookParticipant, setOrderBookParticipant] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
   const [shareListings, setShareListings] = useState([]);
+  const [otherPredictionsMap, setOtherPredictionsMap] = useState({});
+  const [myParticipation, setMyParticipation] = useState(null);
 
   useEffect(() => {
     if (!fundId) {
@@ -135,21 +138,37 @@ export default function FundDetails() {
       setAllUsers(users);
       setShareListings(listings.filter(l => l.status === "active"));
 
-      const myParticipation = allParticipations.find(p => p.user_id === currentUser.id);
-      setHasJoined(!!myParticipation);
+      const foundMyParticipation = allParticipations.find(p => p.user_id === currentUser.id);
+      setMyParticipation(foundMyParticipation || null);
+      setHasJoined(!!foundMyParticipation);
       
       // Auto-verify password for creator or already joined
-      if (myParticipation || selectedFund.visibility !== "private") {
+      if (foundMyParticipation || selectedFund.visibility !== "private") {
         setPasswordVerified(true);
       }
       // Show password modal immediately for private funds the user hasn't joined
-      if (selectedFund.visibility === "private" && !myParticipation) {
+      if (selectedFund.visibility === "private" && !foundMyParticipation) {
         setShowPasswordModal(true);
       }
 
-      if (myParticipation) {
-        const allPredictions = await base44.entities.Prediction.filter({ participation_id: myParticipation.id });
+      if (foundMyParticipation) {
+        const allPredictions = await base44.entities.Prediction.filter({ participation_id: foundMyParticipation.id });
         setMyPredictions(allPredictions);
+
+        // Load other participants' predictions only if current user has submitted
+        if (foundMyParticipation.predictions_completed_at) {
+          const others = allParticipations.filter(p => p.user_id !== currentUser.id);
+          const map = {};
+          await Promise.all(others.map(async (p) => {
+            if (p.predictions_completed_at) {
+              const preds = await base44.entities.Prediction.filter({ participation_id: p.id });
+              map[p.id] = preds;
+            } else {
+              map[p.id] = null;
+            }
+          }));
+          setOtherPredictionsMap(map);
+        }
       } else {
         const initialPredictions = {};
         matchesData.forEach((match) => {
@@ -839,6 +858,17 @@ export default function FundDetails() {
                 </div>
               )}
             </Card>
+
+            {/* Players' Predictions — only visible after user has submitted */}
+            {myParticipation?.predictions_completed_at && (
+              <PlayersPredictions
+                participants={participants}
+                predictionsMap={otherPredictionsMap}
+                allUsers={allUsers}
+                matches={matches}
+                currentUserId={user?.id}
+              />
+            )}
 
             {/* Order Book bottom sheet */}
             {orderBookParticipant && (
