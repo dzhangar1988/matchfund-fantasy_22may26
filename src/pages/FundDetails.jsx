@@ -191,6 +191,13 @@ export default function FundDetails() {
       // Enforce max 2 per match
       if (updated.length >= 2) return prev;
 
+      // Enforce global maxPredictions cap
+      const currentTotal = Object.values(prev).reduce((s, o) => s + o.length, 0);
+      // updated may have fewer than current (mutex removal), so net change = updated.length + 1 - current[matchId].length
+      const currentMatchCount = (prev[matchId] || []).length;
+      const netChange = updated.length + 1 - currentMatchCount;
+      if (currentTotal + netChange > maxPredictions) return prev;
+
       return { ...prev, [matchId]: [...updated, option] };
     });
   };
@@ -863,7 +870,9 @@ export default function FundDetails() {
                     </h2>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-white">{totalCredits}</div>
+                    <div className={`text-3xl font-bold ${totalCredits >= maxPredictions ? "text-orange-400" : "text-white"}`}>
+                      {totalCredits} <span className="text-lg text-gray-400">/ {maxPredictions}</span>
+                    </div>
                     <div className="text-sm text-gray-400">predictions used</div>
                   </div>
                 </div>
@@ -909,6 +918,7 @@ export default function FundDetails() {
                   const opts = predictions[match.id] || [];
                   const matchCredits = getMatchCredits(match.id);
                   const showExact = showExactScore[match.id];
+                  const globalCapReached = totalCredits >= maxPredictions;
                   
                   return (
                     <Card
@@ -925,12 +935,12 @@ export default function FundDetails() {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="text-sm text-gray-400 cursor-help flex items-center gap-1">
-                                    {matchCredits}/2 picks
+                                    {matchCredits} / 2 picks <span className="text-gray-500 text-xs">(optional 2nd)</span>
                                     <span className="text-gray-500">ⓘ</span>
                                   </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Max 2 predictions per match</p>
+                                  <p>1st pick required, 2nd is optional. Global max: {maxPredictions} total.</p>
                                 </TooltipContent>
                           </Tooltip>
                         </div>
@@ -955,12 +965,14 @@ export default function FundDetails() {
                               { value: 'away_win', label: `${match.away_team} Win` }
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (globalCapReached || matchCredits >= 2);
                               return (
                                 <Button
                                   key={option.value}
                                   type="button"
                                   variant={isSelected ? "default" : "outline"}
                                   size="sm"
+                                  disabled={isDisabled}
                                   className={`flex items-center gap-1 ${
                                     isSelected
                                       ? "bg-orange-500 hover:bg-orange-600 text-white font-bold border-orange-500"
@@ -985,12 +997,14 @@ export default function FundDetails() {
                               { value: 'both_score_no', label: 'No' },
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (globalCapReached || matchCredits >= 2);
                               return (
                                 <Button
                                   key={option.value}
                                   type="button"
                                   variant={isSelected ? "default" : "outline"}
                                   size="sm"
+                                  disabled={isDisabled}
                                   className={`flex items-center gap-1 ${
                                     isSelected
                                       ? "bg-blue-500 hover:bg-blue-600 text-white font-bold border-blue-500"
@@ -1015,12 +1029,14 @@ export default function FundDetails() {
                               { value: 'goals_under', label: '0-2 Goals' },
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (globalCapReached || matchCredits >= 2);
                               return (
                                 <Button
                                   key={option.value}
                                   type="button"
                                   variant={isSelected ? "default" : "outline"}
                                   size="sm"
+                                  disabled={isDisabled}
                                   className={`flex items-center gap-1 ${
                                     isSelected
                                       ? "bg-blue-500 hover:bg-blue-600 text-white font-bold border-blue-500"
@@ -1045,12 +1061,14 @@ export default function FundDetails() {
                               { value: 'blowout_no', label: 'No Blowout' },
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (globalCapReached || matchCredits >= 2);
                               return (
                                 <Button
                                   key={option.value}
                                   type="button"
                                   variant={isSelected ? "default" : "outline"}
                                   size="sm"
+                                  disabled={isDisabled}
                                   className={`flex items-center gap-1 ${
                                     isSelected
                                       ? "bg-blue-500 hover:bg-blue-600 text-white font-bold border-blue-500"
@@ -1075,12 +1093,14 @@ export default function FundDetails() {
                               { value: 'clean_sheet_away', label: `${match.away_team} Win to Nil` },
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (globalCapReached || matchCredits >= 2);
                               return (
                                 <Button
                                   key={option.value}
                                   type="button"
                                   variant={isSelected ? "default" : "outline"}
                                   size="sm"
+                                  disabled={isDisabled}
                                   className={`flex items-center gap-1 ${
                                     isSelected
                                       ? "bg-purple-500 hover:bg-purple-600 text-white font-bold border-purple-500"
@@ -1100,6 +1120,7 @@ export default function FundDetails() {
                           <Button
                             type="button"
                             variant="outline"
+                            disabled={!showExact && (globalCapReached || matchCredits >= 2)}
                             onClick={() => toggleExactScore(match.id)}
                             className="w-full border-gray-600 text-gray-300 hover:bg-white/5 flex items-center justify-center gap-2"
                           >
