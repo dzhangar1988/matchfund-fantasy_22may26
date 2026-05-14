@@ -46,7 +46,7 @@ export default function OrderBook({
   const isOwn = currentUser?.id === participant?.user_id;
   const tradingLocked = liveMatchExists;
   const tradingClosed = fundStatus === "finished";
-  const tradingOpen = fundStatus === "in_progress" && !tradingLocked;
+  const tradingOpen = (fundStatus === "open" || fundStatus === "in_progress") && !tradingLocked;
 
   const potentialPrize = calcPotentialPrize(rank, prizePool, prizeSplit);
   const theoreticalPerShare = Math.round(potentialPrize / 100);
@@ -211,11 +211,7 @@ export default function OrderBook({
             🔴 Trading locked — match in progress
           </div>
         )}
-        {!tradingOpen && !tradingClosed && !tradingLocked && (
-          <div className="mx-5 mt-3 px-4 py-2 rounded-lg bg-yellow-500/20 border border-yellow-500/40 text-yellow-400 text-sm text-center">
-            Trading opens when the fund is in progress
-          </div>
-        )}
+
 
         {/* Tabs */}
         <div className="flex border-b border-gray-700 mx-5 mt-3">
@@ -369,9 +365,7 @@ export default function OrderBook({
                 </div>
               )}
 
-              {!tradingOpen && !tradingClosed && (
-                <p className="text-center text-gray-500 text-sm py-4">Selling available once fund is in progress</p>
-              )}
+
               {sharesAvailableToSell <= 0 && (
                 <p className="text-center text-gray-500 text-sm py-2">All 100 shares are currently listed</p>
               )}
