@@ -580,151 +580,13 @@ export default function FundDetails() {
 
         {hasJoined ? (
           <>
-            <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                <CheckCircle className="w-6 h-6 text-green-400" />
-                Your Predictions
-              </h2>
-              
-              {myPredictions.length > 0 ? (
-                <div className="space-y-4">
-                  {matches.map((match) => {
-                    const prediction = myPredictions.find(p => p.match_id === match.id);
-                    const isFinished = match.status === 'finished';
-                    const points = prediction?.points_earned || 0;
-                    
-                    return (
-                      <div
-                        key={match.id}
-                        className={`p-6 rounded-xl border ${
-                          isFinished 
-                            ? points > 0
-                              ? "bg-green-500/10 border-green-500/30"
-                              : "bg-red-500/10 border-red-500/30"
-                            : "bg-white/5 border-gray-700"
-                        }`}
-                      >
-                        <div className="text-center mb-4">
-                          <p className="text-lg font-bold text-white">
-                            {match.home_team} vs {match.away_team}
-                          </p>
-                          <p className="text-sm text-gray-400">
-                            {new Date(match.match_date).toLocaleString("ru-RU", {
-                              day: "numeric",
-                              month: "long",
-                              hour: "2-digit",
-                              minute: "2-digit"
-                            })}
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="text-center p-4 bg-white/5 rounded-lg">
-                            <span className="text-gray-400 text-sm">Your picks ({prediction?.credits_spent || 0} predictions):</span>
-                            <div className="mt-2 flex flex-wrap gap-2 justify-center">
-                              {(prediction?.selected_options || []).map((opt, idx) => (
-                                <Badge key={idx} className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                                  {formatOption(opt, match.home_team, match.away_team)}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-
-                          {isFinished && (
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                              <span className="text-gray-400 text-sm">Final Result:</span>
-                              <div className="mt-2">
-                                <Badge className={`${
-                                  points > 0
-                                    ? "bg-green-500/20 text-green-400 border-green-500/30"
-                                    : "bg-red-500/20 text-red-400 border-red-500/30"
-                                } text-lg px-4 py-2`}>
-                                  {match.home_goals ?? '?'} - {match.away_goals ?? '?'}
-                                </Badge>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        {isFinished && (
-                          <div className={`mt-4 text-center py-2 rounded-lg ${
-                            points > 0
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}>
-                            <span className="font-bold text-xl">
-                              {points > 0 ? `+${points} pts` : "0 pts"}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-400">Loading your predictions...</p>
-                </div>
-              )}
-            </Card>
-
-            {fund.status === 'finished' && (
-              <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                  <Trophy className="w-6 h-6 text-yellow-400" />
-                  Winners
-                </h2>
-                
-                {participants.filter(p => p.status === 'winner').length > 0 ? (
-                  <div className="space-y-3">
-                    {participants
-                      .filter(p => p.status === 'winner')
-                      .sort((a, b) => (b.final_payout || 0) - (a.final_payout || 0))
-                      .map((winner, index) => (
-                        <div
-                          key={winner.id}
-                          className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center font-bold text-white text-xl">
-                              {index + 1}
-                            </div>
-                            <div>
-                              <p className="text-white font-bold text-lg">
-                                {winner.user_id === user?.id ? "You" : `Player ${winner.user_id.slice(0, 8)}`}
-                                  {winner.is_creator && (
-                                    <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
-                                      Creator
-                                    </Badge>
-                                  )}
-                                </p>
-                                <p className="text-sm text-gray-400">
-                                  {winner.total_points || 0} pts • {winner.credits_used || 0} picks
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                              ${winner.final_payout || 0}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-400">No winners yet or fund refunded</p>
-                  </div>
-                )}
-              </Card>
-            )}
-
+            {/* YOUR_PREDICTIONS_CARD_START */}
             {(() => {
               const liveMatchExists = matches.some(m => m.status === "live");
               const tradingOpen = (fund.status === "open" || fund.status === "in_progress") && !liveMatchExists;
               const tradingClosed = fund.status === "finished";
               return (
-            <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
+            <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
               <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                 <Users className="w-6 h-6 text-blue-400" />
                 Participants
@@ -831,6 +693,145 @@ export default function FundDetails() {
             </Card>
               );
             })()}
+
+            {fund.status === 'finished' && (
+              <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
+                <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                  <Trophy className="w-6 h-6 text-yellow-400" />
+                  Winners
+                </h2>
+                
+                {participants.filter(p => p.status === 'winner').length > 0 ? (
+                  <div className="space-y-3">
+                    {participants
+                      .filter(p => p.status === 'winner')
+                      .sort((a, b) => (b.final_payout || 0) - (a.final_payout || 0))
+                      .map((winner, index) => (
+                        <div
+                          key={winner.id}
+                          className="flex items-center justify-between p-4 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center font-bold text-white text-xl">
+                              {index + 1}
+                            </div>
+                            <div>
+                              <p className="text-white font-bold text-lg">
+                                {winner.user_id === user?.id ? "You" : `Player ${winner.user_id.slice(0, 8)}`}
+                                  {winner.is_creator && (
+                                    <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
+                                      Creator
+                                    </Badge>
+                                  )}
+                                </p>
+                                <p className="text-sm text-gray-400">
+                                  {winner.total_points || 0} pts • {winner.credits_used || 0} picks
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                              ${winner.final_payout || 0}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-400">No winners yet or fund refunded</p>
+                  </div>
+                )}
+              </Card>
+            )}
+
+            <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <CheckCircle className="w-6 h-6 text-green-400" />
+                Your Predictions
+              </h2>
+              
+              {myPredictions.length > 0 ? (
+                <div className="space-y-4">
+                  {matches.map((match) => {
+                    const prediction = myPredictions.find(p => p.match_id === match.id);
+                    const isFinished = match.status === 'finished';
+                    const points = prediction?.points_earned || 0;
+                    
+                    return (
+                      <div
+                        key={match.id}
+                        className={`p-6 rounded-xl border ${
+                          isFinished 
+                            ? points > 0
+                              ? "bg-green-500/10 border-green-500/30"
+                              : "bg-red-500/10 border-red-500/30"
+                            : "bg-white/5 border-gray-700"
+                        }`}
+                      >
+                        <div className="text-center mb-4">
+                          <p className="text-lg font-bold text-white">
+                            {match.home_team} vs {match.away_team}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {new Date(match.match_date).toLocaleString("ru-RU", {
+                              day: "numeric",
+                              month: "long",
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })}
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="text-center p-4 bg-white/5 rounded-lg">
+                            <span className="text-gray-400 text-sm">Your picks ({prediction?.credits_spent || 0} predictions):</span>
+                            <div className="mt-2 flex flex-wrap gap-2 justify-center">
+                              {(prediction?.selected_options || []).map((opt, idx) => (
+                                <Badge key={idx} className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                                  {formatOption(opt, match.home_team, match.away_team)}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          {isFinished && (
+                            <div className="text-center p-4 bg-white/5 rounded-lg">
+                              <span className="text-gray-400 text-sm">Final Result:</span>
+                              <div className="mt-2">
+                                <Badge className={`${
+                                  points > 0
+                                    ? "bg-green-500/20 text-green-400 border-green-500/30"
+                                    : "bg-red-500/20 text-red-400 border-red-500/30"
+                                } text-lg px-4 py-2`}>
+                                  {match.home_goals ?? '?'} - {match.away_goals ?? '?'}
+                                </Badge>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {isFinished && (
+                          <div className={`mt-4 text-center py-2 rounded-lg ${
+                            points > 0
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-red-500/20 text-red-400"
+                          }`}>
+                            <span className="font-bold text-xl">
+                              {points > 0 ? `+${points} pts` : "0 pts"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">Loading your predictions...</p>
+                </div>
+              )}
+            </Card>
 
             {/* Order Book bottom sheet */}
             {orderBookParticipant && (
