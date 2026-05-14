@@ -435,7 +435,7 @@ const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState(() => {
-    return localStorage.getItem("app_language") || "ru";
+    return localStorage.getItem("app_language") || "en";
   });
 
   const toggleLanguage = () => {
@@ -445,7 +445,7 @@ export function LanguageProvider({ children }) {
   };
 
   const t = (key) => {
-    return translations[language]?.[key] || translations["ru"]?.[key] || key;
+    return translations[language]?.[key] || translations["en"]?.[key] || key;
   };
 
   return (

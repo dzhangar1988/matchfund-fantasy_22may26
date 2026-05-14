@@ -60,7 +60,7 @@ export default function Layout({ children, currentPageName }) {
 
   const handleSaveUsername = async () => {
     if (!username || username.trim().length < 3) {
-      alert("Имя пользователя должно быть не менее 3 символов");
+      alert("Username must be at least 3 characters");
       return;
     }
     
@@ -69,7 +69,7 @@ export default function Layout({ children, currentPageName }) {
       setShowUsernameModal(false);
       await loadUser();
     } catch (error) {
-      alert("Не удалось сохранить имя: " + error.message);
+      alert("Failed to save username: " + error.message);
     }
   };
 
@@ -197,14 +197,14 @@ export default function Layout({ children, currentPageName }) {
                 <div className="flex items-center gap-3 px-2">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center font-bold text-white">
                     {user.avatar_url ? (
-                      <img src={user.avatar_url} alt={user.username || user.full_name || "Пользователь"} className="w-full h-full rounded-full object-cover" />
+                      <img src={user.avatar_url} alt={user.username || user.full_name || "User"} className="w-full h-full rounded-full object-cover" />
                     ) : (
                       <span>{(user.username?.[0] || user.full_name?.[0] || "U").toUpperCase()}</span>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-white text-sm truncate">
-                      {user.username || user.full_name || "Пользователь"}
+                      {user.username || user.full_name || "User"}
                     </p>
                     <p className="text-xs text-gray-400 truncate">{user.email}</p>
                   </div>
@@ -225,7 +225,7 @@ export default function Layout({ children, currentPageName }) {
                     className="text-gray-400 hover:text-white hover:bg-white/5"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
-                    {language === "ru" ? "Выход" : "Logout"}
+                    {t("logout")}
                   </Button>
                 </div>
               </div>
