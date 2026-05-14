@@ -263,10 +263,6 @@ export default function FundDetails() {
 
   const allPredictionsValid = () => {
     if (matches.length === 0) return false;
-    for (const match of matches) {
-      const opts = predictions[match.id] || [];
-      if (opts.length === 0 || opts.length > 2) return false;
-    }
     return getTotalCredits() === maxPredictions;
   };
 
@@ -1204,7 +1200,7 @@ export default function FundDetails() {
                   )}
                 </Button>
 
-                {!allPredictionsValid() && totalCredits > 0 && (
+                {totalCredits < maxPredictions && (
                   <p className="text-center text-sm text-gray-400 mt-3">
                     ⚠️ Use all {maxPredictions} predictions to submit ({totalCredits}/{maxPredictions} used)
                   </p>
