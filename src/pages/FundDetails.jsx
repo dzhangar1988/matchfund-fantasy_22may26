@@ -231,11 +231,17 @@ export default function FundDetails() {
       });
       return;
     }
-    
+
     const exactOption = `exact_${home}-${away}`;
     setPredictions(prev => {
       const current = prev[matchId] || [];
       const withoutExact = current.filter(o => !o.startsWith('exact_'));
+      // Enforce max 2 per match: if non-exact picks already = 2, don't add exact on top
+      if (withoutExact.length >= 2) return prev;
+      // Enforce global cap: current total minus existing exact for this match + 1
+      const currentExactCount = current.filter(o => o.startsWith('exact_')).length;
+      const currentTotal = Object.values(prev).reduce((s, o) => s + o.length, 0);
+      if (currentTotal - currentExactCount + 1 > maxPredictions) return prev;
       return { ...prev, [matchId]: [...withoutExact, exactOption] };
     });
   };
@@ -289,7 +295,8 @@ export default function FundDetails() {
 
   const allPredictionsValid = () => {
     if (matches.length === 0) return false;
-    return getTotalCredits() === maxPredictions;
+    const total = getTotalCredits();
+    return total >= matches.length && total <= maxPredictions;
   };
 
   const submitPredictions = async () => {
@@ -314,7 +321,7 @@ export default function FundDetails() {
       }
 
       if (!allPredictionsValid()) {
-        throw new Error("Invalid predictions. Use 10-12 credits total, 1-3 per match.");
+        throw new Error(`Invalid predictions. Use between ${matches.length} and ${maxPredictions} picks total, max 2 per match.`);
       }
 
       const totalCredits = getTotalCredits();
@@ -1252,9 +1259,9 @@ export default function FundDetails() {
                   )}
                 </Button>
 
-                {totalCredits < maxPredictions && (
+                {totalCredits < matches.length && (
                   <p className="text-center text-sm text-gray-400 mt-3">
-                    ⚠️ Use all {maxPredictions} predictions to submit ({totalCredits}/{maxPredictions} used)
+                    ⚠️ Add at least {matches.length - totalCredits} more pick(s) to submit
                   </p>
                 )}
               </Card>
