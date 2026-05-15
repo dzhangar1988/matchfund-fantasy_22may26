@@ -1089,9 +1089,9 @@ export default function FundDetails() {
                           </div>
                         </div>
 
-                        {/* Blowout — 2.5 pts */}
+                        {/* Blowout — 1.5 pts */}
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Margin <span className="normal-case text-gray-600">(2.5 pts)</span></p>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Margin <span className="normal-case text-gray-600">(1.5 pts)</span></p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'blowout_yes', label: 'Blowout (3+ goal diff)' },

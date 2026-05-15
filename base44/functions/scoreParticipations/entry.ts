@@ -4,7 +4,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 // match_result (home/draw/away): 3 pts
 // btts_yes / btts_no:            2 pts
 // over_2_5 / under_2_5:          2.5 pts
-// blowout_yes / blowout_no:      2.5 pts
+// blowout_yes / blowout_no:      1.5 pts
 // clean_sheet (home/away):       4 pts
 // exact_score:                   9 pts
 
@@ -12,7 +12,7 @@ function getOptionWeight(option) {
   if (option === 'home_win' || option === 'draw' || option === 'away_win') return 3;
   if (option === 'btts_yes' || option === 'btts_no') return 2;
   if (option === 'over_2_5' || option === 'under_2_5') return 2.5;
-  if (option === 'blowout_yes' || option === 'blowout_no') return 2.5;
+  if (option === 'blowout_yes' || option === 'blowout_no') return 1.5;
   if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win') return 4;
   if (option.startsWith('exact_')) return 9;
   return 1;
