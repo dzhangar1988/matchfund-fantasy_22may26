@@ -69,7 +69,7 @@ export default function InfoCard() {
               <span className="text-orange-400 font-bold">•</span>
               <div>
                 <strong className="text-white">Blowout</strong> (win by 3+ goals):
-                <span className="text-orange-400 font-bold ml-1">2.5 pts</span>
+                <span className="text-orange-400 font-bold ml-1">1.5 pts</span>
               </div>
             </div>
 
