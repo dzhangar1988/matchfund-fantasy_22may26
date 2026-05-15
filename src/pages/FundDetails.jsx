@@ -1132,8 +1132,8 @@ export default function FundDetails() {
                           <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Total Goals <span className="normal-case text-gray-600">(2.5 pts)</span></p>
                           <div className="flex gap-2 flex-wrap">
                             {[
-                              { value: 'goals_over', label: '3+ Goals' },
-                              { value: 'goals_under', label: '0-2 Goals' },
+                              { value: 'goals_over', label: 'Over 2.5 Goals' },
+                              { value: 'goals_under', label: 'Under 2.5 Goals' },
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               const isDisabled = !isSelected && (globalCapReached || matchCredits >= 2);
