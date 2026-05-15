@@ -378,6 +378,56 @@ export default function FundDetails() {
     }
   };
 
+  const handleCancelFund = async () => {
+    if (!window.confirm("Cancel this fund? All entry fees and share purchases will be refunded.")) return;
+
+    setIsSubmitting(true);
+    try {
+      // STEP 1 — Cancel active share listings
+      const activeListings = await base44.entities.ShareListing.filter({ fund_id: fund.id, status: "active" });
+      await Promise.all(activeListings.map(l =>
+        base44.entities.ShareListing.update(l.id, { status: "cancelled", shares_available: 0 })
+      ));
+
+      // STEP 2 — Refund share buyers & clawback from sellers
+      const purchases = await base44.entities.SharePurchase.filter({ fund_id: fund.id });
+      const usersToUpdate = {};
+      for (const purchase of purchases) {
+        if (!usersToUpdate[purchase.buyer_id]) {
+          const u = await base44.entities.User.get(purchase.buyer_id);
+          usersToUpdate[purchase.buyer_id] = u.total_balance ?? 0;
+        }
+        usersToUpdate[purchase.buyer_id] += purchase.total_cost;
+
+        if (!usersToUpdate[purchase.seller_id]) {
+          const u = await base44.entities.User.get(purchase.seller_id);
+          usersToUpdate[purchase.seller_id] = u.total_balance ?? 0;
+        }
+        usersToUpdate[purchase.seller_id] = Math.max(0, usersToUpdate[purchase.seller_id] - purchase.total_cost);
+      }
+      await Promise.all(Object.entries(usersToUpdate).map(([uid, bal]) =>
+        base44.entities.User.update(uid, { total_balance: bal })
+      ));
+
+      // STEP 3 — Refund entry fees
+      const allParticipations = await base44.entities.Participation.filter({ fund_id: fund.id });
+      await Promise.all(allParticipations.map(async (p) => {
+        const u = await base44.entities.User.get(p.user_id);
+        const currentBal = u.total_balance ?? 0;
+        await base44.entities.User.update(p.user_id, { total_balance: currentBal + fund.entry_fee });
+      }));
+
+      // STEP 4 — Mark fund cancelled
+      await base44.entities.MatchFund.update(fund.id, { status: "cancelled" });
+
+      navigate("/");
+    } catch (err) {
+      setError(err.message || "Failed to cancel fund");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleJoinPrivateFund = () => {
     if (fund?.visibility === "private" && !passwordVerified) {
       setShowPasswordModal(true);
@@ -494,13 +544,33 @@ export default function FundDetails() {
           Back
         </Button>
 
+        {fund.status === "cancelled" && (
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/40 text-red-400 font-semibold flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            This fund has been cancelled. Entry fees and share purchases have been refunded.
+          </div>
+        )}
+
         <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
           <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-6">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white mb-3 flex items-center gap-2">
-                {fund.visibility === "private" && <span>🔒</span>}
-                {fund.title}
-              </h1>
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="text-3xl font-bold text-white mb-3 flex items-center gap-2">
+                  {fund.visibility === "private" && <span>🔒</span>}
+                  {fund.title}
+                </h1>
+                {(fund.status === "open" || fund.status === "draft") && fund.creator_id === user?.id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isSubmitting}
+                    onClick={handleCancelFund}
+                    className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300 shrink-0"
+                  >
+                    Cancel Fund
+                  </Button>
+                )}
+              </div>
               <div className="flex flex-wrap gap-3">
                 <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30">
                   {maxPredictions} Predictions
@@ -611,7 +681,7 @@ export default function FundDetails() {
           })()}
         </Card>
 
-        {hasJoined ? (
+        {fund.status === "cancelled" ? null : hasJoined ? (
           <>
             {/* YOUR_PREDICTIONS_CARD_START */}
             {(() => {
@@ -895,7 +965,7 @@ export default function FundDetails() {
               />
             )}
           </>
-        ) : (
+        ) : fund.status !== "cancelled" ? (
           <div>
             <div className="sticky top-0 z-10 bg-[#0C1523] pb-4 mb-6">
               <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
@@ -1267,7 +1337,7 @@ export default function FundDetails() {
               </Card>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
