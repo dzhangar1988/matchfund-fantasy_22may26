@@ -877,12 +877,7 @@ export default function FundDetails() {
                             {match.home_team} vs {match.away_team}
                           </p>
                           <p className="text-sm text-gray-400">
-                            {new Date(match.match_date).toLocaleString("ru-RU", {
-                              day: "numeric",
-                              month: "long",
-                              hour: "2-digit",
-                              minute: "2-digit"
-                            })}
+                            {new Date(match.match_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, {new Date(match.match_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
 
@@ -1052,12 +1047,7 @@ export default function FundDetails() {
                           </Tooltip>
                         </div>
                         <p className="text-sm text-gray-400">
-                          {new Date(match.match_date).toLocaleString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit"
-                          })}
+                          {new Date(match.match_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, {new Date(match.match_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
 
