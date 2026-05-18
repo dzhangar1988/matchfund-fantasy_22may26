@@ -109,7 +109,9 @@ export default function CreateFund() {
     setIsLoading(true);
     try {
       await loadUser();
-      const upcomingMatches = await base44.entities.Match.filter({ status: "upcoming" }, "match_date", 100);
+      const now = new Date();
+      const allUpcoming = await base44.entities.Match.filter({ status: "upcoming" }, "match_date", 100);
+      const upcomingMatches = allUpcoming.filter(m => new Date(m.match_date) > now);
       const uniqueMatches = [];
       const seen = new Set();
       for (const match of upcomingMatches) {
@@ -535,7 +537,7 @@ export default function CreateFund() {
                           <div>
                             <p className="text-white font-semibold">{match.home_team} vs {match.away_team}</p>
                             <p className="text-gray-400 text-sm">
-                              {new Date(match.match_date).toLocaleString("ru-RU", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                              {new Date(match.match_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} {new Date(match.match_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                               {match.competition && <span className="ml-2 text-gray-500">• {match.competition}</span>}
                             </p>
                           </div>
@@ -640,7 +642,7 @@ export default function CreateFund() {
                           </Tooltip>
                         </div>
                         <p className="text-sm text-gray-400">
-                          {new Date(match.match_date).toLocaleString("ru-RU", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          {new Date(match.match_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} {new Date(match.match_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
 
