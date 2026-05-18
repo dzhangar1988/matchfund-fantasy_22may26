@@ -169,11 +169,15 @@ export default function Home() {
                         )}
                       </div>
 
-                      {/* Role badges */}
+                      {/* Role badge — single, priority: Creator > Player > Investor */}
                       <div className="flex flex-wrap gap-1">
-                        {role.creator && <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">Creator</Badge>}
-                        {role.player && <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Player</Badge>}
-                        {role.investor && <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">Investor</Badge>}
+                        {fund.creator_id === user.id ? (
+                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">Creator</Badge>
+                        ) : role.player ? (
+                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Player</Badge>
+                        ) : role.investor ? (
+                          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">Investor</Badge>
+                        ) : null}
                       </div>
 
                       <div className="flex items-center gap-4 text-sm text-gray-400">
