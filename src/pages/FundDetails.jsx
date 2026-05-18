@@ -426,7 +426,8 @@ export default function FundDetails() {
     submitPredictions();
   };
 
-  const prizePool = participants.length * (fund?.entry_fee || 0);
+  const grossPrizePool = participants.length * (fund?.entry_fee || 0);
+  const prizePool = Math.floor(grossPrizePool * 0.93);
 
   const totalCredits = getTotalCredits();
 
@@ -598,12 +599,12 @@ export default function FundDetails() {
               )}
             </div>
             <div className="text-right">
-              <div className="text-sm text-gray-400 mb-1">Prize Pool</div>
+              <div className="text-sm text-gray-400 mb-1">Net Prize Pool</div>
               <div className="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
                 ${prizePool}
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                7% platform fee on payout
+                after 7% platform fee
               </div>
             </div>
           </div>
