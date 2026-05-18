@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trophy, Users, Clock, Target, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { ArrowLeft, Trophy, Users, Clock, Target, Loader2, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
@@ -76,6 +76,14 @@ export default function FundDetails() {
     }
     loadData();
   }, [fundId]);
+
+  useEffect(() => {
+    if (!fund || fund.status !== 'in_progress') return;
+    const interval = setInterval(() => {
+      loadData();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fund?.status]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -672,13 +680,24 @@ export default function FundDetails() {
               const tradingClosed = fund.status === "finished";
               return (
             <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                <Users className="w-6 h-6 text-blue-400" />
-                Participants
-                {tradingOpen && (
-                  <span className="text-xs text-gray-400 font-normal ml-2">· tap a row to trade shares</span>
-                )}
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <Users className="w-6 h-6 text-blue-400" />
+                  Participants
+                  {tradingOpen && (
+                    <span className="text-xs text-gray-400 font-normal ml-2">· tap a row to trade shares</span>
+                  )}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={loadData}
+                  className="text-gray-400 hover:text-white hover:bg-white/5 gap-1.5"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Refresh
+                </Button>
+              </div>
               {liveMatchExists && (fund.status === "open" || fund.status === "in_progress") && (
                 <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-semibold flex items-center gap-2">
                   🔴 Trading locked — match in progress
