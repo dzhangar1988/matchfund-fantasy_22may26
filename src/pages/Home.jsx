@@ -44,9 +44,10 @@ export default function Home() {
       setUser(currentUser);
 
       // Load participations AND share purchases in parallel
+      // Note: Participation RLS is scoped to created_by (current user), so no filter needed
       const [participations, sharePurchases, allFunds] = await Promise.all([
-        base44.entities.Participation.filter({ user_id: currentUser.id }),
-        base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
+        base44.entities.Participation.list(),
+        base44.entities.SharePurchase.list(),
         MatchFund.list("-created_date"),
       ]);
 
