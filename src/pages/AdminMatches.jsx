@@ -77,17 +77,7 @@ export default function AdminMatches() {
 
   const loadMatches = async () => {
     const allMatches = await base44.entities.Match.list("-match_date");
-    
-    // Filter matches from last 30 days and future matches
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const recentMatches = allMatches.filter(match => {
-      const matchDate = new Date(match.match_date);
-      return matchDate >= thirtyDaysAgo;
-    });
-    
-    setMatches(recentMatches);
+    setMatches(allMatches);
 
     const scores = {};
     allMatches.forEach(m => {
