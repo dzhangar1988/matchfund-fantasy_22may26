@@ -10,10 +10,10 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 function getOptionWeight(option) {
   if (option === 'home_win' || option === 'draw' || option === 'away_win') return 3;
-  if (option === 'btts_yes' || option === 'btts_no') return 2;
-  if (option === 'over_2_5' || option === 'under_2_5') return 2.5;
+  if (option === 'btts_yes' || option === 'btts_no' || option === 'both_score_yes' || option === 'both_score_no') return 2;
+  if (option === 'over_2_5' || option === 'under_2_5' || option === 'goals_over' || option === 'goals_under') return 2.5;
   if (option === 'blowout_yes' || option === 'blowout_no') return 1.5;
-  if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win') return 4;
+  if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win' || option === 'clean_sheet_home' || option === 'clean_sheet_away') return 4;
   if (option.startsWith('exact_')) return 9;
   return 1;
 }
@@ -32,14 +32,20 @@ function checkOption(option, match) {
     case 'home_win':     return result === 'home_win';
     case 'draw':         return result === 'draw';
     case 'away_win':     return result === 'away_win';
-    case 'btts_yes':     return btts;
-    case 'btts_no':      return !btts;
-    case 'over_2_5':     return totalGoals > 2;
-    case 'under_2_5':    return totalGoals <= 2;
+    case 'btts_yes':
+    case 'both_score_yes': return btts;
+    case 'btts_no':
+    case 'both_score_no':  return !btts;
+    case 'over_2_5':
+    case 'goals_over':   return totalGoals > 2;
+    case 'under_2_5':
+    case 'goals_under':  return totalGoals <= 2;
     case 'blowout_yes':  return goalDiff >= 3;
     case 'blowout_no':   return goalDiff < 3;
-    case 'home_clean_sheet_win': return result === 'home_win' && a === 0;
-    case 'away_clean_sheet_win': return result === 'away_win' && h === 0;
+    case 'home_clean_sheet_win':
+    case 'clean_sheet_home': return result === 'home_win' && a === 0;
+    case 'away_clean_sheet_win':
+    case 'clean_sheet_away': return result === 'away_win' && h === 0;
     default: {
       if (option.startsWith('exact_')) {
         const parts = option.replace('exact_', '').split('-');
