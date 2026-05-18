@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import OrderBook from "@/components/OrderBook";
 import PlayersPredictions from "@/components/PlayersPredictions";
+import { formatOption, badgeClass } from "@/lib/predictionUtils";
 import {
   Tooltip,
   TooltipContent,
@@ -24,25 +25,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-// Helper to turn stored option keys into readable labels
-function formatOption(opt, homeTeam, awayTeam) {
-  if (opt.startsWith('exact_')) return 'Score: ' + opt.replace('exact_', '').replace('-', ' - ');
-  const labels = {
-    home_win: `${homeTeam} Win`,
-    away_win: `${awayTeam} Win`,
-    draw: 'Draw',
-    both_score_yes: 'Both Teams Score',
-    both_score_no: 'No BTTS',
-    goals_over: 'Over 2.5 Goals',
-    goals_under: 'Under 2.5 Goals',
-    blowout_yes: 'Blowout (3+ diff)',
-    blowout_no: 'No Blowout',
-    clean_sheet_home: `${homeTeam} Win to Nil`,
-    clean_sheet_away: `${awayTeam} Win to Nil`,
-  };
-  return labels[opt] || opt;
-}
 
 // Mutual exclusivity groups
 const MUTEX_GROUPS = [
@@ -855,70 +837,36 @@ export default function FundDetails() {
               </h2>
               
               {myPredictions.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {matches.map((match) => {
                     const prediction = myPredictions.find(p => p.match_id === match.id);
                     const isFinished = match.status === 'finished';
                     const points = prediction?.points_earned || 0;
-                    
+                    const opts = prediction?.selected_options || [];
+
                     return (
-                      <div
-                        key={match.id}
-                        className={`p-6 rounded-xl border ${
-                          isFinished 
-                            ? points > 0
-                              ? "bg-green-500/10 border-green-500/30"
-                              : "bg-red-500/10 border-red-500/30"
-                            : "bg-white/5 border-gray-700"
-                        }`}
-                      >
-                        <div className="text-center mb-4">
-                          <p className="text-lg font-bold text-white">
-                            {match.home_team} vs {match.away_team}
-                          </p>
-                          <p className="text-sm text-gray-400">
-                            {new Date(match.match_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}, {new Date(match.match_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="text-center p-4 bg-white/5 rounded-lg">
-                            <span className="text-gray-400 text-sm">Your picks ({prediction?.credits_spent || 0} predictions):</span>
-                            <div className="mt-2 flex flex-wrap gap-2 justify-center">
-                              {(prediction?.selected_options || []).map((opt, idx) => (
-                                <Badge key={idx} className="bg-orange-500/20 text-orange-400 border-orange-500/30">
-                                  {formatOption(opt, match.home_team, match.away_team)}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-
+                      <div key={match.id} className="p-4 rounded-xl bg-white/5 border border-gray-700">
+                        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                          <span className="text-xs text-gray-500">{match.home_team} vs {match.away_team}</span>
                           {isFinished && (
-                            <div className="text-center p-4 bg-white/5 rounded-lg">
-                              <span className="text-gray-400 text-sm">Final Result:</span>
-                              <div className="mt-2">
-                                <Badge className={`${
-                                  points > 0
-                                    ? "bg-green-500/20 text-green-400 border-green-500/30"
-                                    : "bg-red-500/20 text-red-400 border-red-500/30"
-                                } text-lg px-4 py-2`}>
-                                  {match.home_goals ?? '?'} - {match.away_goals ?? '?'}
-                                </Badge>
-                              </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400 font-mono">{match.home_goals} - {match.away_goals}</span>
+                              <span className={`text-xs font-bold ${points > 0 ? "text-green-400" : "text-red-400"}`}>
+                                {points > 0 ? `+${points} pts` : "0 pts"}
+                              </span>
                             </div>
                           )}
                         </div>
-
-                        {isFinished && (
-                          <div className={`mt-4 text-center py-2 rounded-lg ${
-                            points > 0
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
-                          }`}>
-                            <span className="font-bold text-xl">
-                              {points > 0 ? `+${points} pts` : "0 pts"}
-                            </span>
+                        {opts.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {opts.map((opt, i) => (
+                              <Badge key={i} className={`text-xs ${badgeClass(opt, match)}`}>
+                                {formatOption(opt, match.home_team, match.away_team)}
+                              </Badge>
+                            ))}
                           </div>
+                        ) : (
+                          <span className="text-xs text-gray-600 italic">No pick for this match</span>
                         )}
                       </div>
                     );
