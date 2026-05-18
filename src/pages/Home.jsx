@@ -57,11 +57,8 @@ export default function Home() {
       const ACTIVE_STATUSES = ["open", "in_progress"];
 
       const active = allFunds.filter(f =>
-        ACTIVE_STATUSES.includes(f.status) && (
-          f.creator_id === currentUser.id ||
-          participatedFundIds.has(f.id) ||
-          investedFundIds.has(f.id)
-        )
+        (participatedFundIds.has(f.id) || f.creator_id === currentUser.id) &&
+        ACTIVE_STATUSES.includes(f.status)
       );
 
       // Build roles map
