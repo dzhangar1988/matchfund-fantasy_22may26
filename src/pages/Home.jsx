@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MatchFund } from "@/entities/MatchFund";
 import { User } from "@/entities/User";
 import { base44 } from "@/api/base44Client";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, Trophy, ArrowRight } from "lucide-react";
+import { Plus, Trophy, ArrowRight, Users } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import OpenFundsPreview from "../components/OpenFundsPreview";
@@ -16,20 +16,22 @@ export default function Home() {
   const [funds, setFunds] = useState([]);
   const [user, setUser] = useState(null);
   const [myActiveFunds, setMyActiveFunds] = useState([]);
+  const [myRoles, setMyRoles] = useState({}); // fund_id -> { creator, player, investor }
+  const [participantCounts, setParticipantCounts] = useState({}); // fund_id -> count
   const [isLoading, setIsLoading] = useState(true);
+  const openFundsSectionRef = useRef(null);
+
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-    console.log("=== LOADING HOME DATA ===");
     setIsLoading(true);
     try {
       const currentUser = await User.me();
-      
+
       if (currentUser.total_balance === undefined || currentUser.total_balance === null) {
-        console.warn("⚠️ User balance is null on home, setting welcome bonus 500");
-        await User.update(currentUser.id, { 
+        await User.update(currentUser.id, {
           total_balance: 500,
           total_winnings: 0,
           total_wins: 0,
@@ -38,32 +40,57 @@ export default function Home() {
         });
         currentUser.total_balance = 500;
       }
-      
+
       setUser(currentUser);
-      console.log("User loaded:", currentUser.email, "Balance:", currentUser.total_balance);
 
-      // Load user's active participations
-      const participations = await base44.entities.Participation.filter({ user_id: currentUser.id });
-      const joinedFundIds = participations.map(p => p.fund_id);
+      // Load participations AND share purchases in parallel
+      const [participations, sharePurchases, allFunds] = await Promise.all([
+        base44.entities.Participation.filter({ user_id: currentUser.id }),
+        base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
+        MatchFund.list("-created_date"),
+      ]);
 
-      console.log("Loading funds...");
-      const allFunds = await MatchFund.list("-created_date");
-      console.log("Total funds in database:", allFunds.length);
       setFunds(allFunds);
 
+      const participatedFundIds = new Set(participations.map(p => p.fund_id));
+      const investedFundIds = new Set(sharePurchases.map(s => s.fund_id));
+      const ACTIVE_STATUSES = ["open", "in_progress"];
+
       const active = allFunds.filter(f =>
-        joinedFundIds.includes(f.id) && (f.status === "open" || f.status === "in_progress")
+        ACTIVE_STATUSES.includes(f.status) && (
+          f.creator_id === currentUser.id ||
+          participatedFundIds.has(f.id) ||
+          investedFundIds.has(f.id)
+        )
       );
+
+      // Build roles map
+      const roles = {};
+      for (const f of active) {
+        roles[f.id] = {
+          creator: f.creator_id === currentUser.id,
+          player: participatedFundIds.has(f.id),
+          investor: investedFundIds.has(f.id) && !participatedFundIds.has(f.id) && f.creator_id !== currentUser.id,
+        };
+      }
+
+      // Load participant counts for each active fund
+      const countEntries = await Promise.all(
+        active.map(async (f) => {
+          const parts = await base44.entities.Participation.filter({ fund_id: f.id });
+          return [f.id, parts.length];
+        })
+      );
+      setParticipantCounts(Object.fromEntries(countEntries));
+      setMyRoles(roles);
       setMyActiveFunds(active);
       setIsLoading(false);
       return;
     } catch (error) {
       console.log("User not authenticated");
     }
-    
-    console.log("Loading funds...");
+
     const allFunds = await MatchFund.list("-created_date");
-    console.log("Total funds in database:", allFunds.length);
     setFunds(allFunds);
     setIsLoading(false);
   };
@@ -126,36 +153,66 @@ export default function Home() {
         </div>
 
         {/* My Active Funds */}
-        {!isLoading && user && myActiveFunds.length > 0 && (
+        {!isLoading && user && (
           <div className="mb-10">
             <h2 className="text-xl font-bold text-white mb-4">My Active Funds</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {myActiveFunds.map(fund => (
-                <div key={fund.id} className="p-5 rounded-2xl border border-gray-700 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] flex flex-col gap-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-white font-bold text-lg leading-tight">{fund.title}</h3>
-                    {fund.status === "in_progress" ? (
-                      <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs animate-pulse shrink-0">🔴 LIVE</Badge>
-                    ) : (
-                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs shrink-0">Open</Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 text-sm text-gray-400">
-                    <span>Entry: <span className="text-white font-semibold">${fund.entry_fee}</span></span>
-                    <span>{fund.total_matches || 0} matches</span>
-                  </div>
-                  <Link to={`/FundDetails?id=${fund.id}`}>
-                    <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-sm">
-                      View Fund <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </Link>
-                </div>
-              ))}
-            </div>
+            {myActiveFunds.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {myActiveFunds.map(fund => {
+                  const role = myRoles[fund.id] || {};
+                  return (
+                    <div key={fund.id} className="p-5 rounded-2xl border border-gray-700 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] flex flex-col gap-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-white font-bold text-lg leading-tight">{fund.title}</h3>
+                        {fund.status === "in_progress" ? (
+                          <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs animate-pulse shrink-0">🔴 LIVE</Badge>
+                        ) : (
+                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs shrink-0">Open</Badge>
+                        )}
+                      </div>
+
+                      {/* Role badges */}
+                      <div className="flex flex-wrap gap-1">
+                        {role.creator && <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">Creator</Badge>}
+                        {role.player && <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Player</Badge>}
+                        {role.investor && <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">Investor</Badge>}
+                      </div>
+
+                      <div className="flex items-center gap-4 text-sm text-gray-400">
+                        <span>Entry: <span className="text-white font-semibold">{fund.entry_fee} pts</span></span>
+                        <span>{fund.total_matches || 0} matches</span>
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5" />
+                          {participantCounts[fund.id] ?? "—"}
+                        </span>
+                      </div>
+
+                      <Link to={`/FundDetails?id=${fund.id}`}>
+                        <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-sm">
+                          View Fund <ArrowRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-8 rounded-2xl border border-gray-700 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] text-center">
+                <p className="text-gray-400 mb-4">You're not in any active funds yet.</p>
+                <Button
+                  variant="outline"
+                  className="border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                  onClick={() => openFundsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  Browse Open Funds
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
         {/* Open Funds Preview */}
+        <div ref={openFundsSectionRef} />
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
