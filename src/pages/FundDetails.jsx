@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trophy, Users, Clock, Target, Loader2, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, Trophy, Users, Clock, Target, Loader2, AlertCircle, CheckCircle, RefreshCw, Lock, Pencil } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { format } from "date-fns";
@@ -67,6 +68,10 @@ export default function FundDetails() {
   const [shareListings, setShareListings] = useState([]);
   const [otherPredictionsMap, setOtherPredictionsMap] = useState({});
   const [myParticipation, setMyParticipation] = useState(null);
+  const [editingMatchId, setEditingMatchId] = useState(null);
+  const [editPicks, setEditPicks] = useState([]);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!fundId) {
@@ -365,6 +370,52 @@ export default function FundDetails() {
       setError(error.message || "Failed to submit predictions");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEditMatch = (match) => {
+    const prediction = myPredictions.find(p => p.match_id === match.id);
+    setEditPicks(prediction?.selected_options ? [...prediction.selected_options] : []);
+    setEditingMatchId(match.id);
+  };
+
+  const handleEditPickToggle = (option) => {
+    setEditPicks(prev => {
+      if (prev.includes(option)) return prev.filter(o => o !== option);
+      // Remove mutex partners
+      let updated = [...prev];
+      for (const group of MUTEX_GROUPS) {
+        if (group.includes(option)) updated = updated.filter(o => !group.includes(o));
+      }
+      // Remove conflicts
+      for (const [a, b] of CONFLICTS) {
+        if (option === a) updated = updated.filter(o => o !== b);
+        if (option === b) updated = updated.filter(o => o !== a);
+      }
+      if (updated.length >= 2) return prev;
+      return [...updated, option];
+    });
+  };
+
+  const handleSaveEdit = async (matchId) => {
+    if (editPicks.length < 1 || editPicks.length > 2) return;
+    setIsSavingEdit(true);
+    try {
+      const prediction = myPredictions.find(p => p.match_id === matchId);
+      if (prediction) {
+        await base44.entities.Prediction.update(prediction.id, {
+          selected_options: editPicks,
+          credits_spent: editPicks.length,
+        });
+      }
+      setEditingMatchId(null);
+      setEditPicks([]);
+      await loadData();
+      toast({ description: "Picks updated!" });
+    } catch (err) {
+      toast({ description: "Failed to save: " + err.message, variant: "destructive" });
+    } finally {
+      setIsSavingEdit(false);
     }
   };
 
@@ -851,11 +902,19 @@ export default function FundDetails() {
             )}
 
             <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
                 <CheckCircle className="w-6 h-6 text-green-400" />
                 Your Predictions
               </h2>
-              
+
+              {/* Edit notice — only if at least one match is still unlocked */}
+              {matches.some(m => new Date(m.match_date) > new Date() && m.status !== 'live' && m.status !== 'finished') && (
+                <div className="mb-4 text-sm text-gray-400 flex items-center gap-1.5">
+                  <Pencil className="w-3.5 h-3.5 text-gray-500" />
+                  You can update picks on upcoming matches until kickoff.
+                </div>
+              )}
+
               {myPredictions.length > 0 ? (
                 <div className="space-y-3">
                   {matches.map((match) => {
@@ -863,11 +922,64 @@ export default function FundDetails() {
                     const isFinished = match.status === 'finished';
                     const points = prediction?.points_earned || 0;
                     const opts = prediction?.selected_options || [];
+                    const isPast = new Date(match.match_date) <= new Date();
+                    const isLocked = isPast || match.status === 'live' || match.status === 'finished';
+                    const isEditing = editingMatchId === match.id;
+
+                    const OPTION_GROUPS = [
+                      {
+                        label: "Result (3 pts)", options: [
+                          { value: 'home_win', label: `${match.home_team} Win` },
+                          { value: 'draw', label: 'Draw' },
+                          { value: 'away_win', label: `${match.away_team} Win` },
+                        ], color: "bg-orange-500 border-orange-500"
+                      },
+                      {
+                        label: "Both Teams to Score (2 pts)", options: [
+                          { value: 'both_score_yes', label: 'Yes' },
+                          { value: 'both_score_no', label: 'No' },
+                        ], color: "bg-blue-500 border-blue-500"
+                      },
+                      {
+                        label: "Total Goals (2.5 pts)", options: [
+                          { value: 'goals_over', label: 'Over 2.5' },
+                          { value: 'goals_under', label: 'Under 2.5' },
+                        ], color: "bg-blue-500 border-blue-500"
+                      },
+                      {
+                        label: "Margin (1.5 pts)", options: [
+                          { value: 'blowout_yes', label: 'Blowout (3+ goals)' },
+                          { value: 'blowout_no', label: 'No Blowout' },
+                        ], color: "bg-blue-500 border-blue-500"
+                      },
+                      {
+                        label: "Win to Nil (4 pts)", options: [
+                          { value: 'clean_sheet_home', label: `${match.home_team} Win to Nil` },
+                          { value: 'clean_sheet_away', label: `${match.away_team} Win to Nil` },
+                        ], color: "bg-purple-500 border-purple-500"
+                      },
+                    ];
 
                     return (
-                      <div key={match.id} className="p-4 rounded-xl bg-white/5 border border-gray-700">
+                      <div key={match.id} className={`p-4 rounded-xl border border-gray-700 ${isLocked ? "bg-white/3 opacity-90" : "bg-white/5"}`}>
+                        {/* Match header */}
                         <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                          <span className="text-xs text-gray-500">{match.home_team} vs {match.away_team}</span>
+                          <div className="flex items-center gap-2">
+                            {isLocked
+                              ? <Lock className="w-3.5 h-3.5 text-gray-500 shrink-0" />
+                              : !isEditing && (
+                                <button
+                                  onClick={() => handleEditMatch(match)}
+                                  className="flex items-center gap-1 text-xs text-orange-400 hover:text-orange-300 transition-colors"
+                                >
+                                  <Pencil className="w-3 h-3" /> Edit
+                                </button>
+                              )
+                            }
+                            <span className={`text-xs ${isLocked ? "text-gray-600" : "text-gray-400"}`}>
+                              {match.home_team} vs {match.away_team}
+                            </span>
+                          </div>
                           {isFinished && (
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-gray-400 font-mono">{match.home_goals} - {match.away_goals}</span>
@@ -877,16 +989,72 @@ export default function FundDetails() {
                             </div>
                           )}
                         </div>
-                        {opts.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {opts.map((opt, i) => (
+
+                        {/* View mode — current picks as badges */}
+                        {!isEditing && (
+                          <div className={`flex flex-wrap gap-1 ${isLocked ? "opacity-60" : ""}`}>
+                            {opts.length > 0 ? opts.map((opt, i) => (
                               <Badge key={i} className={`text-xs ${badgeClass(opt, match)}`}>
                                 {formatOption(opt, match.home_team, match.away_team)}
                               </Badge>
-                            ))}
+                            )) : (
+                              <span className="text-xs text-gray-600 italic">No pick for this match</span>
+                            )}
                           </div>
-                        ) : (
-                          <span className="text-xs text-gray-600 italic">No pick for this match</span>
+                        )}
+
+                        {/* Edit mode — option buttons */}
+                        {isEditing && (
+                          <div className="mt-3 space-y-3">
+                            {OPTION_GROUPS.map((group) => (
+                              <div key={group.label}>
+                                <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">{group.label}</p>
+                                <div className="flex gap-2 flex-wrap">
+                                  {group.options.map((option) => {
+                                    const isSelected = editPicks.includes(option.value);
+                                    const isDisabled = !isSelected && editPicks.length >= 2;
+                                    return (
+                                      <Button
+                                        key={option.value}
+                                        type="button"
+                                        variant={isSelected ? "default" : "outline"}
+                                        size="sm"
+                                        disabled={isDisabled}
+                                        className={`flex items-center gap-1 ${
+                                          isSelected
+                                            ? `${group.color} text-white font-bold`
+                                            : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                        }`}
+                                        onClick={() => handleEditPickToggle(option.value)}
+                                      >
+                                        {isSelected && <span>✓</span>}
+                                        <span>{option.label}</span>
+                                      </Button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+
+                            <div className="flex gap-2 mt-2">
+                              <Button
+                                size="sm"
+                                disabled={editPicks.length < 1 || isSavingEdit}
+                                onClick={() => handleSaveEdit(match.id)}
+                                className="bg-orange-500 hover:bg-orange-600 text-white font-semibold"
+                              >
+                                {isSavingEdit ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => { setEditingMatchId(null); setEditPicks([]); }}
+                                className="text-gray-400 hover:text-white"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     );
