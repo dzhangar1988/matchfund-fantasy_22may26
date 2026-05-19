@@ -1517,22 +1517,7 @@ export default function AdminMatches() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {match.status === "upcoming" && (
-                        <Button
-                          size="sm"
-                          onClick={() => startMatch(match.id)}
-                          disabled={isCalculating}
-                          className="bg-orange-600 hover:bg-orange-700"
-                        >
-                          {isCalculating ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            "▶ Start Match"
-                          )}
-                        </Button>
-                      )}
-
-                      {match.status === "live" && (
+                      {(match.status === "upcoming" || match.status === "live") && (
                         <>
                           <Input
                             type="number"
@@ -1582,7 +1567,7 @@ export default function AdminMatches() {
                             ) : (
                               <>
                                 <CheckCircle className="w-4 h-4 mr-1" />
-                                Finish
+                                Mark Finished
                               </>
                             )}
                           </Button>

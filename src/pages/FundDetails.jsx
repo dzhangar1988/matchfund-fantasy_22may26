@@ -922,8 +922,9 @@ export default function FundDetails() {
                     const isFinished = match.status === 'finished';
                     const points = prediction?.points_earned || 0;
                     const opts = prediction?.selected_options || [];
-                    const isPast = new Date(match.match_date) <= new Date();
-                    const isLocked = isPast || match.status === 'live' || match.status === 'finished';
+                    const now = new Date();
+                    const kickoffPassed = new Date(match.match_date) <= now;
+                    const isLocked = kickoffPassed || match.status === 'live' || match.status === 'finished';
                     const isEditing = editingMatchId === match.id;
 
                     const OPTION_GROUPS = [
