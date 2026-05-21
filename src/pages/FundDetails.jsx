@@ -112,8 +112,12 @@ export default function FundDetails() {
       
       const matchesData = [];
       await Promise.all(matchIds.map(async (matchId) => {
-        const results = await base44.entities.Match.filter({ id: matchId });
-        if (results[0]) matchesData.push(results[0]);
+        try {
+          const match = await base44.entities.Match.get(matchId);
+          if (match) matchesData.push(match);
+        } catch (e) {
+          console.warn("Could not load match", matchId);
+        }
       }));
       // Restore original order
       matchesData.sort((a, b) => matchIds.indexOf(a.id) - matchIds.indexOf(b.id));
