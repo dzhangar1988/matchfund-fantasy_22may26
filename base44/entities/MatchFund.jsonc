@@ -38,7 +38,7 @@
       "items": {
         "type": "number"
       },
-      "description": "\u0420\u0430\u0441\u043f\u0440\u0435\u0434\u0435\u043b\u0435\u043d\u0438\u0435 \u043f\u0440\u0438\u0437\u043e\u0432 \u0432 \u043f\u0440\u043e\u0446\u0435\u043d\u0442\u0430\u0445, \u043d\u0430\u043f\u0440\u0438\u043c\u0435\u0440 [100] \u0438\u043b\u0438 [60, 40] \u0438\u043b\u0438 [50, 30, 20]"
+      "description": "\u0420\u0430\u0441\u043f\u0440\u0435\u0434\u0435\u043b\u0435\u043d\u0438\u0435 \u043f\u0440\u0438\u0437\u043e\u0432 \u0432 \u043f\u0440\u043e\u0446\u0435\u043d\u0442\u0430\u0445"
     },
     "visibility": {
       "type": "string",
@@ -111,21 +111,7 @@
     "create": {
       "data.creator_id": "{{user.id}}"
     },
-    "read": {
-      "$or": [
-        {
-          "data.visibility": "public"
-        },
-        {
-          "data.creator_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "read": {},
     "update": {
       "$or": [
         {

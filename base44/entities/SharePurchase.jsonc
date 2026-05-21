@@ -46,21 +46,7 @@
     "total_cost"
   ],
   "rls": {
-    "read": {
-      "$or": [
-        {
-          "buyer_id": "{{user.id}}"
-        },
-        {
-          "seller_id": "{{user.id}}"
-        },
-        {
-          "user_condition": {
-            "role": "admin"
-          }
-        }
-      ]
-    },
+    "read": {},
     "write": {
       "$or": [
         {
