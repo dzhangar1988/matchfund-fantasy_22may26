@@ -291,7 +291,7 @@ export default function FundDetails() {
   const allPredictionsValid = () => {
     if (matches.length === 0) return false;
     const total = getTotalCredits();
-    return total >= matches.length && total <= maxPredictions;
+    return total >= 1 && total <= maxPredictions;
   };
 
   const submitPredictions = async () => {
@@ -1150,8 +1150,8 @@ export default function FundDetails() {
                 <Alert className={totalCredits === 0 ? "bg-blue-500/10 border-blue-500/30" : "bg-green-500/10 border-green-500/30"}>
                 <AlertDescription className={totalCredits === 0 ? "text-blue-300" : "text-green-400"}>
                   {totalCredits === 0
-                    ? "Select 1-2 predictions per match to proceed."
-                    : `✅ ${totalCredits} prediction${totalCredits !== 1 ? "s" : ""} selected`
+                    ? "Select at least 1 prediction to proceed."
+                    : `✅ ${totalCredits} prediction${totalCredits !== 1 ? "s" : ""} selected — ready to join!`
                   }
                 </AlertDescription>
                 </Alert>
@@ -1473,9 +1473,9 @@ export default function FundDetails() {
                   )}
                 </Button>
 
-                {totalCredits < matches.length && (
+                {totalCredits === 0 && (
                   <p className="text-center text-sm text-gray-400 mt-3">
-                    ⚠️ Add at least {matches.length - totalCredits} more pick(s) to submit
+                    ⚠️ Make at least 1 prediction to submit
                   </p>
                 )}
               </Card>
