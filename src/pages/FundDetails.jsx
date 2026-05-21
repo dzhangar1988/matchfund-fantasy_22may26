@@ -97,8 +97,8 @@ export default function FundDetails() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const allFunds = await base44.entities.MatchFund.list();
-      const selectedFund = allFunds.find((f) => f.id === fundId);
+      const fundResults = await base44.entities.MatchFund.filter({ id: fundId });
+      const selectedFund = fundResults[0];
       
       if (!selectedFund) {
         setError(`Fund not found`);
@@ -112,12 +112,12 @@ export default function FundDetails() {
       const matchIds = fundMatches.map(fm => fm.match_id);
       
       const matchesData = [];
-      const allMatches = await base44.entities.Match.list();
-      
-      for (const matchId of matchIds) {
-        const match = allMatches.find(m => m.id === matchId);
-        if (match) matchesData.push(match);
-      }
+      await Promise.all(matchIds.map(async (matchId) => {
+        const results = await base44.entities.Match.filter({ id: matchId });
+        if (results[0]) matchesData.push(results[0]);
+      }));
+      // Restore original order
+      matchesData.sort((a, b) => matchIds.indexOf(a.id) - matchIds.indexOf(b.id));
       
       setMatches(matchesData);
 
@@ -886,7 +886,7 @@ export default function FundDetails() {
                             </div>
                             <div>
                               <p className="text-white font-bold text-lg">
-                                {winner.user_id === user?.id ? "You" : `Player ${winner.user_id.slice(0, 8)}`}
+                                 {winner.user_id === user?.id ? "You" : (winner.user_name || winner.user_email || `Player ${winner.user_id.slice(0, 8)}`)}
                                   {winner.is_creator && (
                                     <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
                                       Creator
