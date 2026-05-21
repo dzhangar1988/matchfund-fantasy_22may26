@@ -1,87 +1,179 @@
-import React, { useState, useEffect } from "react";
-
+import React, { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Crown, Trophy, Medal, TrendingUp, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/lib/LanguageContext";
 
+const TABS = [
+  { key: "month", label: "This Month" },
+  { key: "week", label: "This Week" },
+  { key: "alltime", label: "All Time" },
+];
+
+function getDateFilter(tab) {
+  const now = new Date();
+  if (tab === "week") {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 7);
+    return d;
+  }
+  if (tab === "month") {
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  return null; // all time = no filter
+}
+
 export default function Leaderboard() {
   const { t } = useLanguage();
-  const [users, setUsers] = useState([]);
+  const [allSorted, setAllSorted] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("month");
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     loadLeaderboard();
   }, []);
 
   const loadLeaderboard = async () => {
-    const [allUsers, allParticipations, allFunds] = await Promise.all([
+    const [me, allUsers, allParticipations, allFunds, allPredictions] = await Promise.all([
+      base44.auth.me().catch(() => null),
       base44.entities.User.list(),
       base44.entities.Participation.list(),
       base44.entities.MatchFund.list(),
+      base44.entities.Prediction.list(),
     ]);
+
+    setCurrentUser(me);
 
     const fundMap = {};
     for (const f of allFunds) fundMap[f.id] = f;
 
-    const usersWithStats = allUsers.map(user => {
-      const userParticipations = allParticipations.filter(p => p.user_id === user.id);
-      const finishedParticipations = userParticipations.filter(p => {
-        if (p.status !== 'winner' && p.status !== 'loser') return false;
-        const fund = fundMap[p.fund_id];
-        return fund && fund.status !== 'cancelled';
-      });
+    // Build prediction accuracy map: participationId -> { correct, total }
+    const predAccMap = {};
+    for (const pred of allPredictions) {
+      const pid = pred.participation_id;
+      if (!predAccMap[pid]) predAccMap[pid] = { correct: 0, total: 0 };
+      // Only count picks from finished matches (is_correct is set)
+      if (pred.is_correct !== undefined && pred.is_correct !== null) {
+        predAccMap[pid].total += (pred.selected_options?.length || 1);
+        if (pred.is_correct) predAccMap[pid].correct += (pred.selected_options?.length || 1);
+      }
+    }
 
-      const wins = userParticipations.filter(p => p.status === 'winner' && fundMap[p.fund_id]?.status !== 'cancelled').length;
-      const totalWinnings = userParticipations
-        .filter(p => p.status === 'winner' && fundMap[p.fund_id]?.status !== 'cancelled')
-        .reduce((sum, p) => sum + (p.final_payout || 0), 0);
+    const computeStats = (userParticipations, dateFilter) => {
+      const filtered = dateFilter
+        ? userParticipations.filter(p => {
+            const fund = fundMap[p.fund_id];
+            if (!fund || fund.status === 'cancelled') return false;
+            return new Date(fund.created_date) >= dateFilter;
+          })
+        : userParticipations.filter(p => fundMap[p.fund_id]?.status !== 'cancelled');
 
-      // Total prediction points earned across all non-cancelled participations
-      const totalPoints = userParticipations
-        .filter(p => fundMap[p.fund_id]?.status !== 'cancelled')
-        .reduce((sum, p) => sum + (p.total_points || 0), 0);
+      const finishedParticipations = filtered.filter(p => p.status === 'winner' || p.status === 'loser');
+      const wins = filtered.filter(p => p.status === 'winner').length;
+      const totalWinnings = filtered.filter(p => p.status === 'winner').reduce((sum, p) => sum + (p.final_payout || 0), 0);
+      const totalPoints = filtered.reduce((sum, p) => sum + (p.total_points || 0), 0);
 
-      // Potential prize: sum of what this user could win from active funds
-      const potentialPrize = userParticipations
-        .filter(p => p.status === 'active' || p.status === 'pending')
-        .reduce((sum, p) => {
-          const fund = fundMap[p.fund_id];
-          if (!fund || !fund.prize_distribution) return sum;
-          const pool = (fund.total_pool || 0) * (1 - ((fund.platform_fee_percent || 7) / 100));
-          const topPrize = pool * ((fund.prize_distribution[0] || 100) / 100);
-          return sum + topPrize;
-        }, 0);
+      // Prediction accuracy across filtered participations
+      let correctPicks = 0, totalPicks = 0;
+      for (const p of filtered) {
+        const acc = predAccMap[p.id];
+        if (acc) { correctPicks += acc.correct; totalPicks += acc.total; }
+      }
+      const accuracy = totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : null;
 
       const winRate = finishedParticipations.length > 0
         ? Math.round((wins / finishedParticipations.length) * 100)
         : 0;
 
-      return {
-        ...user,
-        total_wins: wins,
-        total_winnings: totalWinnings,
-        total_points: totalPoints,
-        potential_prize: Math.round(potentialPrize),
-        total_participations: finishedParticipations.length,
-        active_participations: userParticipations.filter(p => p.status === 'active' || p.status === 'pending').length,
-        win_rate: winRate
-      };
+      // Active (all time, not filtered by date)
+      const activeParticipations = userParticipations.filter(
+        p => (p.status === 'active' || p.status === 'pending') && fundMap[p.fund_id]?.status !== 'cancelled'
+      ).length;
+
+      return { totalPoints, totalWinnings, wins, finishedCount: finishedParticipations.length, winRate, accuracy, activeParticipations };
+    };
+
+    const usersWithStats = allUsers.map(user => {
+      const userParticipations = allParticipations.filter(p => p.user_id === user.id);
+      // Compute alltime stats for base data
+      const stats = computeStats(userParticipations, null);
+      return { ...user, _participations: userParticipations, ...stats };
     });
 
-    // Sort by total prediction points, then by winnings, then by balance
     const sorted = usersWithStats
-      .filter(u => u.total_points > 0 || u.total_participations > 0 || u.active_participations > 0)
+      .filter(u => u.totalPoints > 0 || u.finishedCount > 0 || u.activeParticipations > 0)
       .sort((a, b) => {
-        if (b.total_points !== a.total_points) return b.total_points - a.total_points;
-        if (b.total_winnings !== a.total_winnings) return b.total_winnings - a.total_winnings;
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+        if (b.totalWinnings !== a.totalWinnings) return b.totalWinnings - a.totalWinnings;
         return (b.total_balance || 0) - (a.total_balance || 0);
       });
 
-    setUsers(sorted);
+    setAllSorted(sorted);
     setIsLoading(false);
   };
+
+  // Recompute sorted list based on active tab
+  const dateFilter = getDateFilter(activeTab);
+
+  const tabSorted = useMemo(() => {
+    if (!allSorted.length) return [];
+    if (activeTab === "alltime") return allSorted;
+
+    const fundMap = {};
+    // We need fundMap here — but we stored _participations; re-derive from allSorted data
+    // Instead, recompute points per user using stored _participations + fundMap
+    // Since we don't have fundMap here, we store it in state
+    return allSorted; // fallback, will be replaced by stateful approach below
+  }, [allSorted, activeTab]);
+
+  // Better approach: store fundMap in state for tab recomputation
+  const [fundMap, setFundMap] = useState({});
+
+  useEffect(() => {
+    base44.entities.MatchFund.list().then(funds => {
+      const m = {};
+      for (const f of funds) m[f.id] = f;
+      setFundMap(m);
+    });
+  }, []);
+
+  const displaySorted = useMemo(() => {
+    if (!allSorted.length || !Object.keys(fundMap).length) return allSorted;
+    if (activeTab === "alltime") return allSorted;
+
+    const cutoff = getDateFilter(activeTab);
+
+    return allSorted
+      .map(u => {
+        const userParticipations = u._participations || [];
+        const filtered = userParticipations.filter(p => {
+          const fund = fundMap[p.fund_id];
+          if (!fund || fund.status === 'cancelled') return false;
+          return new Date(fund.created_date) >= cutoff;
+        });
+
+        const finishedParticipations = filtered.filter(p => p.status === 'winner' || p.status === 'loser');
+        const wins = filtered.filter(p => p.status === 'winner').length;
+        const totalWinnings = filtered.filter(p => p.status === 'winner').reduce((sum, p) => sum + (p.final_payout || 0), 0);
+        const totalPoints = filtered.reduce((sum, p) => sum + (p.total_points || 0), 0);
+        const winRate = finishedParticipations.length > 0 ? Math.round((wins / finishedParticipations.length) * 100) : 0;
+
+        return { ...u, totalPoints, totalWinnings, wins, finishedCount: finishedParticipations.length, winRate };
+      })
+      .filter(u => u.totalPoints > 0 || u.finishedCount > 0)
+      .sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+        if (b.totalWinnings !== a.totalWinnings) return b.totalWinnings - a.totalWinnings;
+        return (b.total_balance || 0) - (a.total_balance || 0);
+      });
+  }, [allSorted, activeTab, fundMap]);
+
+  const top100 = displaySorted.slice(0, 100);
+  const currentUserRank = currentUser ? displaySorted.findIndex(u => u.id === currentUser.id) : -1;
+  const currentUserEntry = currentUserRank >= 0 ? displaySorted[currentUserRank] : null;
+  const isOutsideTop100 = currentUserRank >= 100;
 
   const getPositionIcon = (index) => {
     if (index === 0) return <Crown className="w-6 h-6 text-yellow-400" />;
@@ -97,6 +189,88 @@ export default function Leaderboard() {
     return "from-gray-700 to-gray-800";
   };
 
+  const renderRow = (user, rankIndex, highlight = false) => (
+    <div
+      key={user.id}
+      className={`relative overflow-hidden rounded-xl p-6 border transition-all ${
+        highlight
+          ? "border-orange-500/60 bg-orange-500/10"
+          : "border-gray-700 bg-white/5 hover:bg-white/10"
+      }`}
+    >
+      <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${highlight ? "from-orange-400 to-orange-600" : getPositionColor(rankIndex)}`} />
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="relative">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center font-bold text-white text-xl">
+              {user.username?.[0]?.toUpperCase() || user.full_name?.[0]?.toUpperCase() || "U"}
+            </div>
+            {rankIndex < 3 && user.totalWinnings > 0 && (
+              <div className="absolute -top-1 -right-1">{getPositionIcon(rankIndex)}</div>
+            )}
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 font-bold text-lg">#{rankIndex + 1}</span>
+              <h3 className={`font-bold text-lg ${highlight ? "text-orange-300" : "text-white"}`}>
+                {user.username || user.full_name || t("player_default")}
+                {highlight && <span className="ml-2 text-xs text-orange-400">(You)</span>}
+              </h3>
+            </div>
+            <div className="flex items-center gap-4 mt-1 flex-wrap">
+              {(user.finishedCount > 0 || user.activeParticipations > 0) ? (
+                <>
+                  <div className="flex items-center gap-1 text-sm text-gray-400">
+                    <Trophy className="w-4 h-4 text-yellow-500" />
+                    <span>{user.wins || 0} {t("wins")}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-gray-400">
+                    <Target className="w-4 h-4 text-blue-500" />
+                    <span>{(user.finishedCount || 0) + (user.activeParticipations || 0)} {t("funds_count")}</span>
+                  </div>
+                  {user.winRate > 0 && (
+                    <div className="flex items-center gap-1 text-sm text-gray-400">
+                      <TrendingUp className="w-4 h-4 text-green-500" />
+                      <span>{user.winRate}% {t("win_rate_pct")}</span>
+                    </div>
+                  )}
+                  {user.accuracy !== null && user.accuracy !== undefined && (
+                    <div className="flex items-center gap-1 text-sm text-gray-400">
+                      <span>🎯 {user.accuracy}% accuracy</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-sm text-gray-500">{t("no_participants_yet")}</div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+            {user.totalPoints || 0}
+          </div>
+          <div className="text-sm text-gray-400">pts earned</div>
+          {user.totalWinnings > 0 && (
+            <div className="text-xs text-green-400 mt-1">+{user.totalWinnings} won</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Neighbourhood: 3 above + user + 3 below (all-time only, outside top 100)
+  const neighbourhoodRows = useMemo(() => {
+    if (activeTab !== "alltime" || !isOutsideTop100 || currentUserRank < 0) return null;
+    const start = Math.max(100, currentUserRank - 3);
+    const end = Math.min(displaySorted.length - 1, currentUserRank + 3);
+    return displaySorted.slice(start, end + 1).map((u, i) => ({
+      user: u,
+      rank: start + i,
+      isMe: u.id === currentUser?.id,
+    }));
+  }, [activeTab, isOutsideTop100, currentUserRank, displaySorted, currentUser]);
+
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
@@ -106,6 +280,23 @@ export default function Leaderboard() {
           </div>
           <h1 className="text-4xl font-bold text-white mb-2">{t("leaderboard_title")}</h1>
           <p className="text-gray-400">{t("leaderboard_subtitle")}</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          {TABS.map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === tab.key
+                  ? "bg-orange-500 text-white shadow-lg shadow-orange-500/30"
+                  : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-gray-700"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
@@ -122,77 +313,35 @@ export default function Leaderboard() {
                 </div>
               ))}
             </div>
-          ) : users.length > 0 ? (
+          ) : top100.length > 0 ? (
             <div className="space-y-3">
-              {users.map((user, index) => (
-                <div
-                  key={user.id}
-                  className="relative overflow-hidden rounded-xl p-6 border border-gray-700 bg-white/5 hover:bg-white/10 transition-all"
-                >
-                  <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${getPositionColor(index)}`} />
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="relative">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center font-bold text-white text-xl">
-                          {user.username?.[0]?.toUpperCase() || user.full_name?.[0]?.toUpperCase() || "U"}
-                        </div>
-                        {index < 3 && user.total_winnings > 0 && (
-                          <div className="absolute -top-1 -right-1">
-                            {getPositionIcon(index)}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400 font-bold text-lg">#{index + 1}</span>
-                          <h3 className="text-white font-bold text-lg">
-                            {user.username || user.full_name || t("player_default")}
-                          </h3>
-                        </div>
-                        <div className="flex items-center gap-4 mt-1 flex-wrap">
-                          {(user.total_participations > 0 || user.active_participations > 0) ? (
-                            <>
-                              <div className="flex items-center gap-1 text-sm text-gray-400">
-                                <Trophy className="w-4 h-4 text-yellow-500" />
-                                <span>{user.total_wins || 0} {t("wins")}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-sm text-gray-400">
-                                <Target className="w-4 h-4 text-blue-500" />
-                                <span>{(user.total_participations || 0) + (user.active_participations || 0)} {t("funds_count")}</span>
-                              </div>
-                              {user.win_rate > 0 && (
-                                <div className="flex items-center gap-1 text-sm text-gray-400">
-                                  <TrendingUp className="w-4 h-4 text-green-500" />
-                                  <span>{user.win_rate}% {t("win_rate_pct")}</span>
-                                </div>
-                              )}
-                              {user.potential_prize > 0 && (
-                                <div className="flex items-center gap-1 text-sm text-green-400">
-                                  <span>🏆 Potential: {user.potential_prize} pts</span>
-                                </div>
-                              )}
-                            </>
-                          ) : (
-                            <div className="text-sm text-gray-500">{t("no_participants_yet")}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="text-3xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                        {user.total_points || 0}
-                      </div>
-                      <div className="text-sm text-gray-400">pts earned</div>
-                      {user.total_winnings > 0 && (
-                        <div className="text-xs text-green-400 mt-1">+{user.total_winnings} won</div>
-                      )}
-                    </div>
-                  </div>
+              {top100.map((user, index) =>
+                renderRow(user, index, user.id === currentUser?.id)
+              )}
+
+              {/* Current user outside top 100 — simple banner */}
+              {isOutsideTop100 && currentUserEntry && (
+                <div className="mt-4 p-4 rounded-xl border border-orange-500/40 bg-orange-500/10 text-center">
+                  <span className="text-orange-300 font-semibold">
+                    You are <span className="text-white">#{currentUserRank + 1}</span> with{" "}
+                    <span className="text-white">{currentUserEntry.totalPoints || 0} pts</span> earned
+                  </span>
                 </div>
-              ))}
+              )}
+
+              {/* Neighbourhood view — all-time only */}
+              {neighbourhoodRows && neighbourhoodRows.length > 0 && (
+                <>
+                  <div className="flex items-center gap-3 py-2">
+                    <div className="flex-1 h-px bg-gray-700" />
+                    <span className="text-xs text-gray-500 uppercase tracking-widest">Your neighbourhood</span>
+                    <div className="flex-1 h-px bg-gray-700" />
+                  </div>
+                  {neighbourhoodRows.map(({ user, rank, isMe }) =>
+                    renderRow(user, rank, isMe)
+                  )}
+                </>
+              )}
             </div>
           ) : (
             <div className="text-center py-12">
