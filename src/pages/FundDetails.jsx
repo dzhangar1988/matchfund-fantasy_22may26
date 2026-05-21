@@ -960,7 +960,7 @@ export default function FundDetails() {
                         ], color: "bg-blue-500 border-blue-500"
                       },
                       {
-                        label: "Margin (2.5 pts)", options: [
+                        label: "Margin (1.5 pts)", options: [
                           { value: 'blowout_yes', label: 'Blowout (3+ goals)' },
                           { value: 'blowout_no', label: 'No Blowout' },
                         ], color: "bg-blue-500 border-blue-500"
@@ -1299,7 +1299,7 @@ export default function FundDetails() {
 
                         {/* Blowout — 1.5 pts */}
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Margin <span className="normal-case text-gray-600">(2.5 pts)</span></p>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Margin <span className="normal-case text-gray-600">(1.5 pts)</span></p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'blowout_yes', label: 'Blowout (3+ goal diff)' },

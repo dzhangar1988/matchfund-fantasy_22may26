@@ -12,7 +12,7 @@ function getOptionWeight(option) {
   if (option === 'home_win' || option === 'draw' || option === 'away_win') return 3;
   if (option === 'btts_yes' || option === 'btts_no' || option === 'both_score_yes' || option === 'both_score_no') return 2;
   if (option === 'over_2_5' || option === 'under_2_5' || option === 'goals_over' || option === 'goals_under') return 2.5;
-  if (option === 'blowout_yes' || option === 'blowout_no') return 2.5;
+  if (option === 'blowout_yes' || option === 'blowout_no') return 1.5;
   if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win' || option === 'clean_sheet_home' || option === 'clean_sheet_away') return 4;
   if (option.startsWith('exact_')) return 9;
   return 1;
