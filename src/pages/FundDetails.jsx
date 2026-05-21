@@ -601,16 +601,33 @@ export default function FundDetails() {
                   {fund.visibility === "private" && <span>🔒</span>}
                   {fund.title}
                 </h1>
-                {(fund.status === "open" || fund.status === "draft") && fund.creator_id === user?.id && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={isSubmitting}
-                    onClick={handleCancelFund}
-                    className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300 shrink-0"
-                  >
-                    Cancel Fund
-                  </Button>
+                {fund.creator_id === user?.id && (fund.status === "open" || fund.status === "draft") && (
+                  <div className="flex gap-2 shrink-0">
+                    {fund.status === "draft" && (
+                      <Button
+                        size="sm"
+                        disabled={isSubmitting}
+                        onClick={async () => {
+                          setIsSubmitting(true);
+                          await base44.entities.MatchFund.update(fund.id, { status: "open" });
+                          await loadData();
+                          setIsSubmitting(false);
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+                      >
+                        Open Fund
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isSubmitting}
+                      onClick={handleCancelFund}
+                      className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                    >
+                      Cancel Fund
+                    </Button>
+                  </div>
                 )}
               </div>
               <div className="flex flex-wrap gap-3">
