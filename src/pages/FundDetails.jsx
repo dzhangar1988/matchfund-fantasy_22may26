@@ -97,8 +97,7 @@ export default function FundDetails() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const fundResults = await base44.entities.MatchFund.filter({ id: fundId });
-      const selectedFund = fundResults[0];
+      const selectedFund = await base44.entities.MatchFund.get(fundId);
       
       if (!selectedFund) {
         setError(`Fund not found`);
