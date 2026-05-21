@@ -84,6 +84,7 @@
   ],
   "rls": {
     "read": {},
+    "list": {},
     "update": {
       "$or": [
         {

@@ -114,11 +114,26 @@
     "entry_paid"
   ],
   "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
     "read": {},
-    "write": {
+    "update": {
       "$or": [
         {
-          "user_id": "{{user.id}}"
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
         },
         {
           "user_condition": {

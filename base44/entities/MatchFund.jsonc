@@ -108,10 +108,11 @@
     "entry_fee"
   ],
   "rls": {
+    "read": {},
+    "list": {},
     "create": {
       "data.creator_id": "{{user.id}}"
     },
-    "read": {},
     "update": {
       "$or": [
         {
