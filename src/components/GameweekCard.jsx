@@ -41,7 +41,7 @@ export default function GameweekCard({ gameweek, matches, user }) {
 
   const handleQuickCreate = () => {
     if (!fundTitle.trim()) {
-      alert("Введите название фонда");
+      alert("Please enter a fund name");
       return;
     }
 
@@ -119,7 +119,7 @@ export default function GameweekCard({ gameweek, matches, user }) {
                   </p>
                 </div>
                 <div className="text-xs text-gray-400">
-                  {format(new Date(match.match_date), "d MMM, HH:mm", { locale: ru })}
+                  {format(new Date(match.match_date), "d MMM, HH:mm", { locale: enUS })}
                 </div>
               </div>
             ))}

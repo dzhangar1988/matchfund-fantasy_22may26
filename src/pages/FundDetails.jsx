@@ -507,7 +507,7 @@ export default function FundDetails() {
             onClick={() => navigate(createPageUrl("Home"))}
             className="w-full bg-gradient-to-r from-orange-500 to-orange-600"
           >
-            Назад на главную
+            Back to Home
           </Button>
         </Card>
       </div>
@@ -538,7 +538,7 @@ export default function FundDetails() {
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && passwordInput.length >= 1) {
                     if (passwordInput !== fund?.password) {
-                      setPasswordError("Неверный пароль");
+                      setPasswordError("Incorrect password");
                     } else {
                       setPasswordVerified(true);
                       setShowPasswordModal(false);
@@ -552,7 +552,7 @@ export default function FundDetails() {
               <Button
                 onClick={() => {
                   if (passwordInput !== fund?.password) {
-                    setPasswordError("Неверный пароль");
+                    setPasswordError("Incorrect password");
                     return;
                   }
                   setPasswordVerified(true);
