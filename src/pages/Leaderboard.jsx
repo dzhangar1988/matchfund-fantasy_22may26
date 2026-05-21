@@ -27,17 +27,21 @@ export default function Leaderboard() {
 
     const usersWithStats = allUsers.map(user => {
       const userParticipations = allParticipations.filter(p => p.user_id === user.id);
-      const finishedParticipations = userParticipations.filter(
-        p => p.status === 'winner' || p.status === 'loser'
-      );
+      const finishedParticipations = userParticipations.filter(p => {
+        if (p.status !== 'winner' && p.status !== 'loser') return false;
+        const fund = fundMap[p.fund_id];
+        return fund && fund.status !== 'cancelled';
+      });
 
-      const wins = userParticipations.filter(p => p.status === 'winner').length;
+      const wins = userParticipations.filter(p => p.status === 'winner' && fundMap[p.fund_id]?.status !== 'cancelled').length;
       const totalWinnings = userParticipations
-        .filter(p => p.status === 'winner')
+        .filter(p => p.status === 'winner' && fundMap[p.fund_id]?.status !== 'cancelled')
         .reduce((sum, p) => sum + (p.final_payout || 0), 0);
 
-      // Total prediction points earned across all participations
-      const totalPoints = userParticipations.reduce((sum, p) => sum + (p.total_points || 0), 0);
+      // Total prediction points earned across all non-cancelled participations
+      const totalPoints = userParticipations
+        .filter(p => fundMap[p.fund_id]?.status !== 'cancelled')
+        .reduce((sum, p) => sum + (p.total_points || 0), 0);
 
       // Potential prize: sum of what this user could win from active funds
       const potentialPrize = userParticipations
