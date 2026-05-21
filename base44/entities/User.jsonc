@@ -1,0 +1,105 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "Unique username"
+    },
+    "avatar_url": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "Avatar URL (optional)"
+    },
+    "bio": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "Short bio (optional)"
+    },
+    "referral_code": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "Unique referral code"
+    },
+    "referred_by": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "Referral code of inviter"
+    },
+    "referral_earnings": {
+      "type": "number",
+      "default": 0,
+      "description": "Total earned from referrals"
+    },
+    "total_balance": {
+      "type": "number",
+      "default": 100,
+      "description": "User balance (welcome bonus: 100)"
+    },
+    "total_winnings": {
+      "type": "number",
+      "default": 0,
+      "description": "Total winnings all-time"
+    },
+    "total_points": {
+      "type": "number",
+      "default": 0,
+      "description": "Total points statistic"
+    },
+    "total_wins": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of wins"
+    },
+    "total_participations": {
+      "type": "number",
+      "default": 0,
+      "description": "Number of funds participated in"
+    },
+    "total_predictions": {
+      "type": "number",
+      "default": 0,
+      "description": "Total predictions made"
+    },
+    "is_admin": {
+      "type": "boolean",
+      "default": false,
+      "description": "Platform administrator"
+    }
+  },
+  "required": [
+    "username"
+  ],
+  "rls": {
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
