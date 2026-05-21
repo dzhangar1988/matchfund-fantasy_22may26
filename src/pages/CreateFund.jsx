@@ -334,6 +334,7 @@ export default function CreateFund() {
         min_participants: fundData.min_participants,
         credits_per_player: 20,
         prize_distribution: fundData.prize_distribution,
+        prize_split: fundData.prize_distribution.length === 1 ? "winner_takes_all" : fundData.prize_distribution.length === 2 ? "top2" : "top3",
         visibility: fundData.visibility,
         password: fundData.password || null,
         status: "open",
