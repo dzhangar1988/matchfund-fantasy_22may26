@@ -64,7 +64,6 @@ export default function FundDetails() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordVerified, setPasswordVerified] = useState(false);
   const [orderBookParticipant, setOrderBookParticipant] = useState(null);
-  const [allUsers, setAllUsers] = useState([]);
   const [shareListings, setShareListings] = useState([]);
   const [otherPredictionsMap, setOtherPredictionsMap] = useState({});
   const [myParticipation, setMyParticipation] = useState(null);
@@ -125,12 +124,8 @@ export default function FundDetails() {
       const allParticipations = await base44.entities.Participation.filter({ fund_id: fundId }, "-total_points");
       setParticipants(allParticipations);
 
-      // Load users + share listings for market data
-      const [users, listings] = await Promise.all([
-        base44.entities.User.list(),
-        base44.entities.ShareListing.filter({ fund_id: fundId }),
-      ]);
-      setAllUsers(users);
+      // Load share listings only (no User.list() — display names come from participation fields)
+      const listings = await base44.entities.ShareListing.filter({ fund_id: fundId });
       setShareListings(listings.filter(l => l.status === "active"));
 
       const foundMyParticipation = allParticipations.find(p => p.user_id === currentUser.id);
@@ -333,6 +328,8 @@ export default function FundDetails() {
       const participation = await base44.entities.Participation.create({
         fund_id: fundId,
         user_id: user.id,
+        user_name: user.username || user.full_name || user.email,
+        user_email: user.email,
         entry_paid: fund.entry_fee,
         is_creator: false,
         status: "active",
@@ -804,8 +801,7 @@ export default function FundDetails() {
                       const potentialPrize = Math.round(prizePool * pct / 100);
                       const theoreticalPerShare = Math.round(potentialPrize / 100);
                       const activeListing = shareListings.find(l => l.seller_id === participant.user_id && l.participation_id === participant.id);
-                      const pUser = allUsers.find(u => u.id === participant.user_id);
-                      const displayName = participant.user_id === user?.id ? "You" : (pUser?.username || pUser?.full_name || `Player ${participant.user_id.slice(0, 8)}`);
+                      const displayName = participant.user_id === user?.id ? "You" : (participant.user_name || participant.user_email || `Player ${participant.user_id.slice(0, 8)}`);
 
                       return (
                         <div
@@ -1090,7 +1086,6 @@ export default function FundDetails() {
               <PlayersPredictions
                 participants={participants}
                 predictionsMap={otherPredictionsMap}
-                allUsers={allUsers}
                 matches={matches}
                 currentUserId={user?.id}
               />

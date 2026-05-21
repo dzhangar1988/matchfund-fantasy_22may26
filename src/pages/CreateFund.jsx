@@ -352,6 +352,8 @@ export default function CreateFund() {
       const participation = await base44.entities.Participation.create({
         fund_id: newFund.id,
         user_id: user.id,
+        user_name: user.username || user.full_name || user.email,
+        user_email: user.email,
         entry_paid: fundData.entry_fee,
         is_creator: true,
         status: "active",

@@ -24,7 +24,7 @@ function getCorrectSummary(preds, matches) {
   return `${correct} / ${total} correct`;
 }
 
-export default function PlayersPredictions({ participants, predictionsMap, allUsers, matches, currentUserId }) {
+export default function PlayersPredictions({ participants, predictionsMap, matches, currentUserId }) {
   const others = participants.filter(p => p.user_id !== currentUserId);
   if (others.length === 0) return null;
 
@@ -37,8 +37,7 @@ export default function PlayersPredictions({ participants, predictionsMap, allUs
 
       <div className="space-y-6">
         {others.map((participant) => {
-          const pUser = allUsers.find(u => u.id === participant.user_id);
-          const displayName = pUser?.username || pUser?.full_name || `Player ${participant.user_id.slice(0, 8)}`;
+          const displayName = participant.user_name || participant.user_email || `Player ${participant.user_id.slice(0, 8)}`;
           const preds = predictionsMap[participant.id];
           const hasSubmitted = !!participant.predictions_completed_at;
           const summary = hasSubmitted && preds ? getCorrectSummary(preds, matches) : null;
