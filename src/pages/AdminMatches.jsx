@@ -21,9 +21,9 @@ const COMPETITIONS = [
 const TEAMS = {
   "Premier League": [
     "Arsenal", "Manchester City", "Bournemouth", "Liverpool", "Chelsea",
-    "Tottenham", "Sunderland", "Crystal Palace", "Manchester United", "Brighton",
+    "Tottenham Hotspur", "Sunderland", "Crystal Palace", "Manchester United", "Brighton",
     "Aston Villa", "Everton", "Brentford", "Newcastle United", "Fulham",
-    "Leeds United", "Burnley", "Nottingham Forest", "West Ham", "Wolves"
+    "Leeds United", "Burnley", "Nottingham Forest", "West Ham United", "Wolves"
   ],
   "La Liga": [
     "Real Madrid", "Barcelona", "Atletico Madrid", "Sevilla", "Real Sociedad",
