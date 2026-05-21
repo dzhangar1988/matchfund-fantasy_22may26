@@ -55,6 +55,7 @@ export default function AdminMatches() {
 
   const [editingMatchId, setEditingMatchId] = useState(null);
   const [editScore, setEditScore] = useState({ home: 0, away: 0 });
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     checkAdminAndLoadData();
@@ -1491,14 +1492,37 @@ export default function AdminMatches() {
 
         <Card className="border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
           <CardHeader>
-            <CardTitle className="text-white">All Matches ({matches.length})</CardTitle>
+            <CardTitle className="text-white flex items-center justify-between">
+              <span>All Matches ({matches.length})</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {matches.map((match) => (
+            {(() => {
+              const sevenDaysAgo = new Date();
+              sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+              const activeMatches = matches.filter(m => !(m.status === 'finished' && new Date(m.match_date) < sevenDaysAgo));
+              const archivedMatches = matches.filter(m => m.status === 'finished' && new Date(m.match_date) < sevenDaysAgo);
+              const visibleMatches = showArchived ? matches : activeMatches;
+              return (
+                <>
+                  {archivedMatches.length > 0 && (
+                    <div className="mb-4 flex items-center justify-between">
+                      <span className="text-sm text-gray-400">{archivedMatches.length} finished match{archivedMatches.length !== 1 ? 'es' : ''} older than 7 days archived</span>
+                      <button
+                        onClick={() => setShowArchived(v => !v)}
+                        className="text-sm text-orange-400 hover:text-orange-300 underline"
+                      >
+                        {showArchived ? "Hide archived" : "Show archived"}
+                      </button>
+                    </div>
+                  )}
+                  <div className="space-y-3">
+                    {visibleMatches.map((match) => {
+                      const isArchived = match.status === 'finished' && new Date(match.match_date) < sevenDaysAgo;
+                      return (
                 <div
                   key={match.id}
-                  className="flex flex-col gap-3 p-4 rounded-lg bg-white/5 border border-gray-700"
+                  className={`flex flex-col gap-3 p-4 rounded-lg border ${isArchived ? "bg-white/2 border-gray-800 opacity-60" : "bg-white/5 border-gray-700"}`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -1602,8 +1626,12 @@ export default function AdminMatches() {
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+                    );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
