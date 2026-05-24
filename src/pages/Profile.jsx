@@ -107,6 +107,59 @@ export default function Profile() {
           </Button>
         </div>
 
+        {/* Respect & Premium Section */}
+        {!isLoading && user && (
+          <div className="mb-8 space-y-4">
+            {/* Premium badge row */}
+            {user.is_premium && (
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-sm font-semibold border border-yellow-500/30">
+                  ⭐ Premium
+                </span>
+              </div>
+            )}
+
+            {/* Respect points banner */}
+            {(user.respect_points > 0) && (
+              <Card className="border-yellow-500/40 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="text-5xl">💎</div>
+                  <div>
+                    <div className="text-3xl font-bold text-yellow-400">
+                      {user.respect_points} Respect
+                    </div>
+                    <div className="text-sm text-gray-400 mt-1">Earned from the community</div>
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {/* Progress tracker */}
+            <Card className="border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] p-5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-300 font-medium">
+                  ⭐ {user.show_respects_received ?? 0} / 10 Show Respects towards next 💎 Respect
+                </span>
+                <span className="text-xs text-gray-500">{user.show_respects_received ?? 0}/10</span>
+              </div>
+              <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-3 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-500"
+                  style={{ width: `${Math.min(((user.show_respects_received ?? 0) % 10) / 10 * 100, 100)}%` }}
+                />
+              </div>
+              {!user.is_premium && (user.show_respects_received ?? 0) > 0 && (
+                <p className="text-xs text-gray-500 mt-3">
+                  Want to give Respect to great players?{" "}
+                  <span className="text-orange-400 cursor-pointer hover:text-orange-300">
+                    Ask about Premium →
+                  </span>
+                </p>
+              )}
+            </Card>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {[1, 2, 3, 4].map((i) => (
