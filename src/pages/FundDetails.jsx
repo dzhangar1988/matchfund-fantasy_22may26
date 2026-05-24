@@ -70,6 +70,7 @@ export default function FundDetails() {
   const [editingMatchId, setEditingMatchId] = useState(null);
   const [editPicks, setEditPicks] = useState([]);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [myRespects, setMyRespects] = useState([]); // all respects given by current user ever
   const { toast } = useToast();
 
   useEffect(() => {
@@ -130,6 +131,10 @@ export default function FundDetails() {
       // Load share listings only (no User.list() — display names come from participation fields)
       const listings = await base44.entities.ShareListing.filter({ fund_id: fundId });
       setShareListings(listings.filter(l => l.status === "active"));
+
+      // Load all respects given by current user (across all funds)
+      const respects = await base44.entities.ShowRespect.filter({ giver_id: currentUser.id });
+      setMyRespects(respects);
 
       const foundMyParticipation = allParticipations.find(p => p.user_id === currentUser.id);
       setMyParticipation(foundMyParticipation || null);
@@ -466,6 +471,36 @@ export default function FundDetails() {
       setError(err.message || "Failed to cancel fund");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleShowRespect = async (participant) => {
+    try {
+      await base44.entities.ShowRespect.create({
+        giver_id: user.id,
+        receiver_id: participant.user_id,
+        fund_id: fund.id,
+        created_at: new Date().toISOString(),
+      });
+
+      // Increment receiver's show_respects_received
+      const receiver = await base44.entities.User.get(participant.user_id);
+      const newCount = (receiver.show_respects_received || 0) + 1;
+      const updates = { show_respects_received: newCount };
+      // Every 10 respects received, grant 1 respect_point
+      if (newCount % 10 === 0) {
+        updates.respect_points = (receiver.respect_points || 0) + 1;
+      }
+      await base44.entities.User.update(participant.user_id, updates);
+
+      // Refresh local respects list
+      const respects = await base44.entities.ShowRespect.filter({ giver_id: user.id });
+      setMyRespects(respects);
+
+      const name = participant.user_name || participant.user_email || `Player ${participant.user_id.slice(0, 8)}`;
+      toast({ description: `Respect shown to ${name}!` });
+    } catch (err) {
+      toast({ description: "Failed to show respect: " + err.message, variant: "destructive" });
     }
   };
 
@@ -854,6 +889,46 @@ export default function FundDetails() {
                               {participant.status === 'loser' && (
                                 <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30 text-xs">No prize</Badge>
                               )}
+                              {/* Show Respect — only for finished funds, premium users, on other players */}
+                              {fund.status === 'finished' && user?.is_premium && participant.user_id !== user?.id && (() => {
+                                const alreadyRespectedThisFund = myRespects.some(
+                                  r => r.receiver_id === participant.user_id && r.fund_id === fund.id
+                                );
+                                if (alreadyRespectedThisFund) {
+                                  return (
+                                    <Badge className="bg-pink-500/20 text-pink-400 border-pink-500/30 text-xs">❤️ Respected</Badge>
+                                  );
+                                }
+                                // Count unique receivers across all funds
+                                const uniqueReceiversGiven = new Set(myRespects.map(r => r.receiver_id + r.fund_id)).size;
+                                const allUsed = uniqueReceiversGiven >= 3;
+                                return (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <span>
+                                          <button
+                                            disabled={allUsed}
+                                            onClick={(e) => { e.stopPropagation(); handleShowRespect(participant); }}
+                                            className={`text-xs px-2 py-1 rounded-md border transition-colors ${
+                                              allUsed
+                                                ? "border-gray-700 text-gray-600 cursor-not-allowed"
+                                                : "border-pink-500/40 text-pink-400 hover:bg-pink-500/10 hover:border-pink-500"
+                                            }`}
+                                          >
+                                            🤝 Respect
+                                          </button>
+                                        </span>
+                                      </TooltipTrigger>
+                                      {allUsed && (
+                                        <TooltipContent>
+                                          <p>You've used all 3 of your Respects</p>
+                                        </TooltipContent>
+                                      )}
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>
