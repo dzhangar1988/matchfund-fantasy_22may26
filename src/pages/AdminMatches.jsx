@@ -57,6 +57,9 @@ export default function AdminMatches() {
   const [editScore, setEditScore] = useState({ home: 0, away: 0 });
   const [showArchived, setShowArchived] = useState(false);
 
+  const [allUsers, setAllUsers] = useState([]);
+  const [premiumUpdating, setPremiumUpdating] = useState({});
+
   useEffect(() => {
     checkAdminAndLoadData();
   }, []);
@@ -69,11 +72,22 @@ export default function AdminMatches() {
         return;
       }
       setUser(currentUser);
-      await loadMatches();
-      await checkProblemFunds();
+      await Promise.all([loadMatches(), checkProblemFunds(), loadUsers()]);
     } catch (error) {
       navigate(createPageUrl("Home"));
     }
+  };
+
+  const loadUsers = async () => {
+    const users = await base44.entities.User.list();
+    setAllUsers(users);
+  };
+
+  const togglePremium = async (userId, currentValue) => {
+    setPremiumUpdating(prev => ({ ...prev, [userId]: true }));
+    await base44.entities.User.update(userId, { is_premium: !currentValue });
+    setAllUsers(prev => prev.map(u => u.id === userId ? { ...u, is_premium: !currentValue } : u));
+    setPremiumUpdating(prev => ({ ...prev, [userId]: false }));
   };
 
   const loadMatches = async () => {
@@ -1632,6 +1646,66 @@ export default function AdminMatches() {
                 </>
               );
             })()}
+          </CardContent>
+        </Card>
+
+        {/* Premium Accounts Section */}
+        <Card className="mt-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              👑 Premium Accounts
+            </CardTitle>
+            <p className="text-sm text-gray-400 mt-1">Premium users can give up to 3 Respects total.</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {allUsers.map(u => (
+                <div key={u.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-gray-700">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-white font-semibold truncate">{u.username || u.full_name || "—"}</span>
+                      {u.is_premium && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-semibold">Premium ✓</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                      <span className="text-xs text-gray-400 truncate">{u.email}</span>
+                      {(u.respect_points || 0) > 0 && (
+                        <span className="text-xs text-yellow-400">💎 {u.respect_points} pts</span>
+                      )}
+                      {(u.show_respects_received || 0) > 0 && (
+                        <span className="text-xs text-pink-400">❤️ {u.show_respects_received} received</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4 shrink-0">
+                    {u.is_premium ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={premiumUpdating[u.id]}
+                        onClick={() => togglePremium(u.id, true)}
+                        className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                      >
+                        {premiumUpdating[u.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : "Revoke"}
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        disabled={premiumUpdating[u.id]}
+                        onClick={() => togglePremium(u.id, false)}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        {premiumUpdating[u.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : "Grant Premium"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {allUsers.length === 0 && (
+                <p className="text-gray-500 text-sm text-center py-4">No users found.</p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
