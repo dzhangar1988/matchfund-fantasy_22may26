@@ -135,6 +135,12 @@ export default function FAQ() {
             </CardHeader>
             <CardContent>
               <p className="text-gray-300 mb-4">{t("faq_contact")}</p>
+              <a
+                href="mailto:d.sangadzhiev1988@gmail.com"
+                className="inline-block text-green-400 hover:text-green-300 font-semibold underline"
+              >
+                d.sangadzhiev1988@gmail.com
+              </a>
             </CardContent>
           </Card>
         </div>
