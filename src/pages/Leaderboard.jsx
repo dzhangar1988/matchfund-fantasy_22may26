@@ -107,6 +107,7 @@ export default function Leaderboard() {
       .sort((a, b) => {
         if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
         if (b.totalWinnings !== a.totalWinnings) return b.totalWinnings - a.totalWinnings;
+        if ((b.respect_points || 0) !== (a.respect_points || 0)) return (b.respect_points || 0) - (a.respect_points || 0);
         return (b.total_balance || 0) - (a.total_balance || 0);
       });
 
@@ -194,6 +195,7 @@ export default function Leaderboard() {
       .sort((a, b) => {
         if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
         if (b.totalWinnings !== a.totalWinnings) return b.totalWinnings - a.totalWinnings;
+        if ((b.respect_points || 0) !== (a.respect_points || 0)) return (b.respect_points || 0) - (a.respect_points || 0);
         return (b.total_balance || 0) - (a.total_balance || 0);
       });
   }, [allSorted, activeTab, fundMap, predAccMap]);
@@ -240,9 +242,14 @@ export default function Leaderboard() {
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <span className="text-gray-400 font-bold text-lg">#{rankIndex + 1}</span>
-              <h3 className={`font-bold text-lg ${highlight ? "text-orange-300" : "text-white"}`}>
+              <h3 className={`font-bold text-lg ${highlight ? "text-orange-300" : "text-white"} flex items-center gap-2 flex-wrap`}>
                 {user.username || user.full_name || t("player_default")}
-                {highlight && <span className="ml-2 text-xs text-orange-400">(You)</span>}
+                {highlight && <span className="text-xs text-orange-400">(You)</span>}
+                {(user.respect_points || 0) > 0 && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
+                    💎 {user.respect_points} Respect
+                  </span>
+                )}
               </h3>
             </div>
             <div className="flex items-center gap-4 mt-1 flex-wrap">
