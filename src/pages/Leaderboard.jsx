@@ -128,14 +128,29 @@ export default function Leaderboard() {
     return allSorted; // fallback, will be replaced by stateful approach below
   }, [allSorted, activeTab]);
 
-  // Better approach: store fundMap in state for tab recomputation
+  // Store fundMap and predAccMap in state for tab recomputation
   const [fundMap, setFundMap] = useState({});
+  const [predAccMap, setPredAccMap] = useState({});
 
   useEffect(() => {
-    base44.entities.MatchFund.list().then(funds => {
+    Promise.all([
+      base44.entities.MatchFund.list(),
+      base44.entities.Prediction.list(),
+    ]).then(([funds, predictions]) => {
       const m = {};
       for (const f of funds) m[f.id] = f;
       setFundMap(m);
+
+      const accMap = {};
+      for (const pred of predictions) {
+        const pid = pred.participation_id;
+        if (!accMap[pid]) accMap[pid] = { correct: 0, total: 0 };
+        if (pred.is_correct !== undefined && pred.is_correct !== null) {
+          accMap[pid].total += (pred.selected_options?.length || 1);
+          if (pred.is_correct) accMap[pid].correct += (pred.selected_options?.length || 1);
+        }
+      }
+      setPredAccMap(accMap);
     });
   }, []);
 
@@ -160,15 +175,28 @@ export default function Leaderboard() {
         const totalPoints = filtered.reduce((sum, p) => sum + (p.total_points || 0), 0);
         const winRate = finishedParticipations.length > 0 ? Math.round((wins / finishedParticipations.length) * 100) : 0;
 
-        return { ...u, totalPoints, totalWinnings, wins, finishedCount: finishedParticipations.length, winRate };
+        // Accuracy scoped to filtered participations
+        let correctPicks = 0, totalPicks = 0;
+        for (const p of filtered) {
+          const acc = predAccMap[p.id];
+          if (acc) { correctPicks += acc.correct; totalPicks += acc.total; }
+        }
+        const accuracy = totalPicks > 0 ? Math.round((correctPicks / totalPicks) * 100) : null;
+
+        // Active participations scoped to filtered period
+        const activeParticipations = filtered.filter(
+          p => p.status === 'active' || p.status === 'pending'
+        ).length;
+
+        return { ...u, totalPoints, totalWinnings, wins, finishedCount: finishedParticipations.length, winRate, accuracy, activeParticipations };
       })
-      .filter(u => u.totalPoints > 0 || u.finishedCount > 0)
+      .filter(u => u.totalPoints > 0 || u.finishedCount > 0 || u.activeParticipations > 0)
       .sort((a, b) => {
         if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
         if (b.totalWinnings !== a.totalWinnings) return b.totalWinnings - a.totalWinnings;
         return (b.total_balance || 0) - (a.total_balance || 0);
       });
-  }, [allSorted, activeTab, fundMap]);
+  }, [allSorted, activeTab, fundMap, predAccMap]);
 
   const top100 = displaySorted.slice(0, 100);
   const currentUserRank = currentUser ? displaySorted.findIndex(u => u.id === currentUser.id) : -1;
