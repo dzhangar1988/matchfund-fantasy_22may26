@@ -83,6 +83,20 @@ export default function FAQ() {
       )
     },
     {
+      icon: Shield,
+      question: "What is Premium?",
+      answer: (
+        <p>Premium is a one-time account upgrade. Premium players can give up to 3 Respects to players who impressed them in a fund. To get Premium, contact us directly — details on the home page.</p>
+      )
+    },
+    {
+      icon: Trophy,
+      question: "What is Respect?",
+      answer: (
+        <p>Respect is a rare reputation badge earned from the community. When 10 Premium players show you Respect for your predictions, you earn 1 💎 Respect point on your profile. Respect cannot be bought — only earned. It shows on your profile and the Leaderboard.</p>
+      )
+    },
+    {
       icon: Lock,
       question: t("faq_q6"),
       answer: (
