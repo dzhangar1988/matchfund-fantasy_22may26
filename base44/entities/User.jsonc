@@ -82,6 +82,16 @@
       "type": "boolean",
       "default": false,
       "description": "Premium account \u2014 manually granted by admin"
+    },
+    "respect_points": {
+      "type": "number",
+      "default": 0,
+      "description": "Total respect points earned"
+    },
+    "show_respects_received": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of Show Respects received"
     }
   },
   "required": [

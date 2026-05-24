@@ -1,0 +1,37 @@
+{
+  "name": "ShowRespect",
+  "type": "object",
+  "properties": {
+    "giver_id": {
+      "type": "string",
+      "description": "ID of the user giving respect"
+    },
+    "receiver_id": {
+      "type": "string",
+      "description": "ID of the user receiving respect"
+    },
+    "fund_id": {
+      "type": "string",
+      "description": "ID of the fund context"
+    },
+    "created_at": {
+      "type": "string",
+      "description": "Timestamp when respect was given"
+    }
+  },
+  "required": [
+    "giver_id",
+    "receiver_id",
+    "fund_id"
+  ],
+  "rls": {
+    "read": {},
+    "list": {},
+    "create": {
+      "data.giver_id": "{{user.id}}"
+    },
+    "delete": {
+      "data.giver_id": "{{user.id}}"
+    }
+  }
+}
