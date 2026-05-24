@@ -839,7 +839,9 @@ export default function FundDetails() {
                       const potentialPrize = Math.round(prizePool * pct / 100);
                       const theoreticalPerShare = Math.round(potentialPrize / 100);
                       const activeListing = shareListings.find(l => l.seller_id === participant.user_id && l.participation_id === participant.id);
-                      const displayName = participant.user_id === user?.id ? "You" : (participant.user_name || participant.user_email || `Player ${participant.user_id.slice(0, 8)}`);
+                      const displayName = participant.user_id === user?.id
+                        ? "You"
+                        : (participant.user_name || participant.user_email?.split('@')[0] || `Player ${participant.user_id.slice(0, 8)}`);
 
                       return (
                         <div
@@ -964,7 +966,9 @@ export default function FundDetails() {
                             </div>
                             <div>
                               <p className="text-white font-bold text-lg">
-                                 {winner.user_id === user?.id ? "You" : (winner.user_name || winner.user_email || `Player ${winner.user_id.slice(0, 8)}`)}
+                                 {winner.user_id === user?.id
+                                  ? "You"
+                                  : (winner.user_name || winner.user_email?.split('@')[0] || `Player ${winner.user_id.slice(0, 8)}`)}
                                   {winner.is_creator && (
                                     <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
                                       Creator
