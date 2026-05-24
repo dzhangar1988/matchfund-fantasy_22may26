@@ -77,6 +77,11 @@
       "type": "boolean",
       "default": false,
       "description": "Platform administrator"
+    },
+    "is_premium": {
+      "type": "boolean",
+      "default": false,
+      "description": "Premium account \u2014 manually granted by admin"
     }
   },
   "required": [
