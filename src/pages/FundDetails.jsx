@@ -71,6 +71,7 @@ export default function FundDetails() {
   const [editPicks, setEditPicks] = useState([]);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [myRespects, setMyRespects] = useState([]); // all respects given by current user ever
+  const [usersMap, setUsersMap] = useState({}); // userId -> user object
   const { toast } = useToast();
 
   useEffect(() => {
@@ -127,6 +128,12 @@ export default function FundDetails() {
 
       const allParticipations = await base44.entities.Participation.filter({ fund_id: fundId }, "-total_points");
       setParticipants(allParticipations);
+
+      // Load users for display names
+      const allUsers = await base44.entities.User.list({}, "created_date", 1000);
+      const uMap = {};
+      for (const u of allUsers) uMap[u.id] = u;
+      setUsersMap(uMap);
 
       // Load share listings only (no User.list() — display names come from participation fields)
       const listings = await base44.entities.ShareListing.filter({ fund_id: fundId });
@@ -843,9 +850,10 @@ export default function FundDetails() {
                       const potentialPrize = Math.round(prizePool * pct / 100);
                       const theoreticalPerShare = Math.round(potentialPrize / 100);
                       const activeListing = shareListings.find(l => l.seller_id === participant.user_id && l.participation_id === participant.id);
+                      const pUser = usersMap[participant.user_id];
                       const displayName = participant.user_id === user?.id
                         ? "You"
-                        : (participant.user_name || participant.user_email?.split('@')[0] || `Player ${participant.user_id.slice(0, 8)}`);
+                        : (pUser?.username || pUser?.email?.split('@')[0] || `Player ${participant.user_id.slice(0, 8)}`);
 
                       return (
                         <div
@@ -972,7 +980,7 @@ export default function FundDetails() {
                               <p className="text-white font-bold text-lg">
                                  {winner.user_id === user?.id
                                   ? "You"
-                                  : (winner.user_name || winner.user_email?.split('@')[0] || `Player ${winner.user_id.slice(0, 8)}`)}
+                                  : (() => { const wUser = usersMap[winner.user_id]; return wUser?.username || wUser?.email?.split('@')[0] || `Player ${winner.user_id.slice(0, 8)}`; })()}
                                   {winner.is_creator && (
                                     <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
                                       Creator
