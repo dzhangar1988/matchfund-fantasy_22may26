@@ -130,7 +130,7 @@ export default function FundDetails() {
       setParticipants(allParticipations);
 
       // Load users for display names
-      const allUsers = await base44.entities.User.list({}, "created_date", 1000);
+      const allUsers = await base44.entities.User.list();
       const uMap = {};
       for (const u of allUsers) uMap[u.id] = u;
       setUsersMap(uMap);
