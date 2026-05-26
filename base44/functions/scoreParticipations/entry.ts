@@ -164,10 +164,7 @@ Deno.serve(async (req) => {
     // Only distribute prizes if fund_id is provided and all fund matches are finished
 
     if (fund_id) {
-      // Load the fund
       const fund = await base44.asServiceRole.entities.MatchFund.get(fund_id);
-
-      // Check all fund matches are finished
       const fundMatches = await base44.asServiceRole.entities.FundMatch.filter({ fund_id });
       const fundMatchIds = fundMatches.map(fm => fm.match_id);
       const allFundMatchObjects = await Promise.all(
@@ -176,28 +173,21 @@ Deno.serve(async (req) => {
       const allFinished = allFundMatchObjects.every(m => m.status === 'finished');
 
       if (allFinished) {
-        // Get all participations for this fund, sorted by total_points descending
         const fundParticipations = await base44.asServiceRole.entities.Participation.filter({ fund_id });
         const sorted = [...fundParticipations].sort((a, b) => (b.total_points || 0) - (a.total_points || 0));
 
-        // Calculate gross prize pool
         const grossPool = (fund.entry_fee || 0) * sorted.length;
+        const creatorBonusPct = (fund.creator_bonus_percent ?? 1) / 100;
+        const platformFeePct = (fund.platform_fee_percent ?? 7) / 100;
+        const creatorBonus = Math.floor(grossPool * creatorBonusPct);
+        const platformFee = Math.floor(grossPool * platformFeePct);
+        const netPool = grossPool - creatorBonus - platformFee;
 
-        // 1% creator fee (floor, minimum 0)
-        const creatorFee = Math.floor(grossPool * 0.01);
-        const netPool = grossPool - creatorFee;
+        // prize_distribution is an array like [100] or [60,40] or [50,30,20]
+        const dist = fund.prize_distribution || [100];
+        const splits = dist.map(pct => pct / 100);
 
-        // Determine prize split from fund.prize_split: "100", "60-40", "50-30-20"
-        let splits = [];
-        if (fund.prize_split === '60-40') {
-          splits = [0.6, 0.4];
-        } else if (fund.prize_split === '50-30-20') {
-          splits = [0.5, 0.3, 0.2];
-        } else {
-          splits = [1.0]; // default: winner takes all
-        }
-
-        // Handle ties: group participants by points
+        // Group by tied points
         const groups = [];
         for (const part of sorted) {
           const last = groups[groups.length - 1];
@@ -208,36 +198,30 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Assign prizes
+        // Assign prizes respecting ties
         const prizes = {};
         let splitIndex = 0;
         for (const group of groups) {
-          // Collect all split shares for this tied group
           const sharesForGroup = splits.slice(splitIndex, splitIndex + group.length);
+          if (sharesForGroup.length === 0) break;
           const totalShare = sharesForGroup.reduce((s, v) => s + v, 0);
           const prizePerPlayer = Math.floor((netPool * totalShare) / group.length);
           for (const part of group) {
             prizes[part.id] = prizePerPlayer;
           }
           splitIndex += group.length;
-          if (splitIndex >= splits.length) break;
         }
 
-        // Apply prizes — update participation status and user balances
+        // Update participations and user balances
         const prizeUpdates = [];
         for (const part of sorted) {
           const prize = prizes[part.id] || 0;
-          const isWinner = prize > 0;
-
-          // Update participation
           prizeUpdates.push(
             base44.asServiceRole.entities.Participation.update(part.id, {
-              status: isWinner ? 'winner' : 'loser',
+              status: prize > 0 ? 'winner' : 'loser',
               prize_won: prize
             })
           );
-
-          // Credit user balance
           if (prize > 0) {
             const usr = await base44.asServiceRole.entities.User.get(part.user_id);
             prizeUpdates.push(
@@ -248,17 +232,17 @@ Deno.serve(async (req) => {
           }
         }
 
-        // Credit creator fee
-        if (creatorFee > 0) {
+        // Creator bonus
+        if (creatorBonus > 0) {
           const creator = await base44.asServiceRole.entities.User.get(fund.creator_id);
           prizeUpdates.push(
             base44.asServiceRole.entities.User.update(fund.creator_id, {
-              total_balance: (creator.total_balance || 0) + creatorFee
+              total_balance: (creator.total_balance || 0) + creatorBonus
             })
           );
         }
 
-        // Mark fund as finished
+        // Mark fund finished
         prizeUpdates.push(
           base44.asServiceRole.entities.MatchFund.update(fund_id, { status: 'finished' })
         );
