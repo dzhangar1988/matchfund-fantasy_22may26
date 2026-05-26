@@ -515,6 +515,10 @@ export default function FundDetails() {
   const grossPrizePool = participants.length * (fund?.entry_fee || 0);
   const prizePool = Math.floor(grossPrizePool * 0.93);
 
+  const nowCheck = new Date();
+  const hasUpcomingMatches = matches.some(m => new Date(m.match_date) > nowCheck && m.status === 'upcoming');
+  const fundIsJoinable = !hasJoined && hasUpcomingMatches && fund?.status === 'open';
+
   const totalCredits = getTotalCredits();
 
   const maxPredictions = matches.length >= 1 && matches.length <= 3
@@ -1191,7 +1195,7 @@ export default function FundDetails() {
               />
             )}
           </>
-        ) : fund.status !== "cancelled" ? (
+        ) : fundIsJoinable ? (
           <div>
             <div className="sticky top-0 z-10 bg-[#0C1523] pb-4 mb-6">
               <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
@@ -1224,13 +1228,27 @@ export default function FundDetails() {
                   </Alert>
                 )}
 
-                <Alert className={totalCredits === 0 ? "bg-blue-500/10 border-blue-500/30" : "bg-green-500/10 border-green-500/30"}>
-                <AlertDescription className={totalCredits === 0 ? "text-blue-300" : "text-green-400"}>
-                  {totalCredits === 0
-                    ? "Select at least 1 prediction to proceed."
-                    : `✅ ${totalCredits} prediction${totalCredits !== 1 ? "s" : ""} selected — ready to join!`
-                  }
-                </AlertDescription>
+                <Alert className={
+                  totalCredits === 0
+                    ? "bg-blue-500/10 border-blue-500/30"
+                    : allPredictionsValid()
+                    ? "bg-green-500/10 border-green-500/30"
+                    : "bg-yellow-500/10 border-yellow-500/30"
+                }>
+                  <AlertDescription className={
+                    totalCredits === 0
+                      ? "text-blue-300"
+                      : allPredictionsValid()
+                      ? "text-green-400"
+                      : "text-yellow-400"
+                  }>
+                    {totalCredits === 0
+                      ? "Select at least 1 prediction per match to proceed."
+                      : allPredictionsValid()
+                      ? `✅ ${totalCredits} predictions selected — ready to join!`
+                      : `${totalCredits} / ${maxPredictions} predictions selected — add ${matches.length - totalCredits} more to submit`
+                    }
+                  </AlertDescription>
                 </Alert>
               </Card>
             </div>
@@ -1557,6 +1575,10 @@ export default function FundDetails() {
                 )}
               </Card>
             </div>
+          </div>
+        ) : fund.status !== "cancelled" ? (
+          <div className="mt-6 p-6 rounded-xl bg-red-500/10 border border-red-500/30 text-center">
+            <p className="text-red-400 font-semibold text-lg">⛔ This fund is no longer open for new entries — all matches have started.</p>
           </div>
         ) : null}
       </div>
