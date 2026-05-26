@@ -37,7 +37,7 @@ export default function PlayersPredictions({ participants, predictionsMap, match
 
       <div className="space-y-6">
         {others.map((participant) => {
-          const displayName = participant.user_name || participant.user_email || `Player ${participant.user_id.slice(0, 8)}`;
+          const displayName = participant.user_name || participant.user_email?.split('@')[0] || `Player ${participant.user_id.slice(0, 8)}`;
           const preds = predictionsMap[participant.id];
           const hasSubmitted = !!participant.predictions_completed_at;
           const summary = hasSubmitted && preds ? getCorrectSummary(preds, matches) : null;

@@ -497,7 +497,7 @@ export default function FundDetails() {
       const respects = await base44.entities.ShowRespect.filter({ giver_id: user.id });
       setMyRespects(respects);
 
-      const name = participant.user_name || participant.user_email || `Player ${participant.user_id.slice(0, 8)}`;
+      const name = participant.user_name || participant.user_email?.split('@')[0] || `Player ${participant.user_id.slice(0, 8)}`;
       toast({ description: `Respect shown to ${name}!` });
     } catch (err) {
       toast({ description: "Failed to show respect: " + err.message, variant: "destructive" });
