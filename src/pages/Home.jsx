@@ -129,9 +129,9 @@ export default function Home() {
           </div>
 
           {/* Balance stat */}
-          <div className="grid grid-cols-1 gap-6 mb-8">
+          <div className="grid grid-cols-1 gap-4 mb-8">
             {stats.map((stat, index) => (
-              <div 
+              <div
                 key={index}
                 className="relative overflow-hidden rounded-2xl border border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] p-6"
               >
@@ -147,6 +147,35 @@ export default function Home() {
                 </div>
               </div>
             ))}
+
+            {/* Respect card — only shown if user has any respect activity */}
+            {!isLoading && user && ((user.respect_points ?? 0) > 0 || (user.show_respects_received ?? 0) > 0) && (
+              <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 p-6">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-yellow-500 to-orange-500 opacity-10 rounded-full blur-3xl" />
+                <div className="relative">
+                  {(user.respect_points ?? 0) > 0 && (
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-2xl">💎</span>
+                      <div>
+                        <p className="text-2xl font-bold text-yellow-400">{user.respect_points} Respect</p>
+                        <p className="text-xs text-gray-400">Community reputation</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm text-gray-300">
+                      ⭐ {(user.show_respects_received ?? 0) % 10} / 10 towards next 💎 Respect
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-800/60 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-2 rounded-full bg-gradient-to-r from-yellow-500 to-orange-400 transition-all duration-500"
+                      style={{ width: `${Math.min(((user.show_respects_received ?? 0) % 10) / 10 * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
