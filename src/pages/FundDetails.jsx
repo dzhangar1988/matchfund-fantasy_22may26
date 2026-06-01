@@ -758,12 +758,16 @@ export default function FundDetails() {
 
           {/* Prize Distribution */}
           {(() => {
-            const tiersByType = {
-              winner_takes_all: [{ emoji: "🥇", label: "1st place", pct: 100 }],
-              top2: [{ emoji: "🥇", label: "1st", pct: 60 }, { emoji: "🥈", label: "2nd", pct: 40 }],
-              top3: [{ emoji: "🥇", label: "1st", pct: 50 }, { emoji: "🥈", label: "2nd", pct: 30 }, { emoji: "🥉", label: "3rd", pct: 20 }],
-            };
-            const tiers = tiersByType[fund.prize_split] || [{ emoji: "🥇", label: "1st place", pct: 100 }];
+            const dist = Array.isArray(fund.prize_distribution) && fund.prize_distribution.length > 0
+              ? fund.prize_distribution
+              : [100];
+            const medals = ["🥇", "🥈", "🥉"];
+            const labels = ["1st place", "2nd place", "3rd place"];
+            const tiers = dist.map((pct, i) => ({
+              emoji: medals[i] || "🏅",
+              label: labels[i] || `${i + 1}th place`,
+              pct
+            }));
             return (
               <div className="mt-4 p-4 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex items-center gap-2 mb-3">
@@ -820,12 +824,9 @@ export default function FundDetails() {
               )}
 
               {(() => {
-                const tierPcts = {
-                  winner_takes_all: [100],
-                  top2: [60, 40],
-                  top3: [50, 30, 20],
-                };
-                const pcts = tierPcts[fund.prize_split] || [100];
+                const pcts = Array.isArray(fund.prize_distribution) && fund.prize_distribution.length > 0
+                  ? fund.prize_distribution
+                  : [100];
 
                 const sorted = [...participants].sort((a, b) => {
                   const aPayout = a.final_payout || 0;
@@ -1194,7 +1195,7 @@ export default function FundDetails() {
                 participantName={orderBookParticipant.displayName}
                 rank={orderBookParticipant.rank}
                 prizePool={prizePool}
-                prizeSplit={fund.prize_split}
+                prizeSplit={fund.prize_distribution}
                 fundId={fundId}
                 fundStatus={fund.status}
                 liveMatchExists={orderBookParticipant.liveMatchExists}
