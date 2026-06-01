@@ -172,19 +172,18 @@ Deno.serve(async (req) => {
       );
       const allFinished = allFundMatchObjects.every(m => m.status === 'finished');
 
-      if (allFinished) {
+      if (allFinished && fund.status !== 'finished' && fund.status !== 'cancelled') {
         const fundParticipations = await base44.asServiceRole.entities.Participation.filter({ fund_id });
         const sorted = [...fundParticipations].sort((a, b) => (b.total_points || 0) - (a.total_points || 0));
 
         const grossPool = (fund.entry_fee || 0) * sorted.length;
-        const creatorBonusPct = (fund.creator_bonus_percent ?? 1) / 100;
-        const platformFeePct = (fund.platform_fee_percent ?? 7) / 100;
-        const creatorBonus = Math.floor(grossPool * creatorBonusPct);
-        const platformFee = Math.floor(grossPool * platformFeePct);
-        const netPool = grossPool - creatorBonus - platformFee;
+        const creatorBonus = Math.floor(grossPool * 0.01);
+        const netPool = grossPool - creatorBonus;
 
         // prize_distribution is an array like [100] or [60,40] or [50,30,20]
-        const dist = fund.prize_distribution || [100];
+        const dist = Array.isArray(fund.prize_distribution) && fund.prize_distribution.length > 0
+          ? fund.prize_distribution
+          : [100];
         const splits = dist.map(pct => pct / 100);
 
         // Group by tied points
@@ -254,7 +253,8 @@ Deno.serve(async (req) => {
     return Response.json({
       ok: true,
       predictions_scored: updates.length,
-      participations_updated: partUpdates.length
+      participations_updated: partUpdates.length,
+      prizes_distributed: fund_id ? true : false
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
