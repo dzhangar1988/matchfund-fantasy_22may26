@@ -322,7 +322,7 @@ export default function FundDetails() {
       }
 
       if (user.total_balance < fund.entry_fee) {
-        throw new Error(`Insufficient balance! You need $${fund.entry_fee} but have $${user.total_balance}`);
+        throw new Error(`Insufficient balance! You need ${fund.entry_fee} pts but have ${user.total_balance} pts`);
       }
 
       if (!allPredictionsValid()) {
@@ -715,7 +715,7 @@ export default function FundDetails() {
             <div className="text-right">
               <div className="text-sm text-gray-400 mb-1">Net Prize Pool</div>
               <div className="text-4xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                ${prizePool}
+                {prizePool} pts
               </div>
               <div className="text-xs text-gray-500 mt-1">
                 after 7% platform fee
@@ -729,7 +729,7 @@ export default function FundDetails() {
                 <Trophy className="w-4 h-4 text-orange-400" />
                 <span className="text-xs text-gray-400">Entry Fee</span>
               </div>
-              <div className="text-2xl font-bold text-white">${fund.entry_fee}</div>
+              <div className="text-2xl font-bold text-white">{fund.entry_fee} pts</div>
             </div>
             <div className="p-4 rounded-lg bg-white/5 border border-white/10">
               <div className="flex items-center gap-2 mb-2">
@@ -776,7 +776,7 @@ export default function FundDetails() {
                       {i > 0 && <span className="text-gray-600">·</span>}
                       <span className="text-white font-semibold">
                         {tier.emoji} {tier.label}: {tier.pct}%{" "}
-                        <span className="text-yellow-400">(${Math.round(prizePool * tier.pct / 100)})</span>
+                        <span className="text-yellow-400">({Math.round(prizePool * tier.pct / 100)} pts)</span>
                       </span>
                     </React.Fragment>
                   ))}
@@ -880,7 +880,7 @@ export default function FundDetails() {
                               <div>
                                 <div className="text-lg font-bold text-white">{participant.total_points || 0} pts</div>
                                 {potentialPrize > 0 && (
-                                  <div className="text-xs text-yellow-400">Prize: ${potentialPrize}</div>
+                                  <div className="text-xs text-yellow-400">Prize: {potentialPrize} pts</div>
                                 )}
                               </div>
                               {(fund.status === "open" || fund.status === "in_progress") && !tradingClosed && (
@@ -895,7 +895,7 @@ export default function FundDetails() {
                                 </div>
                               )}
                               {participant.final_payout > 0 && (
-                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">Won: ${participant.final_payout}</Badge>
+                                <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">Won: {participant.final_payout} pts</Badge>
                               )}
                               {participant.status === 'refunded' && (
                                 <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Refunded</Badge>
@@ -994,7 +994,7 @@ export default function FundDetails() {
                           </div>
                           <div className="text-right">
                             <p className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                              ${winner.final_payout || 0}
+                              {winner.final_payout || 0} pts
                             </p>
                           </div>
                         </div>
@@ -1229,7 +1229,7 @@ export default function FundDetails() {
                       <div>
                         <p className="font-semibold">Insufficient balance</p>
                         <p className="text-sm">
-                          You need ${fund.entry_fee} to join but have ${user.total_balance}.
+                          You need {fund.entry_fee} pts to join but have {user.total_balance} pts.
                         </p>
                       </div>
                     </AlertDescription>
