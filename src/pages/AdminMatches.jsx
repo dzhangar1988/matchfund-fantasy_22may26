@@ -33,62 +33,90 @@ const TEAMS = {
 };
 
 const WC_FIXTURES = [
-  // Group A
-  { home_team: "Mexico", away_team: "USA", match_date: "2026-06-11T20:00", matchweek: 1 },
-  { home_team: "Uruguay", away_team: "Panama", match_date: "2026-06-12T17:00", matchweek: 1 },
-  { home_team: "USA", away_team: "Panama", match_date: "2026-06-16T17:00", matchweek: 2 },
-  { home_team: "Uruguay", away_team: "Mexico", match_date: "2026-06-16T20:00", matchweek: 2 },
-  { home_team: "USA", away_team: "Uruguay", match_date: "2026-06-22T20:00", matchweek: 3 },
-  { home_team: "Panama", away_team: "Mexico", match_date: "2026-06-22T20:00", matchweek: 3 },
-  // Group B
-  { home_team: "Argentina", away_team: "Chile", match_date: "2026-06-12T20:00", matchweek: 1 },
-  { home_team: "Morocco", away_team: "Colombia", match_date: "2026-06-13T17:00", matchweek: 1 },
-  { home_team: "Argentina", away_team: "Morocco", match_date: "2026-06-17T17:00", matchweek: 2 },
-  { home_team: "Colombia", away_team: "Chile", match_date: "2026-06-17T20:00", matchweek: 2 },
-  { home_team: "Colombia", away_team: "Argentina", match_date: "2026-06-23T20:00", matchweek: 3 },
-  { home_team: "Chile", away_team: "Morocco", match_date: "2026-06-23T20:00", matchweek: 3 },
-  // Group C
-  { home_team: "Spain", away_team: "Brazil", match_date: "2026-06-13T20:00", matchweek: 1 },
-  { home_team: "Japan", away_team: "Croatia", match_date: "2026-06-14T17:00", matchweek: 1 },
-  { home_team: "Spain", away_team: "Japan", match_date: "2026-06-18T17:00", matchweek: 2 },
-  { home_team: "Brazil", away_team: "Croatia", match_date: "2026-06-18T20:00", matchweek: 2 },
-  { home_team: "Brazil", away_team: "Japan", match_date: "2026-06-24T20:00", matchweek: 3 },
-  { home_team: "Croatia", away_team: "Spain", match_date: "2026-06-24T20:00", matchweek: 3 },
-  // Group D
-  { home_team: "Germany", away_team: "Saudi Arabia", match_date: "2026-06-14T20:00", matchweek: 1 },
-  { home_team: "France", away_team: "South Korea", match_date: "2026-06-15T17:00", matchweek: 1 },
-  { home_team: "Germany", away_team: "France", match_date: "2026-06-19T17:00", matchweek: 2 },
-  { home_team: "South Korea", away_team: "Saudi Arabia", match_date: "2026-06-19T20:00", matchweek: 2 },
-  { home_team: "South Korea", away_team: "Germany", match_date: "2026-06-25T20:00", matchweek: 3 },
-  { home_team: "Saudi Arabia", away_team: "France", match_date: "2026-06-25T20:00", matchweek: 3 },
-  // Group E
-  { home_team: "England", away_team: "Serbia", match_date: "2026-06-15T20:00", matchweek: 1 },
-  { home_team: "Netherlands", away_team: "Ecuador", match_date: "2026-06-16T17:00", matchweek: 1 },
-  { home_team: "England", away_team: "Netherlands", match_date: "2026-06-20T17:00", matchweek: 2 },
-  { home_team: "Ecuador", away_team: "Serbia", match_date: "2026-06-20T20:00", matchweek: 2 },
-  { home_team: "Ecuador", away_team: "England", match_date: "2026-06-26T20:00", matchweek: 3 },
-  { home_team: "Serbia", away_team: "Netherlands", match_date: "2026-06-26T20:00", matchweek: 3 },
-  // Group F
-  { home_team: "Portugal", away_team: "Iran", match_date: "2026-06-17T17:00", matchweek: 1 },
-  { home_team: "Canada", away_team: "Nigeria", match_date: "2026-06-17T20:00", matchweek: 1 },
-  { home_team: "Portugal", away_team: "Canada", match_date: "2026-06-21T17:00", matchweek: 2 },
-  { home_team: "Nigeria", away_team: "Iran", match_date: "2026-06-21T20:00", matchweek: 2 },
-  { home_team: "Nigeria", away_team: "Portugal", match_date: "2026-06-27T20:00", matchweek: 3 },
-  { home_team: "Iran", away_team: "Canada", match_date: "2026-06-27T20:00", matchweek: 3 },
-  // Group G
-  { home_team: "USA", away_team: "Bolivia", match_date: "2026-06-18T17:00", matchweek: 1 },
-  { home_team: "Senegal", away_team: "Austria", match_date: "2026-06-18T20:00", matchweek: 1 },
-  { home_team: "USA", away_team: "Senegal", match_date: "2026-06-22T17:00", matchweek: 2 },
-  { home_team: "Austria", away_team: "Bolivia", match_date: "2026-06-22T20:00", matchweek: 2 },
-  { home_team: "Austria", away_team: "USA", match_date: "2026-06-28T20:00", matchweek: 3 },
-  { home_team: "Bolivia", away_team: "Senegal", match_date: "2026-06-28T20:00", matchweek: 3 },
-  // Group H
-  { home_team: "Belgium", away_team: "Egypt", match_date: "2026-06-19T17:00", matchweek: 1 },
-  { home_team: "Mexico", away_team: "Qatar", match_date: "2026-06-19T20:00", matchweek: 1 },
-  { home_team: "Belgium", away_team: "Mexico", match_date: "2026-06-23T17:00", matchweek: 2 },
-  { home_team: "Qatar", away_team: "Egypt", match_date: "2026-06-23T20:00", matchweek: 2 },
-  { home_team: "Qatar", away_team: "Belgium", match_date: "2026-06-29T20:00", matchweek: 3 },
-  { home_team: "Egypt", away_team: "Mexico", match_date: "2026-06-29T20:00", matchweek: 3 },
+  // GROUP A: Mexico, South Africa, South Korea, Czechia
+  { home_team: "Mexico", away_team: "South Africa", match_date: "2026-06-11T20:00:00Z", group: "Group A", matchweek: 1 },
+  { home_team: "South Korea", away_team: "Czechia", match_date: "2026-06-12T01:00:00Z", group: "Group A", matchweek: 1 },
+  { home_team: "Mexico", away_team: "Czechia", match_date: "2026-06-18T23:00:00Z", group: "Group A", matchweek: 2 },
+  { home_team: "South Korea", away_team: "South Africa", match_date: "2026-06-19T02:00:00Z", group: "Group A", matchweek: 2 },
+  { home_team: "Mexico", away_team: "South Korea", match_date: "2026-06-26T20:00:00Z", group: "Group A", matchweek: 3 },
+  { home_team: "South Africa", away_team: "Czechia", match_date: "2026-06-26T20:00:00Z", group: "Group A", matchweek: 3 },
+  // GROUP B: Canada, Bosnia & Herzegovina, Qatar, Switzerland
+  { home_team: "Canada", away_team: "Bosnia & Herzegovina", match_date: "2026-06-12T19:00:00Z", group: "Group B", matchweek: 1 },
+  { home_team: "Qatar", away_team: "Switzerland", match_date: "2026-06-13T19:00:00Z", group: "Group B", matchweek: 1 },
+  { home_team: "Canada", away_team: "Qatar", match_date: "2026-06-19T22:00:00Z", group: "Group B", matchweek: 2 },
+  { home_team: "Bosnia & Herzegovina", away_team: "Switzerland", match_date: "2026-06-20T01:00:00Z", group: "Group B", matchweek: 2 },
+  { home_team: "Canada", away_team: "Switzerland", match_date: "2026-06-26T23:00:00Z", group: "Group B", matchweek: 3 },
+  { home_team: "Qatar", away_team: "Bosnia & Herzegovina", match_date: "2026-06-26T23:00:00Z", group: "Group B", matchweek: 3 },
+  // GROUP C: Brazil, Morocco, Haiti, Scotland
+  { home_team: "Brazil", away_team: "Morocco", match_date: "2026-06-13T22:00:00Z", group: "Group C", matchweek: 1 },
+  { home_team: "Haiti", away_team: "Scotland", match_date: "2026-06-14T01:00:00Z", group: "Group C", matchweek: 1 },
+  { home_team: "Brazil", away_team: "Haiti", match_date: "2026-06-20T22:00:00Z", group: "Group C", matchweek: 2 },
+  { home_team: "Morocco", away_team: "Scotland", match_date: "2026-06-21T01:00:00Z", group: "Group C", matchweek: 2 },
+  { home_team: "Brazil", away_team: "Scotland", match_date: "2026-06-27T01:00:00Z", group: "Group C", matchweek: 3 },
+  { home_team: "Morocco", away_team: "Haiti", match_date: "2026-06-27T01:00:00Z", group: "Group C", matchweek: 3 },
+  // GROUP D: USA, Paraguay, Australia, Türkiye
+  { home_team: "USA", away_team: "Paraguay", match_date: "2026-06-13T01:00:00Z", group: "Group D", matchweek: 1 },
+  { home_team: "Australia", away_team: "Türkiye", match_date: "2026-06-14T01:00:00Z", group: "Group D", matchweek: 1 },
+  { home_team: "USA", away_team: "Australia", match_date: "2026-06-19T23:00:00Z", group: "Group D", matchweek: 2 },
+  { home_team: "Paraguay", away_team: "Türkiye", match_date: "2026-06-20T02:00:00Z", group: "Group D", matchweek: 2 },
+  { home_team: "USA", away_team: "Türkiye", match_date: "2026-06-27T02:00:00Z", group: "Group D", matchweek: 3 },
+  { home_team: "Paraguay", away_team: "Australia", match_date: "2026-06-27T02:00:00Z", group: "Group D", matchweek: 3 },
+  // GROUP E: Germany, Curaçao, Côte d'Ivoire, Ecuador
+  { home_team: "Germany", away_team: "Curaçao", match_date: "2026-06-14T22:00:00Z", group: "Group E", matchweek: 1 },
+  { home_team: "Côte d'Ivoire", away_team: "Ecuador", match_date: "2026-06-15T01:00:00Z", group: "Group E", matchweek: 1 },
+  { home_team: "Germany", away_team: "Ecuador", match_date: "2026-06-21T22:00:00Z", group: "Group E", matchweek: 2 },
+  { home_team: "Curaçao", away_team: "Côte d'Ivoire", match_date: "2026-06-22T01:00:00Z", group: "Group E", matchweek: 2 },
+  { home_team: "Germany", away_team: "Côte d'Ivoire", match_date: "2026-06-27T22:00:00Z", group: "Group E", matchweek: 3 },
+  { home_team: "Ecuador", away_team: "Curaçao", match_date: "2026-06-27T22:00:00Z", group: "Group E", matchweek: 3 },
+  // GROUP F: Netherlands, Japan, Sweden, Tunisia
+  { home_team: "Netherlands", away_team: "Tunisia", match_date: "2026-06-15T19:00:00Z", group: "Group F", matchweek: 1 },
+  { home_team: "Japan", away_team: "Sweden", match_date: "2026-06-15T22:00:00Z", group: "Group F", matchweek: 1 },
+  { home_team: "Netherlands", away_team: "Sweden", match_date: "2026-06-22T19:00:00Z", group: "Group F", matchweek: 2 },
+  { home_team: "Japan", away_team: "Tunisia", match_date: "2026-06-22T22:00:00Z", group: "Group F", matchweek: 2 },
+  { home_team: "Netherlands", away_team: "Japan", match_date: "2026-06-27T19:00:00Z", group: "Group F", matchweek: 3 },
+  { home_team: "Sweden", away_team: "Tunisia", match_date: "2026-06-27T19:00:00Z", group: "Group F", matchweek: 3 },
+  // GROUP G: Belgium, Egypt, Iran, New Zealand
+  { home_team: "Belgium", away_team: "Egypt", match_date: "2026-06-15T22:00:00Z", group: "Group G", matchweek: 1 },
+  { home_team: "Iran", away_team: "New Zealand", match_date: "2026-06-16T01:00:00Z", group: "Group G", matchweek: 1 },
+  { home_team: "Belgium", away_team: "Iran", match_date: "2026-06-22T22:00:00Z", group: "Group G", matchweek: 2 },
+  { home_team: "Egypt", away_team: "New Zealand", match_date: "2026-06-23T01:00:00Z", group: "Group G", matchweek: 2 },
+  { home_team: "Belgium", away_team: "New Zealand", match_date: "2026-06-27T23:00:00Z", group: "Group G", matchweek: 3 },
+  { home_team: "Egypt", away_team: "Iran", match_date: "2026-06-27T23:00:00Z", group: "Group G", matchweek: 3 },
+  // GROUP H: Spain, Cabo Verde, Saudi Arabia, Uruguay
+  { home_team: "Spain", away_team: "Cabo Verde", match_date: "2026-06-15T17:00:00Z", group: "Group H", matchweek: 1 },
+  { home_team: "Saudi Arabia", away_team: "Uruguay", match_date: "2026-06-15T23:00:00Z", group: "Group H", matchweek: 1 },
+  { home_team: "Spain", away_team: "Saudi Arabia", match_date: "2026-06-22T20:00:00Z", group: "Group H", matchweek: 2 },
+  { home_team: "Uruguay", away_team: "Cabo Verde", match_date: "2026-06-22T23:00:00Z", group: "Group H", matchweek: 2 },
+  { home_team: "Spain", away_team: "Uruguay", match_date: "2026-06-27T20:00:00Z", group: "Group H", matchweek: 3 },
+  { home_team: "Saudi Arabia", away_team: "Cabo Verde", match_date: "2026-06-27T20:00:00Z", group: "Group H", matchweek: 3 },
+  // GROUP I: France, Senegal, Iraq, Norway
+  { home_team: "France", away_team: "Senegal", match_date: "2026-06-16T19:00:00Z", group: "Group I", matchweek: 1 },
+  { home_team: "Iraq", away_team: "Norway", match_date: "2026-06-16T22:00:00Z", group: "Group I", matchweek: 1 },
+  { home_team: "France", away_team: "Iraq", match_date: "2026-06-23T19:00:00Z", group: "Group I", matchweek: 2 },
+  { home_team: "Senegal", away_team: "Norway", match_date: "2026-06-23T22:00:00Z", group: "Group I", matchweek: 2 },
+  { home_team: "France", away_team: "Norway", match_date: "2026-06-27T01:00:00Z", group: "Group I", matchweek: 3 },
+  { home_team: "Senegal", away_team: "Iraq", match_date: "2026-06-27T01:00:00Z", group: "Group I", matchweek: 3 },
+  // GROUP J: Argentina, Algeria, Austria, Jordan
+  { home_team: "Argentina", away_team: "Algeria", match_date: "2026-06-17T19:00:00Z", group: "Group J", matchweek: 1 },
+  { home_team: "Austria", away_team: "Jordan", match_date: "2026-06-17T22:00:00Z", group: "Group J", matchweek: 1 },
+  { home_team: "Argentina", away_team: "Jordan", match_date: "2026-06-24T19:00:00Z", group: "Group J", matchweek: 2 },
+  { home_team: "Algeria", away_team: "Austria", match_date: "2026-06-24T22:00:00Z", group: "Group J", matchweek: 2 },
+  { home_team: "Argentina", away_team: "Austria", match_date: "2026-06-28T01:00:00Z", group: "Group J", matchweek: 3 },
+  { home_team: "Algeria", away_team: "Jordan", match_date: "2026-06-28T01:00:00Z", group: "Group J", matchweek: 3 },
+  // GROUP K: Portugal, DR Congo, Uzbekistan, Colombia
+  { home_team: "Portugal", away_team: "Uzbekistan", match_date: "2026-06-17T01:00:00Z", group: "Group K", matchweek: 1 },
+  { home_team: "Colombia", away_team: "DR Congo", match_date: "2026-06-17T22:00:00Z", group: "Group K", matchweek: 1 },
+  { home_team: "Portugal", away_team: "DR Congo", match_date: "2026-06-24T01:00:00Z", group: "Group K", matchweek: 2 },
+  { home_team: "Colombia", away_team: "Uzbekistan", match_date: "2026-06-24T22:00:00Z", group: "Group K", matchweek: 2 },
+  { home_team: "Portugal", away_team: "Colombia", match_date: "2026-06-28T19:00:00Z", group: "Group K", matchweek: 3 },
+  { home_team: "DR Congo", away_team: "Uzbekistan", match_date: "2026-06-28T19:00:00Z", group: "Group K", matchweek: 3 },
+  // GROUP L: England, Croatia, Ghana, Panama
+  { home_team: "England", away_team: "Panama", match_date: "2026-06-18T19:00:00Z", group: "Group L", matchweek: 1 },
+  { home_team: "Croatia", away_team: "Ghana", match_date: "2026-06-18T22:00:00Z", group: "Group L", matchweek: 1 },
+  { home_team: "England", away_team: "Croatia", match_date: "2026-06-25T01:00:00Z", group: "Group L", matchweek: 2 },
+  { home_team: "Panama", away_team: "Ghana", match_date: "2026-06-25T22:00:00Z", group: "Group L", matchweek: 2 },
+  { home_team: "England", away_team: "Ghana", match_date: "2026-06-28T23:00:00Z", group: "Group L", matchweek: 3 },
+  { home_team: "Croatia", away_team: "Panama", match_date: "2026-06-28T23:00:00Z", group: "Group L", matchweek: 3 },
 ];
 
 // Helper function to add delay between requests
@@ -1101,9 +1129,16 @@ export default function AdminMatches() {
   };
 
   const seedWCMatches = async () => {
-    if (!confirm(`Seed all ${WC_FIXTURES.length} World Cup 2026 group stage matches? This will add them all at once.`)) return;
+    if (!confirm(`This will DELETE all existing "World Cup 2026" matches and re-seed all ${WC_FIXTURES.length} group stage fixtures. Continue?`)) return;
     setIsCalculating(true);
     try {
+      // Delete all existing WC 2026 matches first
+      const existing = await base44.entities.Match.filter({ competition: "World Cup 2026" });
+      for (const m of existing) {
+        await base44.entities.Match.delete(m.id);
+        await sleep(60);
+      }
+      // Insert correct fixtures
       for (const fixture of WC_FIXTURES) {
         await base44.entities.Match.create({
           ...fixture,
@@ -1114,7 +1149,7 @@ export default function AdminMatches() {
         await sleep(80);
       }
       await loadMatches();
-      showNotification(`✅ All ${WC_FIXTURES.length} WC 2026 group stage matches added!`);
+      showNotification(`✅ Deleted ${existing.length} old matches, seeded ${WC_FIXTURES.length} WC 2026 group stage matches!`);
     } catch (error) {
       showNotification(`Error: ${error.message}`, "error");
     } finally {
