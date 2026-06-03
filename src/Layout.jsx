@@ -22,10 +22,10 @@ import { Button } from "@/components/ui/button";
 const getNavigationItems = (t) => [
   { title: t("nav_home"), url: createPageUrl("Home"), icon: Home },
   { title: t("nav_create_fund"), url: createPageUrl("CreateFund"), icon: Plus },
+  { title: t("nav_profile"), url: createPageUrl("Profile"), icon: UserIcon },
   { title: t("nav_leaderboard"), url: createPageUrl("Leaderboard"), icon: Crown },
   { title: "Portfolio", url: "/portfolio", icon: BarChart2 },
   { title: "FAQ", url: createPageUrl("FAQ"), icon: HelpCircle },
-  { title: t("nav_profile"), url: createPageUrl("Profile"), icon: UserIcon },
 ];
 
 const getAdminNavigationItems = (t) => [
