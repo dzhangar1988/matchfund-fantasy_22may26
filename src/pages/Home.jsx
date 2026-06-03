@@ -149,7 +149,7 @@ export default function Home() {
             ))}
 
             {/* Respect card — only shown if user has any respect activity */}
-            {!isLoading && user && ((user.respect_points ?? 0) > 0 || (user.show_respects_received ?? 0) > 0) && (
+            {!isLoading && user && (
               <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-orange-500/10 p-6">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-yellow-500 to-orange-500 opacity-10 rounded-full blur-3xl" />
                 <div className="relative">
