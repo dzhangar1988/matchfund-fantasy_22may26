@@ -9,27 +9,87 @@ import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const COMPETITIONS = [
+  "World Cup 2026",
   "Premier League",
-  "La Liga",
-  "Serie A",
-  "Bundesliga",
-  "Ligue 1",
-  "Champions League",
-  "Europa League"
 ];
 
 const TEAMS = {
+  "World Cup 2026": [
+    "USA", "Mexico", "Canada",
+    "Argentina", "Brazil", "Uruguay", "Ecuador", "Colombia", "Chile", "Bolivia", "Venezuela", "Paraguay",
+    "Spain", "Germany", "France", "England", "Portugal", "Netherlands", "Italy", "Belgium",
+    "Croatia", "Serbia", "Austria", "Hungary", "Czechia", "Turkey", "Ukraine", "Poland", "Slovakia", "Romania", "Switzerland",
+    "Morocco", "Senegal", "Egypt", "Nigeria", "Cameroon", "South Africa", "DR Congo", "Ivory Coast",
+    "Japan", "South Korea", "Saudi Arabia", "Iran", "Australia", "New Zealand", "Indonesia", "Uzbekistan",
+    "Panama", "Honduras", "Jamaica", "Costa Rica", "El Salvador", "Cuba",
+    "Qatar", "Iraq"
+  ],
   "Premier League": [
     "Arsenal", "Manchester City", "Bournemouth", "Liverpool", "Chelsea",
     "Tottenham Hotspur", "Sunderland", "Crystal Palace", "Manchester United", "Brighton",
     "Aston Villa", "Everton", "Brentford", "Newcastle United", "Fulham",
     "Leeds United", "Burnley", "Nottingham Forest", "West Ham United", "Wolves"
   ],
-  "La Liga": [
-    "Real Madrid", "Barcelona", "Atletico Madrid", "Sevilla", "Real Sociedad",
-    "Real Betis", "Villarreal", "Athletic Bilbao", "Valencia", "Osasuna"
-  ]
 };
+
+const WC_FIXTURES = [
+  // Group A
+  { home_team: "Mexico", away_team: "USA", match_date: "2026-06-11T20:00", matchweek: 1 },
+  { home_team: "Uruguay", away_team: "Panama", match_date: "2026-06-12T17:00", matchweek: 1 },
+  { home_team: "USA", away_team: "Panama", match_date: "2026-06-16T17:00", matchweek: 2 },
+  { home_team: "Uruguay", away_team: "Mexico", match_date: "2026-06-16T20:00", matchweek: 2 },
+  { home_team: "USA", away_team: "Uruguay", match_date: "2026-06-22T20:00", matchweek: 3 },
+  { home_team: "Panama", away_team: "Mexico", match_date: "2026-06-22T20:00", matchweek: 3 },
+  // Group B
+  { home_team: "Argentina", away_team: "Chile", match_date: "2026-06-12T20:00", matchweek: 1 },
+  { home_team: "Morocco", away_team: "Colombia", match_date: "2026-06-13T17:00", matchweek: 1 },
+  { home_team: "Argentina", away_team: "Morocco", match_date: "2026-06-17T17:00", matchweek: 2 },
+  { home_team: "Colombia", away_team: "Chile", match_date: "2026-06-17T20:00", matchweek: 2 },
+  { home_team: "Colombia", away_team: "Argentina", match_date: "2026-06-23T20:00", matchweek: 3 },
+  { home_team: "Chile", away_team: "Morocco", match_date: "2026-06-23T20:00", matchweek: 3 },
+  // Group C
+  { home_team: "Spain", away_team: "Brazil", match_date: "2026-06-13T20:00", matchweek: 1 },
+  { home_team: "Japan", away_team: "Croatia", match_date: "2026-06-14T17:00", matchweek: 1 },
+  { home_team: "Spain", away_team: "Japan", match_date: "2026-06-18T17:00", matchweek: 2 },
+  { home_team: "Brazil", away_team: "Croatia", match_date: "2026-06-18T20:00", matchweek: 2 },
+  { home_team: "Brazil", away_team: "Japan", match_date: "2026-06-24T20:00", matchweek: 3 },
+  { home_team: "Croatia", away_team: "Spain", match_date: "2026-06-24T20:00", matchweek: 3 },
+  // Group D
+  { home_team: "Germany", away_team: "Saudi Arabia", match_date: "2026-06-14T20:00", matchweek: 1 },
+  { home_team: "France", away_team: "South Korea", match_date: "2026-06-15T17:00", matchweek: 1 },
+  { home_team: "Germany", away_team: "France", match_date: "2026-06-19T17:00", matchweek: 2 },
+  { home_team: "South Korea", away_team: "Saudi Arabia", match_date: "2026-06-19T20:00", matchweek: 2 },
+  { home_team: "South Korea", away_team: "Germany", match_date: "2026-06-25T20:00", matchweek: 3 },
+  { home_team: "Saudi Arabia", away_team: "France", match_date: "2026-06-25T20:00", matchweek: 3 },
+  // Group E
+  { home_team: "England", away_team: "Serbia", match_date: "2026-06-15T20:00", matchweek: 1 },
+  { home_team: "Netherlands", away_team: "Ecuador", match_date: "2026-06-16T17:00", matchweek: 1 },
+  { home_team: "England", away_team: "Netherlands", match_date: "2026-06-20T17:00", matchweek: 2 },
+  { home_team: "Ecuador", away_team: "Serbia", match_date: "2026-06-20T20:00", matchweek: 2 },
+  { home_team: "Ecuador", away_team: "England", match_date: "2026-06-26T20:00", matchweek: 3 },
+  { home_team: "Serbia", away_team: "Netherlands", match_date: "2026-06-26T20:00", matchweek: 3 },
+  // Group F
+  { home_team: "Portugal", away_team: "Iran", match_date: "2026-06-17T17:00", matchweek: 1 },
+  { home_team: "Canada", away_team: "Nigeria", match_date: "2026-06-17T20:00", matchweek: 1 },
+  { home_team: "Portugal", away_team: "Canada", match_date: "2026-06-21T17:00", matchweek: 2 },
+  { home_team: "Nigeria", away_team: "Iran", match_date: "2026-06-21T20:00", matchweek: 2 },
+  { home_team: "Nigeria", away_team: "Portugal", match_date: "2026-06-27T20:00", matchweek: 3 },
+  { home_team: "Iran", away_team: "Canada", match_date: "2026-06-27T20:00", matchweek: 3 },
+  // Group G
+  { home_team: "USA", away_team: "Bolivia", match_date: "2026-06-18T17:00", matchweek: 1 },
+  { home_team: "Senegal", away_team: "Austria", match_date: "2026-06-18T20:00", matchweek: 1 },
+  { home_team: "USA", away_team: "Senegal", match_date: "2026-06-22T17:00", matchweek: 2 },
+  { home_team: "Austria", away_team: "Bolivia", match_date: "2026-06-22T20:00", matchweek: 2 },
+  { home_team: "Austria", away_team: "USA", match_date: "2026-06-28T20:00", matchweek: 3 },
+  { home_team: "Bolivia", away_team: "Senegal", match_date: "2026-06-28T20:00", matchweek: 3 },
+  // Group H
+  { home_team: "Belgium", away_team: "Egypt", match_date: "2026-06-19T17:00", matchweek: 1 },
+  { home_team: "Mexico", away_team: "Qatar", match_date: "2026-06-19T20:00", matchweek: 1 },
+  { home_team: "Belgium", away_team: "Mexico", match_date: "2026-06-23T17:00", matchweek: 2 },
+  { home_team: "Qatar", away_team: "Egypt", match_date: "2026-06-23T20:00", matchweek: 2 },
+  { home_team: "Qatar", away_team: "Belgium", match_date: "2026-06-29T20:00", matchweek: 3 },
+  { home_team: "Egypt", away_team: "Mexico", match_date: "2026-06-29T20:00", matchweek: 3 },
+];
 
 // Helper function to add delay between requests
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -47,7 +107,7 @@ export default function AdminMatches() {
     match_date: "",
     matchweek: 1,
     season: "2024/25",
-    competition: "Premier League"
+    competition: "World Cup 2026"
   });
   const [problemFunds, setProblemFunds] = useState([]);
   const [showProblems, setShowProblems] = useState(false);
@@ -189,7 +249,7 @@ export default function AdminMatches() {
         away_team: "",
         match_date: "",
         matchweek: newMatch.matchweek + 1,
-        season: "2024/25",
+        season: newMatch.competition === "World Cup 2026" ? "2026" : "2024/25",
         competition: newMatch.competition
       });
 
@@ -1040,6 +1100,28 @@ export default function AdminMatches() {
     }
   };
 
+  const seedWCMatches = async () => {
+    if (!confirm(`Seed all ${WC_FIXTURES.length} World Cup 2026 group stage matches? This will add them all at once.`)) return;
+    setIsCalculating(true);
+    try {
+      for (const fixture of WC_FIXTURES) {
+        await base44.entities.Match.create({
+          ...fixture,
+          season: "2026",
+          competition: "World Cup 2026",
+          status: "upcoming"
+        });
+        await sleep(80);
+      }
+      await loadMatches();
+      showNotification(`✅ All ${WC_FIXTURES.length} WC 2026 group stage matches added!`);
+    } catch (error) {
+      showNotification(`Error: ${error.message}`, "error");
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
   const cancelFund = async (fundId) => {
     if (!confirm("Cancel this fund? All participants will receive 100% refund.")) return;
     
@@ -1253,6 +1335,13 @@ export default function AdminMatches() {
                 Problem Funds ({problemFunds.length})
               </Button>
             )}
+            <Button
+              onClick={seedWCMatches}
+              disabled={isCalculating}
+              className="bg-green-700 hover:bg-green-800 flex items-center gap-2"
+            >
+              {isCalculating ? <Loader2 className="w-4 h-4 animate-spin" /> : <>🌍 Seed WC 2026 Matches</>}
+            </Button>
             <Button
               onClick={loadTestMatches}
               disabled={isCalculating}
