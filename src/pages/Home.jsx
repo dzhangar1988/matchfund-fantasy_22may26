@@ -16,8 +16,9 @@ export default function Home() {
   const [funds, setFunds] = useState([]);
   const [user, setUser] = useState(null);
   const [myActiveFunds, setMyActiveFunds] = useState([]);
-  const [myRoles, setMyRoles] = useState({}); // fund_id -> { creator, player, investor }
-  const [participantCounts, setParticipantCounts] = useState({}); // fund_id -> count
+  const [myRoles, setMyRoles] = useState({});
+  const [participantCounts, setParticipantCounts] = useState({});
+  const [wcMatches, setWcMatches] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const openFundsSectionRef = useRef(null);
 
@@ -43,13 +44,19 @@ export default function Home() {
 
       setUser(currentUser);
 
-      // Load participations AND share purchases in parallel
-      // Note: Participation RLS is scoped to created_by (current user), so no filter needed
-      const [participations, sharePurchases, allFunds] = await Promise.all([
+      const [participations, sharePurchases, allFunds, wcRaw] = await Promise.all([
         base44.entities.Participation.list(),
         base44.entities.SharePurchase.list(),
         MatchFund.list("-created_date"),
+        base44.entities.Match.filter({ status: "upcoming", competition: "World Cup 2026" }),
       ]);
+
+      const now = new Date();
+      const upcomingWC = wcRaw
+        .filter(m => new Date(m.match_date) > now)
+        .sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
+        .slice(0, 24);
+      setWcMatches(upcomingWC);
 
       setFunds(allFunds);
 
@@ -241,6 +248,51 @@ export default function Home() {
             )}
           </div>
         )}
+
+        {/* World Cup 2026 Upcoming Matches */}
+        {!isLoading && wcMatches.length > 0 && (() => {
+          const groups = {};
+          for (const m of wcMatches) {
+            const dateKey = new Date(m.match_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            if (!groups[dateKey]) groups[dateKey] = [];
+            groups[dateKey].push(m);
+          }
+          return (
+            <div className="mb-10">
+              <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+                🌍 <span className="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">World Cup 2026</span>
+                <span className="text-white">— Upcoming Matches</span>
+              </h2>
+              <p className="text-sm text-gray-400 mb-4">Create a fund around any of these games</p>
+              <div className="space-y-6">
+                {Object.entries(groups).map(([date, matches]) => (
+                  <div key={date}>
+                    <p className="text-xs font-semibold text-orange-400 uppercase tracking-widest mb-2">{date}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {matches.map(match => (
+                        <div key={match.id} className="p-4 rounded-2xl border border-gray-700 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] flex flex-col gap-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-white font-bold text-base leading-tight">
+                              {match.home_team} <span className="text-gray-500 font-normal">vs</span> {match.away_team}
+                            </span>
+                            <span className="text-xs text-gray-400 shrink-0">
+                              {new Date(match.match_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <Link to={createPageUrl("CreateFund")}>
+                            <Button size="sm" className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-xs">
+                              Create Fund <ArrowRight className="w-3 h-3 ml-1" />
+                            </Button>
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Open Funds Preview */}
         <div ref={openFundsSectionRef} />
