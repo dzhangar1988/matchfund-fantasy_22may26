@@ -1560,6 +1560,11 @@ export default function FundDetails() {
 
             <div className="sticky bottom-0 bg-[#0C1523] pt-4">
               <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
+                {allPredictionsValid() && totalCredits < maxPredictions && (
+                  <div className="text-yellow-400 text-sm bg-yellow-400/10 border border-yellow-400/20 rounded-lg px-3 py-2 mb-3">
+                    ⚠️ You have {maxPredictions - totalCredits} unused pick{maxPredictions - totalCredits > 1 ? 's' : ''}. Adding more increases your potential points.
+                  </div>
+                )}
                 <Button
                   onClick={handleJoinPrivateFund}
                   disabled={!allPredictionsValid() || isSubmitting || !user || user.total_balance < fund.entry_fee}
