@@ -124,9 +124,9 @@ export default function Home() {
                 <span className="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
                   MatchFund
                 </span>
-                Fantasy
+                <span className="bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">Fantasy</span>
               </h1>
-              <p className="text-gray-400 text-lg">{t("home_subtitle")}</p>
+              <p className="text-gray-400 text-lg">World Cup 2026 • Prediction Pools</p>
             </div>
             <Link to={createPageUrl("CreateFund")}>
               <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold px-6 py-6 text-lg shadow-2xl shadow-orange-500/30">
