@@ -56,7 +56,7 @@ export default function Home() {
       const upcomingWC = wcRaw
         .filter(m => new Date(m.match_date) > now)
         .sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
-        .slice(0, 24);
+        ;
       setWcMatches(upcomingWC);
 
       setFunds(allFunds);
