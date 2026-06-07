@@ -141,7 +141,7 @@ export default function Layout({ children, currentPageName }) {
                 <Trophy className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-xl text-white tracking-tight">MatchFund</h2>
+                <h2 className="font-bold text-xl tracking-tight bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">MatchFund</h2>
                 <p className="text-xs text-orange-400 font-medium">Fantasy</p>
               </div>
             </div>
