@@ -65,6 +65,8 @@ export default function CreateFund() {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [matchFilter, setMatchFilter] = useState('all');
+  const [countryFilter, setCountryFilter] = useState('');
   const [showExactScore, setShowExactScore] = useState({});
   const [exactScores, setExactScores] = useState({});
   const [fundData, setFundData] = useState({
@@ -509,13 +511,55 @@ export default function CreateFund() {
               </div>
             </Card>
 
+            {/* Filter bar */}
+            {allMatches.length > 0 && (() => {
+              const groups = [...new Set(allMatches.map(m => m.group).filter(Boolean))].sort();
+              return (
+                <div className="flex flex-col gap-3">
+                  {groups.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => setMatchFilter('all')}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${matchFilter === 'all' ? 'bg-orange-500 text-white' : 'bg-white/5 text-gray-400 hover:text-white border border-gray-700'}`}
+                      >
+                        All
+                      </button>
+                      {groups.map(g => (
+                        <button
+                          key={g}
+                          onClick={() => setMatchFilter(matchFilter === g ? 'all' : g)}
+                          className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${matchFilter === g ? 'bg-orange-500 text-white' : 'bg-white/5 text-gray-400 hover:text-white border border-gray-700'}`}
+                        >
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    placeholder="Filter by country..."
+                    value={countryFilter}
+                    onChange={e => setCountryFilter(e.target.value)}
+                    className="text-sm bg-white/5 border border-gray-700 rounded-lg px-3 py-1.5 text-white placeholder-gray-500 w-48 focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+              );
+            })()}
+
             {allMatches.length === 0 ? (
               <Card className="p-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] text-center">
                 <p className="text-gray-400">No upcoming matches available.</p>
               </Card>
             ) : (
               <div className="space-y-3">
-                {allMatches.map((match) => {
+                {allMatches
+                  .filter(m => {
+                    const groupMatch = matchFilter === 'all' || m.group === matchFilter;
+                    const c = countryFilter.toLowerCase();
+                    const countryMatch = !c || m.home_team.toLowerCase().includes(c) || m.away_team.toLowerCase().includes(c);
+                    return groupMatch && countryMatch;
+                  })
+                  .sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
+                  .map((match) => {
                   const isSelected = matches.some(m => m.id === match.id);
                   const isDisabled = !isSelected && matches.length >= 10;
                   return (
@@ -538,6 +582,13 @@ export default function CreateFund() {
                             {isSelected && <Check className="w-3 h-3 text-white" />}
                           </div>
                           <div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              {match.group && (
+                                <span className="text-xs font-medium text-orange-400 bg-orange-400/10 px-2 py-0.5 rounded-full">
+                                  {match.group}
+                                </span>
+                              )}
+                            </div>
                             <p className="text-white font-semibold">{match.home_team} vs {match.away_team}</p>
                             <p className="text-gray-400 text-sm">
                               {new Date(match.match_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} {new Date(match.match_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
