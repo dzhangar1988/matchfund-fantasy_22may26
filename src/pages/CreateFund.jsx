@@ -660,11 +660,12 @@ export default function CreateFund() {
                     }
                   </AlertDescription>
                 </Alert>
-              </Card>
-              <InfoCard />
-            </div>
+                </Card>
+                </div>
 
-            <TooltipProvider>
+                <InfoCard />
+
+                <TooltipProvider>
               <div className="space-y-4 mb-6">
                 {matches.map((match) => {
                   const opts = predictions[match.id] || [];
