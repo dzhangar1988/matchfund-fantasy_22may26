@@ -140,7 +140,7 @@ export default function Layout({ children, currentPageName }) {
         </div>
       )}
       
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-[#0A1628] via-[#0F1E35] to-[#000000]">
+      <div className="h-screen flex w-full bg-gradient-to-br from-[#0A1628] via-[#0F1E35] to-[#000000]">
         <Sidebar className="border-r border-gray-800 bg-[#0A1628]/80 backdrop-blur-xl">
           <SidebarHeader className="border-b border-gray-800 p-6">
             <div className="flex items-center gap-3">
@@ -260,10 +260,7 @@ export default function Layout({ children, currentPageName }) {
 
           <MobileHeader />
 
-          <div
-            className="flex-1 overflow-auto pb-[env(safe-area-inset-bottom)] md:pb-0"
-            style={{ overscrollBehavior: "none" }}
-          >
+          <div className="flex-1 overflow-y-auto overflow-x-hidden pb-[env(safe-area-inset-bottom)] md:pb-0">
             <div key={location.pathname} className="md:pb-0 pb-16 page-enter">{children}</div>
           </div>
         </main>
