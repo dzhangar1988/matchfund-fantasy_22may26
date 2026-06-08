@@ -60,8 +60,8 @@ export default function InfoCard() {
             <div className="flex items-start gap-2">
               <span className="text-purple-400 font-bold">•</span>
               <div>
-                <strong className="text-white">Goals total</strong> (3+ / 0-2):
-                <span className="text-purple-400 font-bold ml-1">2.5 pts</span>
+                <strong className="text-white">Goals total</strong> (Over 2.5 / Under 2.5):
+                <span className="text-purple-400 font-bold ml-1">2 pts</span>
               </div>
             </div>
 
@@ -91,7 +91,7 @@ export default function InfoCard() {
 
             <div className="mt-3 p-2 rounded bg-blue-500/10 border border-blue-500/20">
               <p className="text-xs text-blue-300">
-                💡 <strong>Tip:</strong> Use your predictions wisely — unused credits are lost!
+                💡 <strong>Tip:</strong> Extra picks increase your points potential — use them all!
               </p>
             </div>
           </div>
