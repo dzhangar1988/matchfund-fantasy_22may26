@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Home, Plus, User, Crown, BarChart2 } from "lucide-react";
 import { createPageUrl } from "@/utils";
 
@@ -13,6 +13,18 @@ const tabs = [
 
 export default function MobileBottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleTabPress = (tab) => {
+    const isActive = location.pathname === tab.url ||
+      (tab.url !== "/" && location.pathname.startsWith(tab.url));
+    if (isActive) {
+      // Already on this tab — navigate to its root to reset stack
+      navigate(tab.url, { replace: true });
+    } else {
+      navigate(tab.url);
+    }
+  };
 
   return (
     <nav
@@ -20,27 +32,29 @@ export default function MobileBottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       {tabs.map((tab) => {
-        const isActive = location.pathname === tab.url || 
+        const isActive = location.pathname === tab.url ||
           (tab.url !== "/" && location.pathname.startsWith(tab.url));
         return (
-          <Link
+          <button
             key={tab.label}
-            to={tab.url}
-            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 select-none"
-            style={{ minHeight: 56 }}
+            onClick={() => handleTabPress(tab)}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 rounded-none"
+            style={{ minHeight: 56, WebkitTapHighlightColor: "transparent" }}
+            aria-label={tab.label}
+            aria-current={isActive ? "page" : undefined}
           >
             <tab.icon
               className={`w-5 h-5 transition-colors ${isActive ? "text-orange-400" : "text-gray-500"}`}
             />
             <span
-              className={`text-[10px] font-medium transition-colors ${isActive ? "text-orange-400" : "text-gray-500"}`}
+              className={`text-xs font-medium transition-colors ${isActive ? "text-orange-400" : "text-gray-500"}`}
             >
               {tab.label}
             </span>
             {isActive && (
               <span className="absolute bottom-0 w-6 h-0.5 bg-orange-400 rounded-t-full" />
             )}
-          </Link>
+          </button>
         );
       })}
     </nav>

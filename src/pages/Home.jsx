@@ -255,7 +255,7 @@ export default function Home() {
                 <p className="text-gray-400 mb-4">You're not in any active funds yet.</p>
                 <Button
                   variant="outline"
-                  className="border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                  className="border-orange-500/50 text-orange-400 hover:bg-orange-500/10 min-h-[44px]"
                   onClick={() => openFundsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
                 >
                   Browse Open Funds
@@ -319,13 +319,15 @@ export default function Home() {
               <div className="inline-flex rounded-full bg-white/5 border border-gray-700 p-1 mb-5">
                 <button
                   onClick={() => setWcView('date')}
-                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${wcView === 'date' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'}`}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus-visible:ring-2 focus-visible:ring-orange-400 ${wcView === 'date' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'}`}
+                  style={{ minHeight: 44 }}
                 >
                   By Date
                 </button>
                 <button
                   onClick={() => setWcView('group')}
-                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${wcView === 'group' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'}`}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-all focus-visible:ring-2 focus-visible:ring-orange-400 ${wcView === 'group' ? 'bg-orange-500 text-white' : 'text-gray-400 hover:text-white'}`}
+                  style={{ minHeight: 44 }}
                 >
                   By Group
                 </button>

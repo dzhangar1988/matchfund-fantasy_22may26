@@ -1,4 +1,5 @@
 import './App.css'
+import React, { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -7,10 +8,12 @@ import NavigationTracker from '@/lib/NavigationTracker'
 import { pagesConfig } from './pages.config'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
-import Portfolio from './pages/Portfolio';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+
+// Lazy-load heavy pages for code splitting
+const Portfolio = lazy(() => import('./pages/Portfolio'));
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -62,7 +65,11 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
-      <Route path="/portfolio" element={<LayoutWrapper currentPageName="Portfolio"><Portfolio /></LayoutWrapper>} />
+      <Route path="/portfolio" element={
+        <Suspense fallback={<div className="fixed inset-0 flex items-center justify-center"><div className="w-8 h-8 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" /></div>}>
+          <LayoutWrapper currentPageName="Portfolio"><Portfolio /></LayoutWrapper>
+        </Suspense>
+      } />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

@@ -2,6 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Mobile: prevent rubber-band / overscroll bounce ── */
+html, body, #root {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Page transition animations ── */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes page-exit {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(-18px); }
+}
+.page-enter {
+  animation: page-enter 0.22s ease-out both;
+}
+
+/* ── Ensure minimum readable font size on mobile ── */
+@media (max-width: 768px) {
+  .text-xs { font-size: 0.8125rem !important; line-height: 1.25rem !important; }
+}
+
+/* ── Accessible focus ring for interactive elements ── */
+:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+}
+
 
 /* :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
