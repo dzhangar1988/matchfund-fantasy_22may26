@@ -422,7 +422,7 @@ export default function CreateFund() {
   const stepLabels = ["Matches", "Predictions", "Settings", "Prize"];
 
   return (
-    <div className="min-h-screen p-4 md:p-8 bg-[#0C1523]">
+    <div className="p-4 md:p-8 pb-28 md:pb-8 bg-[#0C1523] min-h-full">
       <div className="max-w-4xl mx-auto">
 
         <Button
@@ -604,7 +604,7 @@ export default function CreateFund() {
               </div>
             )}
 
-            <div className="sticky bottom-0 bg-[#0C1523] pt-4">
+            <div className="sticky bottom-16 md:bottom-0 bg-[#0C1523] pt-4 pb-2">
               <Button
                 onClick={() => setStep(2)}
                 disabled={matches.length < 1}
@@ -922,7 +922,7 @@ export default function CreateFund() {
               </div>
             </TooltipProvider>
 
-            <div className="sticky bottom-0 bg-[#0C1523] pt-4">
+            <div className="sticky bottom-16 md:bottom-0 bg-[#0C1523] pt-4 pb-2">
               <Card className="p-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
                 <div className="flex flex-col md:flex-row gap-4">
                   {!isQuickCreate && (
