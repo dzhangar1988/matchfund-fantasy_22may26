@@ -78,9 +78,45 @@ export default function Profile() {
 
   const handleDeleteAccount = async () => {
     try {
+      // Delete all user-owned data before logging out
+      const [participations, predictions, funds, respects, transactions, listings, purchases] = await Promise.all([
+        base44.entities.Participation.filter({ user_id: user.id }),
+        base44.entities.Prediction.filter({}),
+        base44.entities.MatchFund.filter({ creator_id: user.id }),
+        base44.entities.ShowRespect.filter({ giver_id: user.id }),
+        base44.entities.Transaction.filter({ user_id: user.id }),
+        base44.entities.ShareListing.filter({ seller_id: user.id }),
+        base44.entities.SharePurchase.filter({ buyer_id: user.id }),
+      ]);
+
+      // Delete predictions tied to this user's participations
+      const participationIds = new Set(participations.map(p => p.id));
+      const userPredictions = predictions.filter(p => participationIds.has(p.participation_id));
+      await Promise.all(userPredictions.map(p => base44.entities.Prediction.delete(p.id)));
+
+      // Delete participations
+      await Promise.all(participations.map(p => base44.entities.Participation.delete(p.id)));
+
+      // Cancel (not delete) funds the user created so participants aren't stranded
+      await Promise.all(funds.map(f =>
+        f.status !== 'finished' && f.status !== 'cancelled'
+          ? base44.entities.MatchFund.update(f.id, { status: 'cancelled' })
+          : Promise.resolve()
+      ));
+
+      // Delete respects given, transactions, share data
+      await Promise.all([
+        ...respects.map(r => base44.entities.ShowRespect.delete(r.id)),
+        ...transactions.map(t => base44.entities.Transaction.delete(t.id)),
+        ...listings.map(l => base44.entities.ShareListing.update(l.id, { status: 'cancelled' })),
+        ...purchases.map(p => base44.entities.SharePurchase.delete(p.id)),
+      ]);
+
       await base44.auth.logout();
     } catch (e) {
-      console.error("Logout error:", e);
+      console.error("Delete account error:", e);
+      // Still log out even if cleanup partially fails
+      await base44.auth.logout();
     }
   };
 

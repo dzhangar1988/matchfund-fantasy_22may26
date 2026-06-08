@@ -315,6 +315,32 @@ export default function FundDetails() {
     
     setIsSubmitting(true);
     setError(null);
+
+    // ── Optimistic UI: immediately show joined state ──
+    const optimisticParticipation = {
+      id: "__optimistic__",
+      fund_id: fundId,
+      user_id: user.id,
+      user_name: user.username || user.full_name || user.email,
+      entry_paid: fund.entry_fee,
+      status: "active",
+      total_points: 0,
+      credits_used: getTotalCredits(),
+      predictions_completed_at: new Date().toISOString(),
+      is_creator: false,
+    };
+    setHasJoined(true);
+    setMyParticipation(optimisticParticipation);
+    setMyPredictions(
+      matches.map(m => ({
+        id: `__opt_${m.id}`,
+        participation_id: "__optimistic__",
+        match_id: m.id,
+        selected_options: predictions[m.id] || [],
+        credits_spent: (predictions[m.id] || []).length,
+        points_earned: 0,
+      }))
+    );
     
     try {
       if (!user || user.total_balance === null || user.total_balance === undefined) {
@@ -379,6 +405,10 @@ export default function FundDetails() {
       await loadData();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
+      // Rollback optimistic update on failure
+      setHasJoined(false);
+      setMyParticipation(null);
+      setMyPredictions([]);
       setError(error.message || "Failed to submit predictions");
     } finally {
       setIsSubmitting(false);

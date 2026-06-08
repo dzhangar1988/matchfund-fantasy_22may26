@@ -89,12 +89,20 @@ export default function OrderBook({
     }
     setBuyingId(listing.id);
     setActionError("");
+
+    // ── Optimistic UI: update listing count immediately ──
+    const remaining = listing.shares_available - qty;
+    setListings(prev => prev
+      .map(l => l.id === listing.id ? { ...l, shares_available: remaining } : l)
+      .filter(l => l.shares_available > 0)
+    );
+    setBuyQty(prev => ({ ...prev, [listing.id]: "" }));
+    setActionSuccess(`Bought ${qty} share(s) for ${cost} pts!`);
+
     try {
-      // Deduct buyer balance
       await base44.entities.User.update(currentUser.id, {
         total_balance: (currentUser.total_balance || 0) - cost,
       });
-      // Create purchase record
       await base44.entities.SharePurchase.create({
         listing_id: listing.id,
         fund_id: fundId,
@@ -105,17 +113,16 @@ export default function OrderBook({
         total_cost: cost,
         purchased_at: new Date().toISOString(),
       });
-      // Reduce shares_available or cancel listing
-      const remaining = listing.shares_available - qty;
       await base44.entities.ShareListing.update(listing.id, {
         shares_available: remaining,
         status: remaining <= 0 ? "cancelled" : "active",
       });
-      setActionSuccess(`Bought ${qty} share(s) for ${cost} pts!`);
-      setBuyQty(prev => ({ ...prev, [listing.id]: "" }));
       await loadListings();
       onRefresh && onRefresh();
     } catch (e) {
+      // Rollback optimistic update
+      setListings(prev => [...prev, listing]);
+      setActionSuccess("");
       setActionError(e.message || "Purchase failed");
     }
     setBuyingId(null);
@@ -134,6 +141,22 @@ export default function OrderBook({
     }
     setIsSelling(true);
     setActionError("");
+
+    // ── Optimistic UI: add listing immediately ──
+    const optimisticListing = {
+      id: "__opt__",
+      fund_id: fundId,
+      seller_id: participant.user_id,
+      participation_id: participant.id,
+      shares_available: qty,
+      price_per_share: price,
+      status: "active",
+    };
+    setMyListings(prev => [...prev, optimisticListing]);
+    setSellQty("");
+    setSellPrice("");
+    setActionSuccess(`Listed ${qty} share(s) at ${price} pts/share`);
+
     try {
       await base44.entities.ShareListing.create({
         fund_id: fundId,
@@ -143,12 +166,12 @@ export default function OrderBook({
         price_per_share: price,
         status: "active",
       });
-      setSellQty("");
-      setSellPrice("");
-      setActionSuccess(`Listed ${qty} share(s) at ${price} pts/share`);
       await loadListings();
       onRefresh && onRefresh();
     } catch (e) {
+      // Rollback
+      setMyListings(prev => prev.filter(l => l.id !== "__opt__"));
+      setActionSuccess("");
       setActionError(e.message || "Failed to list");
     }
     setIsSelling(false);

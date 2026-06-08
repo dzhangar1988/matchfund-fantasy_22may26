@@ -264,7 +264,7 @@ export default function Layout({ children, currentPageName }) {
             className="flex-1 overflow-auto pb-[env(safe-area-inset-bottom)] md:pb-0"
             style={{ overscrollBehavior: "none" }}
           >
-            <div className="md:pb-0 pb-16 page-enter">{children}</div>
+            <div key={location.pathname} className="md:pb-0 pb-16 page-enter">{children}</div>
           </div>
         </main>
         <MobileBottomNav />
