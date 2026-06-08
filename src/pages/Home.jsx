@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, Trophy, ArrowRight, Users } from "lucide-react";
+import { Plus, Trophy, ArrowRight, Users, RefreshCw } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import OpenFundsPreview from "../components/OpenFundsPreview";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
 
 export default function Home() {
   const { t } = useLanguage();
@@ -22,6 +23,7 @@ export default function Home() {
   const [wcView, setWcView] = useState('date');
   const [isLoading, setIsLoading] = useState(true);
   const openFundsSectionRef = useRef(null);
+  const { containerRef, pulling, pullDistance, refreshing } = usePullToRefresh(loadData);
 
   useEffect(() => {
     loadData();
@@ -114,7 +116,19 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
+    <div className="min-h-screen p-4 md:p-8" ref={containerRef}>
+      {/* Pull-to-refresh indicator (mobile only) */}
+      {(pulling || refreshing) && (
+        <div
+          className="md:hidden flex items-center justify-center transition-all duration-200"
+          style={{ height: Math.min(pullDistance, 70), overflow: "hidden" }}
+        >
+          <RefreshCw
+            className={`w-5 h-5 text-orange-400 ${refreshing ? "animate-spin" : ""}`}
+            style={{ transform: refreshing ? undefined : `rotate(${(pullDistance / 70) * 180}deg)` }}
+          />
+        </div>
+      )}
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">

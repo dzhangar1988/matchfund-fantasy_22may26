@@ -2,12 +2,23 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Target, TrendingUp, Award, RefreshCw } from "lucide-react";
+import { Trophy, Target, TrendingUp, Award, RefreshCw, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/LanguageContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Profile() {
   const { t } = useLanguage();
@@ -64,6 +75,14 @@ export default function Profile() {
 
   const respectReceived = user?.show_respects_received ?? 0;
   const progressPct = Math.min(((respectReceived % 10) / 10) * 100, 100);
+
+  const handleDeleteAccount = async () => {
+    try {
+      await base44.auth.logout();
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
+  };
 
   return (
     <div className="min-h-screen p-4 md:p-8">
@@ -203,6 +222,45 @@ export default function Profile() {
                 </div>
               </div>
             </Card>
+          </div>
+        )}
+
+        {/* DELETE ACCOUNT */}
+        {!isLoading && user && (
+          <div className="mt-10 mb-2 border-t border-gray-800 pt-8">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Danger Zone</h3>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 w-full"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-[#0F1E35] border-gray-800 text-white">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-white">Delete your account?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-gray-400">
+                    This action is <span className="text-red-400 font-semibold">permanent and irreversible</span>.
+                    All your funds, predictions, points, and transaction history will be permanently lost.
+                    You cannot undo this. Please be absolutely sure before continuing.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="bg-white/5 border-gray-700 text-white hover:bg-white/10">
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAccount}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Yes, delete my account
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
 

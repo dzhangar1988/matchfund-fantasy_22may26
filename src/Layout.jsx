@@ -4,6 +4,8 @@ import { createPageUrl } from "@/utils";
 import { base44 } from "@/api/base44Client";
 import { Trophy, Plus, Home, User as UserIcon, Crown, LogOut, HelpCircle, Settings, BarChart2 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
+import MobileBottomNav from "@/components/MobileBottomNav";
+import MobileHeader from "@/components/MobileHeader";
 import {
   Sidebar,
   SidebarContent,
@@ -102,6 +104,11 @@ export default function Layout({ children, currentPageName }) {
         body {
           background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
           color: #FFFFFF;
+        }
+        button, a, [role="button"], nav, .select-none {
+          -webkit-user-select: none;
+          user-select: none;
+          -webkit-tap-highlight-color: transparent;
         }
       `}</style>
       
@@ -241,15 +248,23 @@ export default function Layout({ children, currentPageName }) {
         </Sidebar>
 
         <main className="flex-1 flex flex-col">
-          <header className="bg-[#0A1628]/60 backdrop-blur-xl border-b border-gray-800 px-6 py-4 md:hidden">
+          <header
+            className="bg-[#0A1628]/60 backdrop-blur-xl border-b border-gray-800 px-6 py-4 md:hidden"
+            style={{ paddingTop: `calc(1rem + env(safe-area-inset-top))` }}
+          >
             <div className="flex items-center gap-4">
-              <SidebarTrigger className="hover:bg-white/5 p-2 rounded-lg transition-colors duration-200" />
+              <SidebarTrigger className="hover:bg-white/5 rounded-lg transition-colors duration-200 select-none" style={{ minWidth: 44, minHeight: 44 }} />
               <h1 className="text-xl font-bold text-white">MatchFund Fantasy</h1>
             </div>
           </header>
 
-          <div className="flex-1 overflow-auto">{children}</div>
+          <MobileHeader />
+
+          <div className="flex-1 overflow-auto pb-[env(safe-area-inset-bottom)] md:pb-0">
+            <div className="md:pb-0 pb-16">{children}</div>
+          </div>
         </main>
+        <MobileBottomNav />
       </div>
     </SidebarProvider>
   );
