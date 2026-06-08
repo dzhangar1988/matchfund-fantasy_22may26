@@ -23,7 +23,6 @@ export default function Home() {
   const [wcView, setWcView] = useState('date');
   const [isLoading, setIsLoading] = useState(true);
   const openFundsSectionRef = useRef(null);
-  const { containerRef, pulling, pullDistance, refreshing } = usePullToRefresh(loadData);
 
   useEffect(() => {
     loadData();
@@ -102,6 +101,8 @@ export default function Home() {
     setFunds(allFunds);
     setIsLoading(false);
   };
+
+  const { containerRef, pulling, pullDistance, refreshing } = usePullToRefresh(loadData);
 
   const myActiveFundIds = new Set(myActiveFunds.map(f => f.id));
   const openFunds = funds.filter(f => (f.status === "open" || f.status === "in_progress") && !myActiveFundIds.has(f.id));
