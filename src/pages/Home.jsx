@@ -116,14 +116,8 @@ export default function Home() {
     }
   ];
 
-  // Attach pull-to-refresh to the Layout's scrollable container
-  useEffect(() => {
-    const scrollEl = document.querySelector('.flex-1.overflow-auto');
-    if (scrollEl && containerRef) containerRef.current = scrollEl;
-  }, [containerRef]);
-
   return (
-    <div className="min-h-screen p-4 md:p-8">
+    <div className="p-4 md:p-8 pb-24 md:pb-8" ref={containerRef}>
       {/* Pull-to-refresh indicator (mobile only) */}
       {(pulling || refreshing) && (
         <div
