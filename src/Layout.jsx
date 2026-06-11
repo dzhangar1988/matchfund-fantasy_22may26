@@ -183,7 +183,7 @@ export default function Layout({ children, currentPageName }) {
                         className={`mb-2 rounded-lg transition-all duration-200 ${
                           location.pathname === item.url
                             ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30"
-                            : "hover:bg-white/5 text-gray-100 hover:text-white"
+                            : "hover:bg-white/5 text-gray-300 hover:text-white"
                         }`}
                       >
                         <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
