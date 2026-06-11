@@ -218,7 +218,7 @@ Deno.serve(async (req) => {
           prizeUpdates.push(
             base44.asServiceRole.entities.Participation.update(part.id, {
               status: prize > 0 ? 'winner' : 'loser',
-              prize_won: prize
+              final_payout: prize
             })
           );
           if (prize > 0) {
