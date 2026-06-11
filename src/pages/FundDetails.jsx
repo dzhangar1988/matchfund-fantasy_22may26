@@ -301,7 +301,7 @@ export default function FundDetails() {
   const allPredictionsValid = () => {
     if (matches.length === 0) return false;
     const total = getTotalCredits();
-    return total >= 1 && total <= maxPredictions;
+    return total >= matches.length && total <= maxPredictions;
   };
 
   const submitPredictions = async () => {
