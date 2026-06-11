@@ -2,23 +2,12 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trophy, Target, TrendingUp, Award, RefreshCw, Trash2 } from "lucide-react";
+import { Trophy, Target, TrendingUp, Award, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useLanguage } from "@/lib/LanguageContext";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 export default function Profile() {
   const { t } = useLanguage();
@@ -76,49 +65,6 @@ export default function Profile() {
   const respectReceived = user?.show_respects_received ?? 0;
   const progressPct = Math.min(((respectReceived % 10) / 10) * 100, 100);
 
-  const handleDeleteAccount = async () => {
-    try {
-      // Delete all user-owned data before logging out
-      const [participations, predictions, funds, respects, transactions, listings, purchases] = await Promise.all([
-        base44.entities.Participation.filter({ user_id: user.id }),
-        base44.entities.Prediction.filter({}),
-        base44.entities.MatchFund.filter({ creator_id: user.id }),
-        base44.entities.ShowRespect.filter({ giver_id: user.id }),
-        base44.entities.Transaction.filter({ user_id: user.id }),
-        base44.entities.ShareListing.filter({ seller_id: user.id }),
-        base44.entities.SharePurchase.filter({ buyer_id: user.id }),
-      ]);
-
-      // Delete predictions tied to this user's participations
-      const participationIds = new Set(participations.map(p => p.id));
-      const userPredictions = predictions.filter(p => participationIds.has(p.participation_id));
-      await Promise.all(userPredictions.map(p => base44.entities.Prediction.delete(p.id)));
-
-      // Delete participations
-      await Promise.all(participations.map(p => base44.entities.Participation.delete(p.id)));
-
-      // Cancel (not delete) funds the user created so participants aren't stranded
-      await Promise.all(funds.map(f =>
-        f.status !== 'finished' && f.status !== 'cancelled'
-          ? base44.entities.MatchFund.update(f.id, { status: 'cancelled' })
-          : Promise.resolve()
-      ));
-
-      // Delete respects given, transactions, share data
-      await Promise.all([
-        ...respects.map(r => base44.entities.ShowRespect.delete(r.id)),
-        ...transactions.map(t => base44.entities.Transaction.delete(t.id)),
-        ...listings.map(l => base44.entities.ShareListing.update(l.id, { status: 'cancelled' })),
-        ...purchases.map(p => base44.entities.SharePurchase.delete(p.id)),
-      ]);
-
-      await base44.auth.logout();
-    } catch (e) {
-      console.error("Delete account error:", e);
-      // Still log out even if cleanup partially fails
-      await base44.auth.logout();
-    }
-  };
 
   return (
     <div className="min-h-screen p-4 md:p-8">
@@ -261,44 +207,6 @@ export default function Profile() {
           </div>
         )}
 
-        {/* DELETE ACCOUNT */}
-        {!isLoading && user && (
-          <div className="mt-10 mb-2 border-t border-gray-800 pt-8">
-            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Danger Zone</h3>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="border-red-500/40 text-red-400 hover:bg-red-500/10 hover:border-red-500/70 w-full"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Account
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="bg-[#0F1E35] border-gray-800 text-white">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="text-white">Delete your account?</AlertDialogTitle>
-                  <AlertDialogDescription className="text-gray-400">
-                    This action is <span className="text-red-400 font-semibold">permanent and irreversible</span>.
-                    All your funds, predictions, points, and transaction history will be permanently lost.
-                    You cannot undo this. Please be absolutely sure before continuing.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="bg-white/5 border-gray-700 text-white hover:bg-white/10">
-                    Cancel
-                  </AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAccount}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Yes, delete my account
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        )}
 
         {/* MY FUNDS */}
         {!isLoading && (
