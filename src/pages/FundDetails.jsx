@@ -1080,7 +1080,7 @@ export default function FundDetails() {
                         ], color: "bg-blue-500 border-blue-500"
                       },
                       {
-                        label: "Total Goals (2.5 pts)", options: [
+                        label: "Total Goals (2 pts)", options: [
                           { value: 'goals_over', label: 'Over 2.5' },
                           { value: 'goals_under', label: 'Under 2.5' },
                         ], color: "bg-blue-500 border-blue-500"
@@ -1405,9 +1405,9 @@ export default function FundDetails() {
                           </div>
                         </div>
 
-                        {/* Goals Over/Under — 2.5 pts */}
+                        {/* Goals Over/Under — 2 pts */}
                         <div>
-                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Total Goals <span className="normal-case text-gray-600">(2.5 pts)</span></p>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Total Goals <span className="normal-case text-gray-600">(2 pts)</span></p>
                           <div className="flex gap-2 flex-wrap">
                             {[
                               { value: 'goals_over', label: 'Over 2.5 Goals' },
