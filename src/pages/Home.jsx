@@ -50,14 +50,15 @@ export default function Home() {
         base44.entities.Participation.list(),
         base44.entities.SharePurchase.list(),
         MatchFund.list("-created_date"),
-        base44.entities.Match.filter({ status: "upcoming", competition: "World Cup 2026" }),
+        base44.entities.Match.filter({ competition: "World Cup 2026" }),
       ]);
 
       const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const upcomingWC = wcRaw
-        .filter(m => new Date(m.match_date) > now)
-        .sort((a, b) => new Date(a.match_date) - new Date(b.match_date))
-        ;
+        .filter(m => ["upcoming", "live"].includes(m.status) || new Date(m.match_date) >= todayStart)
+        .filter(m => m.status !== "finished" && m.status !== "cancelled" && m.status !== "postponed")
+        .sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
       setWcMatches(upcomingWC);
 
       setFunds(allFunds);
@@ -279,9 +280,13 @@ export default function Home() {
                   <span className="text-white font-bold text-base leading-tight">
                     {match.home_team} <span className="text-gray-500 font-normal">vs</span> {match.away_team}
                   </span>
-                  <span className="text-xs text-gray-400 shrink-0">
-                    {new Date(match.match_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+                  {match.status === "live" ? (
+                    <span className="text-xs text-red-400 font-bold shrink-0 animate-pulse">🔴 LIVE</span>
+                  ) : (
+                    <span className="text-xs text-gray-400 shrink-0">
+                      {new Date(match.match_date).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  )}
                 </div>
               </div>
               <Link to={createPageUrl("CreateFund")}>
