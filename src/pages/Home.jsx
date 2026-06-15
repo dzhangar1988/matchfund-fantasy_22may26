@@ -106,12 +106,8 @@ export default function Home() {
   const { containerRef, pulling, pullDistance, refreshing } = usePullToRefresh(loadData);
 
   const myActiveFundIds = new Set(myActiveFunds.map(f => f.id));
-  const isAdmin = user?.role === "admin";
-  // Show all open/in_progress funds in Open Funds section
-  // Only hide funds where user is a PLAYER (has participation), not just creator
-  const openFunds = funds.filter(f => 
-    f.status === "open" || f.status === "in_progress"
-  );
+  // Show all open/in_progress funds - funds state already only contains open+in_progress
+  const openFunds = funds;
 
   const stats = [
     { 
@@ -386,7 +382,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <OpenFundsPreview funds={openFunds} totalCount={openFunds.length} allFundsCount={funds.filter(f => f.status === "open" || f.status === "in_progress").length} />
+          <OpenFundsPreview funds={openFunds} totalCount={openFunds.length} allFundsCount={openFunds.length} />
         )}
       </div>
     </div>
