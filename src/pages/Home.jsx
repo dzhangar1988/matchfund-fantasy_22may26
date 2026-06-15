@@ -44,12 +44,14 @@ export default function Home() {
 
       setUser(currentUser);
 
-      const [participations, sharePurchases, allFunds, wcRaw] = await Promise.all([
+      const [participations, sharePurchases, openFundsRaw, inProgressFundsRaw, wcRaw] = await Promise.all([
         base44.entities.Participation.filter({ user_id: currentUser.id }),
         base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
-        base44.entities.MatchFund.filter({}, "-created_date", 100),
+        base44.entities.MatchFund.filter({ status: "open" }, "-created_date", 100),
+        base44.entities.MatchFund.filter({ status: "in_progress" }, "-created_date", 100),
         base44.entities.Match.filter({ competition: "World Cup 2026" }),
       ]);
+      const allFunds = [...openFundsRaw, ...inProgressFundsRaw];
 
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -96,12 +98,9 @@ export default function Home() {
       setIsLoading(false);
       return;
     } catch (error) {
-      console.log("User not authenticated");
+      console.error("loadData error:", error);
+      setIsLoading(false);
     }
-
-    const allFunds = await base44.entities.MatchFund.filter({}, "-created_date", 100);
-    setFunds(allFunds);
-    setIsLoading(false);
   };
 
   const { containerRef, pulling, pullDistance, refreshing } = usePullToRefresh(loadData);
