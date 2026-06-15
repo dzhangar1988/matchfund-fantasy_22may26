@@ -107,9 +107,10 @@ export default function Home() {
 
   const myActiveFundIds = new Set(myActiveFunds.map(f => f.id));
   const isAdmin = user?.role === "admin";
+  // Show all open/in_progress funds in Open Funds section
+  // Only hide funds where user is a PLAYER (has participation), not just creator
   const openFunds = funds.filter(f => 
-    (f.status === "open" || f.status === "in_progress") && 
-    (isAdmin || !myActiveFundIds.has(f.id))
+    f.status === "open" || f.status === "in_progress"
   );
 
   const stats = [
