@@ -107,7 +107,11 @@ export default function Home() {
   const { containerRef, pulling, pullDistance, refreshing } = usePullToRefresh(loadData);
 
   const myActiveFundIds = new Set(myActiveFunds.map(f => f.id));
-  const openFunds = funds.filter(f => (f.status === "open" || f.status === "in_progress") && !myActiveFundIds.has(f.id));
+  const isAdmin = user?.role === "admin";
+  const openFunds = funds.filter(f => 
+    (f.status === "open" || f.status === "in_progress") && 
+    (isAdmin || !myActiveFundIds.has(f.id))
+  );
 
   const stats = [
     { 
