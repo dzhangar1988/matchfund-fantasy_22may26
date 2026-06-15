@@ -93,7 +93,7 @@ export default function FundCard({ fund }) {
           </div>
         </div>
 
-        <Link to={createPageUrl(`FundDetails?id=${fund.id}`)}>
+        <Link to={`/FundDetails?id=${fund.id}`}>
           <Button
             disabled={fund.status === "finished" || fund.status === "cancelled" || fund.status === "closed"}
             className={`w-full font-semibold ${
