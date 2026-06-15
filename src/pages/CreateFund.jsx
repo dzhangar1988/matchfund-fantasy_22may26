@@ -112,10 +112,15 @@ export default function CreateFund() {
     try {
       await loadUser();
       const now = new Date();
-      const allUpcoming = await base44.entities.Match.filter({ status: "upcoming" });
-      const upcomingMatches = allUpcoming.filter(m => {
+      const [allUpcoming, allLive] = await Promise.all([
+        base44.entities.Match.filter({ status: "upcoming" }),
+        base44.entities.Match.filter({ status: "live" }),
+      ]);
+      const upcomingMatches = [...allUpcoming, ...allLive].filter(m => {
         const matchTime = m.match_date.endsWith('Z') ? new Date(m.match_date) : new Date(m.match_date + 'Z');
-        return matchTime > now;
+        // Include upcoming (future) and live (started within last 3 hours)
+        const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+        return matchTime > threeHoursAgo;
       });
       const uniqueMatches = [];
       const seen = new Set();
