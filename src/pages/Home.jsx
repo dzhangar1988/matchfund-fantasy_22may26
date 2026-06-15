@@ -50,9 +50,7 @@ export default function Home() {
         base44.entities.MatchFund.list("-created_date", 100),
         base44.entities.Match.filter({ competition: "World Cup 2026" }),
       ]);
-      const statusCounts = allFundsRaw.reduce((acc, f) => { acc[f.status] = (acc[f.status] || 0) + 1; return acc; }, {});
-      console.log("Fund statuses breakdown:", statusCounts);
-      const allFunds = allFundsRaw.filter(f => ["open", "in_progress", "draft"].includes(f.status));
+      const allFunds = allFundsRaw.filter(f => f.status === "open" || f.status === "in_progress");
 
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
