@@ -47,8 +47,8 @@ export default function Home() {
       setUser(currentUser);
 
       const [participations, sharePurchases, allFunds, wcRaw] = await Promise.all([
-        base44.entities.Participation.list(),
-        base44.entities.SharePurchase.list(),
+        base44.entities.Participation.filter({ user_id: currentUser.id }),
+        base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
         MatchFund.list("-created_date"),
         base44.entities.Match.filter({ competition: "World Cup 2026" }),
       ]);
