@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MatchFund } from "@/entities/MatchFund";
-import { User } from "@/entities/User";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,10 +29,10 @@ export default function Home() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const currentUser = await User.me();
+      const currentUser = await base44.auth.me();
 
       if (currentUser.total_balance === undefined || currentUser.total_balance === null) {
-        await User.update(currentUser.id, {
+        await base44.entities.User.update(currentUser.id, {
           total_balance: 500,
           total_winnings: 0,
           total_wins: 0,
@@ -49,7 +47,7 @@ export default function Home() {
       const [participations, sharePurchases, allFunds, wcRaw] = await Promise.all([
         base44.entities.Participation.filter({ user_id: currentUser.id }),
         base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
-        MatchFund.list("-created_date"),
+        base44.entities.MatchFund.list("-created_date"),
         base44.entities.Match.filter({ competition: "World Cup 2026" }),
       ]);
 
@@ -98,7 +96,7 @@ export default function Home() {
       console.log("User not authenticated");
     }
 
-    const allFunds = await MatchFund.list("-created_date");
+    const allFunds = await base44.entities.MatchFund.list("-created_date");
     setFunds(allFunds);
     setIsLoading(false);
   };

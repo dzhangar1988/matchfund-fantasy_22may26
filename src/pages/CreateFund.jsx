@@ -112,7 +112,7 @@ export default function CreateFund() {
     try {
       await loadUser();
       const now = new Date();
-      const allUpcoming = await base44.entities.Match.filter({ status: "upcoming" }, "match_date", 100);
+      const allUpcoming = await base44.entities.Match.filter({ status: "upcoming" });
       const upcomingMatches = allUpcoming.filter(m => new Date(m.match_date) > now);
       const uniqueMatches = [];
       const seen = new Set();
