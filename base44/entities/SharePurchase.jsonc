@@ -47,6 +47,9 @@
   ],
   "rls": {
     "read": {},
+    "list": {
+      "buyer_id": "{{user.id}}"
+    },
     "write": {
       "$or": [
         {
