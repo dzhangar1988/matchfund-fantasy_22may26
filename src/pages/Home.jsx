@@ -55,7 +55,10 @@ export default function Home() {
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const upcomingWC = wcRaw
         .filter(m => m.status !== "finished" && m.status !== "cancelled" && m.status !== "postponed")
-        .filter(m => new Date(m.match_date) > now)
+        .filter(m => {
+          const matchTime = m.match_date.endsWith('Z') ? new Date(m.match_date) : new Date(m.match_date + 'Z');
+          return matchTime > now;
+        })
         .sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
       setWcMatches(upcomingWC);
 
