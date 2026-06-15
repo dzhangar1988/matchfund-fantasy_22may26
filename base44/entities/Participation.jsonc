@@ -114,10 +114,11 @@
     "entry_paid"
   ],
   "rls": {
+    "list": {},
+    "read": {},
     "create": {
       "data.user_id": "{{user.id}}"
     },
-    "read": {},
     "update": {
       "$or": [
         {
