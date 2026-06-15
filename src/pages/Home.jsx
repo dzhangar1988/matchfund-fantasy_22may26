@@ -47,7 +47,7 @@ export default function Home() {
       const [participations, sharePurchases, allFunds, wcRaw] = await Promise.all([
         base44.entities.Participation.filter({ user_id: currentUser.id }),
         base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
-        base44.entities.MatchFund.list("-created_date"),
+        base44.entities.MatchFund.filter({}, "-created_date", 100),
         base44.entities.Match.filter({ competition: "World Cup 2026" }),
       ]);
 
@@ -96,7 +96,7 @@ export default function Home() {
       console.log("User not authenticated");
     }
 
-    const allFunds = await base44.entities.MatchFund.list("-created_date");
+    const allFunds = await base44.entities.MatchFund.filter({}, "-created_date", 100);
     setFunds(allFunds);
     setIsLoading(false);
   };
