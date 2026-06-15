@@ -54,8 +54,8 @@ export default function Home() {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const upcomingWC = wcRaw
-        .filter(m => ["upcoming", "live"].includes(m.status) || new Date(m.match_date) >= todayStart)
         .filter(m => m.status !== "finished" && m.status !== "cancelled" && m.status !== "postponed")
+        .filter(m => new Date(m.match_date) > now)
         .sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
       setWcMatches(upcomingWC);
 
