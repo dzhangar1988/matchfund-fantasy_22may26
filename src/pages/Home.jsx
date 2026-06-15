@@ -379,7 +379,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <OpenFundsPreview funds={openFunds} totalCount={openFunds.length} />
+          <OpenFundsPreview funds={openFunds} totalCount={openFunds.length} allFundsCount={funds.filter(f => f.status === "open" || f.status === "in_progress").length} />
         )}
       </div>
     </div>

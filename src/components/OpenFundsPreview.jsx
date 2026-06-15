@@ -7,7 +7,7 @@ import { createPageUrl } from "@/utils";
 import FundCard from "./FundCard";
 import { useLanguage } from "@/lib/LanguageContext";
 
-export default function OpenFundsPreview({ funds, totalCount }) {
+export default function OpenFundsPreview({ funds, totalCount, allFundsCount }) {
   const { t } = useLanguage();
   const displayFunds = funds.slice(0, 3);
 
@@ -46,12 +46,17 @@ export default function OpenFundsPreview({ funds, totalCount }) {
         <Card className="border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
           <CardContent className="p-12 text-center">
             <DollarSign className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-            <h3 className="text-xl font-semibold text-white mb-2">
-              {t("no_funds")}
-            </h3>
-            <p className="text-gray-400 mb-6">
-              {t("be_first_to_create")}
-            </p>
+            {allFundsCount > 0 ? (
+              <>
+                <h3 className="text-xl font-semibold text-white mb-2">You're in all active funds!</h3>
+                <p className="text-gray-400 mb-6">You've already joined every open fund. Create a new one to keep playing.</p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold text-white mb-2">{t("no_funds")}</h3>
+                <p className="text-gray-400 mb-6">{t("be_first_to_create")}</p>
+              </>
+            )}
             <Link to={createPageUrl("CreateFund")}>
               <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
                 {t("create_fund")}
