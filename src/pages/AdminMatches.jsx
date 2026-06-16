@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1552,53 +1553,59 @@ export default function AdminMatches() {
         )}
 
         {/* Edit Match Modal */}
-        {editingMatch && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
-            <Card className="border-gray-800 bg-[#0F1E35] p-6 max-w-md w-full">
+        {editingMatch && createPortal(
+          <div
+            className="fixed inset-0 bg-black/80 flex items-start justify-center z-[9999] p-4 overflow-y-auto"
+            onClick={() => setEditingMatch(null)}
+          >
+            <div
+              className="bg-[#0F1E35] border border-gray-800 rounded-2xl p-6 max-w-md w-full my-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
               <h3 className="text-xl font-bold text-white mb-4">Edit Match</h3>
 
               <label className="text-sm text-gray-400 mb-1 block">Home Team</label>
-              <Select value={editForm.home_team} onValueChange={(v) => setEditForm({ ...editForm, home_team: v })}>
-                <SelectTrigger className="bg-white/5 border-gray-700 text-white mb-3">
-                  <SelectValue placeholder="Home team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TEAMS["World Cup 2026"].map((t) => (
-                    <SelectItem key={t} value={t} disabled={t === editForm.away_team}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={editForm.home_team}
+                onChange={(e) => setEditForm({ ...editForm, home_team: e.target.value })}
+                className="w-full bg-[#0A1628] border border-gray-700 text-white rounded-md p-2 mb-3"
+              >
+                <option value="">Select home team</option>
+                {TEAMS["World Cup 2026"].map((t) => (
+                  <option key={t} value={t} disabled={t === editForm.away_team}>{t}</option>
+                ))}
+              </select>
 
               <label className="text-sm text-gray-400 mb-1 block">Away Team</label>
-              <Select value={editForm.away_team} onValueChange={(v) => setEditForm({ ...editForm, away_team: v })}>
-                <SelectTrigger className="bg-white/5 border-gray-700 text-white mb-3">
-                  <SelectValue placeholder="Away team" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TEAMS["World Cup 2026"].map((t) => (
-                    <SelectItem key={t} value={t} disabled={t === editForm.home_team}>{t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={editForm.away_team}
+                onChange={(e) => setEditForm({ ...editForm, away_team: e.target.value })}
+                className="w-full bg-[#0A1628] border border-gray-700 text-white rounded-md p-2 mb-3"
+              >
+                <option value="">Select away team</option>
+                {TEAMS["World Cup 2026"].map((t) => (
+                  <option key={t} value={t} disabled={t === editForm.home_team}>{t}</option>
+                ))}
+              </select>
 
               <label className="text-sm text-gray-400 mb-1 block">Group</label>
-              <Select value={editForm.group} onValueChange={(v) => setEditForm({ ...editForm, group: v })}>
-                <SelectTrigger className="bg-white/5 border-gray-700 text-white mb-3">
-                  <SelectValue placeholder="Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  {["A","B","C","D","E","F","G","H","I","J","K","L"].map((g) => (
-                    <SelectItem key={g} value={`Group ${g}`}>Group {g}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select
+                value={editForm.group}
+                onChange={(e) => setEditForm({ ...editForm, group: e.target.value })}
+                className="w-full bg-[#0A1628] border border-gray-700 text-white rounded-md p-2 mb-3"
+              >
+                <option value="">No group</option>
+                {["A","B","C","D","E","F","G","H","I","J","K","L"].map((g) => (
+                  <option key={g} value={`Group ${g}`}>Group {g}</option>
+                ))}
+              </select>
 
               <label className="text-sm text-gray-400 mb-1 block">Date & Time (local)</label>
-              <Input
+              <input
                 type="datetime-local"
                 value={editForm.match_date}
                 onChange={(e) => setEditForm({ ...editForm, match_date: e.target.value })}
-                className="bg-white/5 border-gray-700 text-white mb-6"
+                className="w-full bg-[#0A1628] border border-gray-700 text-white rounded-md p-2 mb-6"
               />
 
               <div className="flex gap-3">
@@ -1609,20 +1616,21 @@ export default function AdminMatches() {
                   Save
                 </Button>
               </div>
-            </Card>
-          </div>
+            </div>
+          </div>,
+          document.body
         )}
 
         {/* Edit Date Modal */}
-        {editingDateMatchId && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
-            <Card className="border-gray-800 bg-[#0F1E35] p-6 max-w-md w-full">
+        {editingDateMatchId && createPortal(
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4" onClick={() => setEditingDateMatchId(null)}>
+            <div className="bg-[#0F1E35] border border-gray-800 rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-xl font-bold text-white mb-4">Edit Match Date & Time</h3>
-              <Input
+              <input
                 type="datetime-local"
                 value={editDate}
                 onChange={(e) => setEditDate(e.target.value)}
-                className="bg-white/5 border-gray-700 text-white mb-6"
+                className="w-full bg-[#0A1628] border border-gray-700 text-white rounded-md p-2 mb-6"
               />
               <div className="flex gap-3">
                 <Button variant="outline" onClick={() => setEditingDateMatchId(null)} className="flex-1 border-gray-700">
@@ -1632,14 +1640,15 @@ export default function AdminMatches() {
                   Save Date
                 </Button>
               </div>
-            </Card>
-          </div>
+            </div>
+          </div>,
+          document.body
         )}
 
         {/* Simple Edit Modal */}
-        {editingMatchId && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
-            <Card className="border-gray-800 bg-[#0F1E35] p-6 max-w-md w-full">
+        {editingMatchId && createPortal(
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4" onClick={() => setEditingMatchId(null)}>
+            <div className="bg-[#0F1E35] border border-gray-800 rounded-2xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-xl font-bold text-white mb-4">Edit Match Score</h3>
               <div className="flex items-center justify-center gap-3 mb-6">
                 <Input
@@ -1683,8 +1692,9 @@ export default function AdminMatches() {
               <p className="text-xs text-gray-400 mt-3 text-center">
                 This will automatically recalculate all affected funds.
               </p>
-            </Card>
-          </div>
+            </div>
+          </div>,
+          document.body
         )}
 
         <Card className="mb-8 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
