@@ -145,6 +145,8 @@ export default function AdminMatches() {
   const [editScore, setEditScore] = useState({ home: 0, away: 0 });
   const [editingDateMatchId, setEditingDateMatchId] = useState(null);
   const [editDate, setEditDate] = useState("");
+  const [editingMatch, setEditingMatch] = useState(null);
+  const [editForm, setEditForm] = useState({ home_team: "", away_team: "", group: "", match_date: "" });
   const [showArchived, setShowArchived] = useState(false);
 
   const [allUsers, setAllUsers] = useState([]);
