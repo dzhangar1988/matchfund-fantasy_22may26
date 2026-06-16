@@ -61,7 +61,7 @@ export default function Portfolio() {
         fundIdsToLoad.map(id =>
           createdFundsMap[id]
             ? Promise.resolve(createdFundsMap[id])
-            : base44.functions.invoke('getFundById', { fund_id: id }).then(r => r?.fund).catch(() => null)
+            : base44.entities.MatchFund.get(id).catch(() => null)
         )
       )).filter(Boolean);
 
@@ -105,7 +105,7 @@ export default function Portfolio() {
       const purchases = await base44.entities.SharePurchase.filter({ buyer_id: currentUser.id });
       const invFundIds = [...new Set(purchases.map(p => p.fund_id))];
       const [allFundsForInv, allUsersForInv] = await Promise.all([
-        Promise.all(invFundIds.map(id => base44.functions.invoke('getFundById', { fund_id: id }).then(r => r?.fund).catch(() => null))).then(r => r.filter(Boolean)),
+        Promise.all(invFundIds.map(id => base44.entities.MatchFund.get(id).catch(() => null))).then(r => r.filter(Boolean)),
         base44.entities.User.list(),
       ]);
       const allParticipationsForInv = await Promise.all(
