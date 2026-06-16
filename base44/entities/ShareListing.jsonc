@@ -40,11 +40,26 @@
     "price_per_share"
   ],
   "rls": {
+    "create": {
+      "data.seller_id": "{{user.id}}"
+    },
     "read": {},
-    "write": {
+    "update": {
       "$or": [
         {
-          "seller_id": "{{user.id}}"
+          "data.seller_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "data.seller_id": "{{user.id}}"
         },
         {
           "user_condition": {
