@@ -553,8 +553,11 @@ export default function FundDetails() {
   const prizePool = Math.floor(grossPrizePool * 0.93);
 
   const nowCheck = new Date();
-  const hasUpcomingMatches = matches.some(m => new Date(m.match_date) > nowCheck && m.status === 'upcoming');
-  const fundIsJoinable = !hasJoined && hasUpcomingMatches && fund?.status === 'open';
+  // Lock the moment ANY match in the fund has started (kickoff passed or status !== upcoming)
+  const fundHasStarted = matches.length > 0 && matches.some(m =>
+    m.status !== 'upcoming' || new Date(m.match_date) <= nowCheck
+  );
+  const fundIsJoinable = !hasJoined && !fundHasStarted && fund?.status === 'open';
 
   const totalCredits = getTotalCredits();
 
