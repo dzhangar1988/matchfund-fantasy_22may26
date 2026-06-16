@@ -8,6 +8,7 @@ import { Plus, Trash2, CheckCircle, AlertCircle, Loader2, Calculator, Pencil, Ca
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import WC2026_FIXTURES from "@/data/wc2026Fixtures";
 
 const COMPETITIONS = [
   "World Cup 2026",
@@ -1150,6 +1151,54 @@ export default function AdminMatches() {
     }
   };
 
+  const fmtKickoff = (val) => {
+    if (!val) return "";
+    const d = new Date(typeof val === "string" && !val.endsWith("Z") ? val + "Z" : val);
+    if (isNaN(d.getTime())) return "TBD";
+    return d.toLocaleString(undefined, {
+      weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit",
+    });
+  };
+
+  const reseedWorldCup2026 = async () => {
+    if (!window.confirm(
+      "This DELETES all UPCOMING World Cup 2026 matches and recreates them from the corrected list.\n\n" +
+      "⚠️ Any fund that references a deleted match will break. Only run this BEFORE real funds exist on these games.\n\nContinue?"
+    )) return;
+
+    try {
+      setIsCalculating(true);
+      const existing = await base44.entities.Match.filter({ competition: "World Cup 2026" });
+      const toDelete = existing.filter(m => m.status === "upcoming");
+      for (const m of toDelete) {
+        await base44.entities.Match.delete(m.id);
+        await sleep(150);
+      }
+      let created = 0;
+      for (const fx of WC2026_FIXTURES) {
+        await base44.entities.Match.create({
+          home_team: fx.home_team,
+          away_team: fx.away_team,
+          match_date: fx.match_date,
+          group: fx.group,
+          matchweek: fx.matchweek,
+          competition: "World Cup 2026",
+          season: "2026",
+          status: "upcoming",
+        });
+        created++;
+        await sleep(150);
+      }
+      showNotification(`✅ Reseeded: deleted ${toDelete.length} old, created ${created} new.`);
+      await loadMatches();
+    } catch (err) {
+      showNotification(`Error: ${err.message}`, "error");
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
   const seedWCMatches = async () => {
     if (!confirm(`This will DELETE all existing "World Cup 2026" matches and re-seed all ${WC_FIXTURES.length} group stage fixtures. Continue?`)) return;
     setIsCalculating(true);
@@ -1447,6 +1496,14 @@ export default function AdminMatches() {
                 Problem Funds ({problemFunds.length})
               </Button>
             )}
+            <Button
+              onClick={reseedWorldCup2026}
+              disabled={isCalculating}
+              className="bg-red-600 hover:bg-red-700 flex items-center gap-2"
+            >
+              {isCalculating ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
+              Reseed WC 2026 (fix fixtures)
+            </Button>
             <Button
               onClick={seedWCMatches}
               disabled={isCalculating}
@@ -1839,7 +1896,7 @@ export default function AdminMatches() {
                         GW{match.matchweek}: {match.home_team} vs {match.away_team}
                       </p>
                       <p className="text-sm text-gray-400">
-                        {match.competition} • {new Date(match.match_date).toLocaleString("en-US")}
+                        {match.competition} • {fmtKickoff(match.match_date)}
                       </p>
                       {match.status === "live" && (
                         <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full">
