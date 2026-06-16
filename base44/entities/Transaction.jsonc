@@ -55,7 +55,7 @@
       }
     },
     "read": {
-      "user_id": "{{user.id}}"
+      "data.user_id": "{{user.id}}"
     },
     "update": {
       "user_condition": {
