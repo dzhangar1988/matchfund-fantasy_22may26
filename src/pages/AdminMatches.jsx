@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2, CheckCircle, AlertCircle, Loader2, Calculator, Pencil } from "lucide-react";
+import { Plus, Trash2, CheckCircle, AlertCircle, Loader2, Calculator, Pencil, Calendar } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -143,6 +143,8 @@ export default function AdminMatches() {
 
   const [editingMatchId, setEditingMatchId] = useState(null);
   const [editScore, setEditScore] = useState({ home: 0, away: 0 });
+  const [editingDateMatchId, setEditingDateMatchId] = useState(null);
+  const [editDate, setEditDate] = useState("");
   const [showArchived, setShowArchived] = useState(false);
 
   const [allUsers, setAllUsers] = useState([]);
@@ -1236,6 +1238,28 @@ export default function AdminMatches() {
     });
   };
 
+  const openEditDate = (match) => {
+    setEditingDateMatchId(match.id);
+    // Convert UTC date to local datetime-local format
+    const d = new Date(match.match_date);
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    setEditDate(local);
+  };
+
+  const saveEditedDate = async () => {
+    if (!editingDateMatchId || !editDate) return;
+    try {
+      await base44.entities.Match.update(editingDateMatchId, {
+        match_date: new Date(editDate).toISOString()
+      });
+      setEditingDateMatchId(null);
+      await loadMatches();
+      showNotification("✅ Match date updated!");
+    } catch (error) {
+      showNotification(`Error: ${error.message}`, "error");
+    }
+  };
+
   const saveEditedScore = async () => {
     if (!editingMatchId) return;
     
@@ -1490,6 +1514,29 @@ export default function AdminMatches() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Edit Date Modal */}
+        {editingDateMatchId && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <Card className="border-gray-800 bg-[#0F1E35] p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold text-white mb-4">Edit Match Date & Time</h3>
+              <Input
+                type="datetime-local"
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+                className="bg-white/5 border-gray-700 text-white mb-6"
+              />
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setEditingDateMatchId(null)} className="flex-1 border-gray-700">
+                  Cancel
+                </Button>
+                <Button onClick={saveEditedDate} className="flex-1 bg-orange-500 hover:bg-orange-600">
+                  Save Date
+                </Button>
+              </div>
+            </Card>
+          </div>
         )}
 
         {/* Simple Edit Modal */}
@@ -1770,6 +1817,17 @@ export default function AdminMatches() {
                         </>
                       )}
 
+                      {match.status === "upcoming" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => openEditDate(match)}
+                          className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
+                          title="Edit date/time"
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
