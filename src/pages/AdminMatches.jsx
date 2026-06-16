@@ -1518,7 +1518,7 @@ export default function AdminMatches() {
 
         {/* Edit Date Modal */}
         {editingDateMatchId && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
             <Card className="border-gray-800 bg-[#0F1E35] p-6 max-w-md w-full">
               <h3 className="text-xl font-bold text-white mb-4">Edit Match Date & Time</h3>
               <Input
@@ -1541,7 +1541,7 @@ export default function AdminMatches() {
 
         {/* Simple Edit Modal */}
         {editingMatchId && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
             <Card className="border-gray-800 bg-[#0F1E35] p-6 max-w-md w-full">
               <h3 className="text-xl font-bold text-white mb-4">Edit Match Score</h3>
               <div className="flex items-center justify-center gap-3 mb-6">
