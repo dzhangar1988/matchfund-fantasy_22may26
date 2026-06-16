@@ -178,7 +178,24 @@ export default function AdminMatches() {
     setPremiumUpdating(prev => ({ ...prev, [userId]: false }));
   };
 
+  const seedMissingMatches = async () => {
+    const wcMatchesToSeed = [
+      { home_team: "Argentina", away_team: "Algeria", match_date: "2026-06-15T20:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
+      { home_team: "Austria", away_team: "Jordan", match_date: "2026-06-15T23:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
+      { home_team: "Portugal", away_team: "DR Congo", match_date: "2026-06-17T17:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group K", season: "2026" },
+      { home_team: "England", away_team: "Croatia", match_date: "2026-06-17T20:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group L", season: "2026" },
+      { home_team: "Ghana", away_team: "Panama", match_date: "2026-06-17T23:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group L", season: "2026" },
+    ];
+    for (const m of wcMatchesToSeed) {
+      const existing = await base44.entities.Match.filter({ home_team: m.home_team, away_team: m.away_team });
+      if (existing.length === 0) {
+        await base44.entities.Match.create({ ...m, status: "upcoming" });
+      }
+    }
+  };
+
   const loadMatches = async () => {
+    await seedMissingMatches();
     const allMatches = await base44.entities.Match.list("-match_date");
     setMatches(allMatches);
 
