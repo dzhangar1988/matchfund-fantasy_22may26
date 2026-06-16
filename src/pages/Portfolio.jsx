@@ -44,10 +44,14 @@ export default function Portfolio() {
       const fundIds = [...new Set(participations.map(p => p.fund_id))];
 
       // Load all funds and all participations for leaderboard position
-      const [allFunds, allParticipations] = await Promise.all([
-        base44.entities.MatchFund.list(),
-        base44.entities.Participation.list(),
-      ]);
+      const fundIdsToLoad = [...new Set(participations.map(p => p.fund_id))];
+      const allFunds = await Promise.all(
+        fundIdsToLoad.map(id => base44.entities.MatchFund.get(id))
+      ).then(results => results.filter(Boolean));
+
+      const allParticipations = await Promise.all(
+        fundIdsToLoad.map(id => base44.entities.Participation.filter({ fund_id: id }))
+      ).then(arrays => arrays.flat());
 
       const rows = fundIds.map(fundId => {
         const fund = allFunds.find(f => f.id === fundId);
@@ -92,12 +96,15 @@ export default function Portfolio() {
       setFundRows(rows);
 
       // ---- My Investments (SharePurchases where I am buyer) ----
-      const [purchases, allParticipationsForInv, allFundsForInv, allUsersForInv] = await Promise.all([
-        base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
-        base44.entities.Participation.list(),
-        base44.entities.MatchFund.list(),
+      const purchases = await base44.entities.SharePurchase.filter({ buyer_id: currentUser.id });
+      const invFundIds = [...new Set(purchases.map(p => p.fund_id))];
+      const [allFundsForInv, allUsersForInv] = await Promise.all([
+        Promise.all(invFundIds.map(id => base44.entities.MatchFund.get(id))).then(r => r.filter(Boolean)),
         base44.entities.User.list(),
       ]);
+      const allParticipationsForInv = await Promise.all(
+        invFundIds.map(id => base44.entities.Participation.filter({ fund_id: id }))
+      ).then(arrays => arrays.flat());
 
       const invRows = purchases.map(purchase => {
         const fund = allFundsForInv.find(f => f.id === purchase.fund_id);
