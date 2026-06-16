@@ -61,8 +61,7 @@ export default function Home() {
         .filter(m => m.status !== "finished" && m.status !== "cancelled" && m.status !== "postponed")
         .filter(m => {
           const matchTime = m.match_date.endsWith('Z') ? new Date(m.match_date) : new Date(m.match_date + 'Z');
-          const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
-          return matchTime > threeHoursAgo;
+          return matchTime > now;
         })
         .sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
       setWcMatches(upcomingWC);
