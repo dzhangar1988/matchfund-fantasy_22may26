@@ -34,7 +34,7 @@ const TEAMS = {
 };
 
 const WC_FIXTURES = [
-  // GROUP A
+  // GROUP A — matchweek 1 games were Jun 11-12 (already in DB), only MW2+3 here
   { home_team: "Mexico",        away_team: "South Africa",           match_date: "2026-06-11T20:00:00Z", group: "Group A", matchweek: 1 },
   { home_team: "South Korea",   away_team: "Czechia",                match_date: "2026-06-12T01:00:00Z", group: "Group A", matchweek: 1 },
   { home_team: "Czechia",       away_team: "South Africa",           match_date: "2026-06-18T16:00:00Z", group: "Group A", matchweek: 2 },
