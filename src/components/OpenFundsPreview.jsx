@@ -9,7 +9,8 @@ import { useLanguage } from "@/lib/LanguageContext";
 
 export default function OpenFundsPreview({ funds, totalCount, allFundsCount }) {
   const { t } = useLanguage();
-  const displayFunds = funds.slice(0, 3);
+  const displayFunds = funds;
+  console.log("PREVIEW RECEIVED:", funds.length, funds.map(f => f.title));
 
   return (
     <div>
@@ -28,19 +29,7 @@ export default function OpenFundsPreview({ funds, totalCount, allFundsCount }) {
             ))}
           </div>
 
-          {totalCount > 3 && (
-            <div className="text-center">
-              <Link to={createPageUrl("Home")}>
-                <Button
-                  variant="outline"
-                  className="border-gray-700 text-gray-300 hover:bg-white/5 hover:text-white"
-                >
-                  {t("show_all_funds")} ({totalCount})
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          )}
+
         </>
       ) : (
         <Card className="border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
