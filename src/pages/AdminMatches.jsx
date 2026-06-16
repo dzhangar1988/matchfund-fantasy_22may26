@@ -1240,6 +1240,39 @@ export default function AdminMatches() {
     });
   };
 
+  const toLocalInput = (val) => {
+    if (!val) return "";
+    const d = new Date(typeof val === "string" ? val.replace(" ", "T") : val);
+    if (isNaN(d.getTime())) return "";
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
+
+  const openEditMatch = (match) => {
+    setEditForm({
+      home_team: match.home_team || "",
+      away_team: match.away_team || "",
+      group: match.group || "",
+      match_date: toLocalInput(match.match_date),
+    });
+    setEditingMatch(match);
+  };
+
+  const saveEditedMatch = async () => {
+    if (!editingMatch) return;
+    const payload = {
+      home_team: editForm.home_team,
+      away_team: editForm.away_team,
+      group: editForm.group || null,
+    };
+    if (editForm.match_date) {
+      payload.match_date = new Date(editForm.match_date).toISOString();
+    }
+    await base44.entities.Match.update(editingMatch.id, payload);
+    setEditingMatch(null);
+    await loadMatches();
+    showNotification("✅ Match updated!");
+  };
+
   const openEditDate = (match) => {
     setEditingDateMatchId(match.id);
     // Convert UTC date to local datetime-local format
@@ -1516,6 +1549,65 @@ export default function AdminMatches() {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Edit Match Modal (teams + date) */}
+        {editingMatch && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4">
+            <Card className="border-gray-800 bg-[#0F1E35] p-6 max-w-md w-full">
+              <h3 className="text-xl font-bold text-white mb-4">Edit Match</h3>
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Home Team</label>
+                  <Select value={editForm.home_team} onValueChange={(v) => setEditForm({ ...editForm, home_team: v })}>
+                    <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(TEAMS[editingMatch.competition] || Object.values(TEAMS).flat()).map((team) => (
+                        <SelectItem key={team} value={team} disabled={team === editForm.away_team}>{team}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Away Team</label>
+                  <Select value={editForm.away_team} onValueChange={(v) => setEditForm({ ...editForm, away_team: v })}>
+                    <SelectTrigger className="bg-white/5 border-gray-700 text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(TEAMS[editingMatch.competition] || Object.values(TEAMS).flat()).map((team) => (
+                        <SelectItem key={team} value={team} disabled={team === editForm.home_team}>{team}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Group</label>
+                  <Input
+                    value={editForm.group}
+                    onChange={(e) => setEditForm({ ...editForm, group: e.target.value })}
+                    placeholder="e.g. Group A"
+                    className="bg-white/5 border-gray-700 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1 block">Date & Time</label>
+                  <Input
+                    type="datetime-local"
+                    value={editForm.match_date}
+                    onChange={(e) => setEditForm({ ...editForm, match_date: e.target.value })}
+                    className="bg-white/5 border-gray-700 text-white"
+                  />
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setEditingMatch(null)} className="flex-1 border-gray-700">Cancel</Button>
+                <Button onClick={saveEditedMatch} className="flex-1 bg-orange-500 hover:bg-orange-600">Save</Button>
+              </div>
+            </Card>
+          </div>
         )}
 
         {/* Edit Date Modal */}
@@ -1823,11 +1915,11 @@ export default function AdminMatches() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => openEditDate(match)}
+                          onClick={() => openEditMatch(match)}
                           className="text-orange-400 hover:text-orange-300 hover:bg-orange-500/10"
-                          title="Edit date/time"
+                          title="Edit match"
                         >
-                          <Calendar className="w-4 h-4" />
+                          <Pencil className="w-4 h-4" />
                         </Button>
                       )}
                       <Button
