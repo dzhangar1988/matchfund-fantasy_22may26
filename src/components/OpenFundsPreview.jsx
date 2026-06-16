@@ -10,7 +10,6 @@ import { useLanguage } from "@/lib/LanguageContext";
 export default function OpenFundsPreview({ funds, totalCount, allFundsCount }) {
   const { t } = useLanguage();
   const displayFunds = funds;
-  console.log("DISPLAY FUNDS:", displayFunds.length, displayFunds.map(f => ({title: f.title, status: f.status, vis: f.visibility})));
 
   return (
     <div>

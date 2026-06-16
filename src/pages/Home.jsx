@@ -269,6 +269,23 @@ export default function Home() {
           </div>
         )}
 
+        {/* Open Funds Preview */}
+        <div ref={openFundsSectionRef} />
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-6 rounded-2xl border border-gray-800 bg-[#0F1E35]">
+                <Skeleton className="h-8 w-3/4 mb-4" />
+                <Skeleton className="h-4 w-1/2 mb-6" />
+                <Skeleton className="h-24 w-full mb-4" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <OpenFundsPreview funds={openFunds} totalCount={openFunds.length} allFundsCount={openFunds.length} />
+        )}
+
         {/* World Cup 2026 Upcoming Matches */}
         {!isLoading && wcMatches.length > 0 && (() => {
           const MatchCard = ({ match }) => (
@@ -374,22 +391,6 @@ export default function Home() {
           );
         })()}
 
-        {/* Open Funds Preview */}
-        <div ref={openFundsSectionRef} />
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="p-6 rounded-2xl border border-gray-800 bg-[#0F1E35]">
-                <Skeleton className="h-8 w-3/4 mb-4" />
-                <Skeleton className="h-4 w-1/2 mb-6" />
-                <Skeleton className="h-24 w-full mb-4" />
-                <Skeleton className="h-12 w-full" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <OpenFundsPreview funds={openFunds} totalCount={openFunds.length} allFundsCount={openFunds.length} />
-        )}
       </div>
     </div>
   );
