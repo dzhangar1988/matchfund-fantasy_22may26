@@ -73,16 +73,16 @@ export default function Portfolio() {
         const fund = allFunds.find(f => f.id === fundId);
         if (!fund) return null;
 
-        const myParticipation = participations.find(p => p.fund_id === fundId);
+        const myParticipation = participations.find(p => p.fund_id === fundId) || null;
+        const isCreatorOnly = !participationFundIds.has(fundId);
         const fundParticipations = allParticipations
           .filter(p => p.fund_id === fundId)
           .sort((a, b) => (b.total_points || 0) - (a.total_points || 0));
 
-        const myRank = fundParticipations.findIndex(p => p.user_id === currentUser.id) + 1;
+        const myRank = isCreatorOnly ? null : (fundParticipations.findIndex(p => p.user_id === currentUser.id) + 1 || null);
         const totalParticipants = fundParticipations.length;
         const prizePool = totalParticipants * (fund.entry_fee || 0);
-
-        const potentialPrize = calcPotentialPrize(myRank, prizePool, fund.prize_distribution);
+        const potentialPrize = myRank ? calcPotentialPrize(myRank, prizePool, fund.prize_distribution) : 0;
 
         return {
           fund,
@@ -91,6 +91,7 @@ export default function Portfolio() {
           totalParticipants,
           prizePool,
           potentialPrize,
+          isCreatorOnly,
         };
       }).filter(Boolean);
 
@@ -172,7 +173,7 @@ export default function Portfolio() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {fundRows.map(({ fund, myParticipation, myRank, totalParticipants, potentialPrize }) => (
+              {fundRows.map(({ fund, myParticipation, myRank, totalParticipants, potentialPrize, isCreatorOnly }) => (
                 <div
                   key={fund.id}
                   className="p-5 rounded-2xl border border-gray-700 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] flex flex-col md:flex-row md:items-center gap-4"
@@ -188,25 +189,33 @@ export default function Portfolio() {
                         <Target className="w-3.5 h-3.5" />
                         {fund.total_matches || 0} matches
                       </span>
-                      <span>
-                        Rank: <span className="text-white font-semibold">#{myRank}</span>
-                        <span className="text-gray-500"> / {totalParticipants}</span>
-                      </span>
+                      {isCreatorOnly ? (
+                        <span className="text-yellow-400 font-semibold">Creator · {totalParticipants} players</span>
+                      ) : (
+                        <span>
+                          Rank: <span className="text-white font-semibold">#{myRank}</span>
+                          <span className="text-gray-500"> / {totalParticipants}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Stats */}
                   <div className="flex items-center gap-6 shrink-0">
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500 mb-0.5">My Points</div>
-                      <div className="text-lg font-bold text-white">{myParticipation?.total_points || 0}</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-xs text-gray-500 mb-0.5">Potential Prize</div>
-                      <div className={`text-lg font-bold ${potentialPrize > 0 ? "text-yellow-400" : "text-gray-500"}`}>
-                        {potentialPrize} pts
-                      </div>
-                    </div>
+                    {!isCreatorOnly && (
+                      <>
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 mb-0.5">My Points</div>
+                          <div className="text-lg font-bold text-white">{myParticipation?.total_points || 0}</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 mb-0.5">Potential Prize</div>
+                          <div className={`text-lg font-bold ${potentialPrize > 0 ? "text-yellow-400" : "text-gray-500"}`}>
+                            {potentialPrize} pts
+                          </div>
+                        </div>
+                      </>
+                    )}
                     <Link to={`/FundDetails?id=${fund.id}`}>
                       <Button size="sm" className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold">
                         View Fund <ArrowRight className="w-3.5 h-3.5 ml-1" />
