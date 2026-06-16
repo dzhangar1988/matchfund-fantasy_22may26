@@ -7,10 +7,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { Trophy, Target, ArrowRight, TrendingUp } from "lucide-react";
 
-function calcPotentialPrize(rank, prizePool, prizeSplit) {
-  const pcts = { winner_takes_all: [100], top2: [60, 40], top3: [50, 30, 20] };
-  const arr = pcts[prizeSplit] || [100];
-  return Math.round(prizePool * (arr[rank - 1] ?? 0) / 100);
+function calcPotentialPrize(rank, prizePool, prizeDistribution) {
+  const dist = Array.isArray(prizeDistribution) && prizeDistribution.length > 0
+    ? prizeDistribution
+    : [100];
+  const pct = dist[rank - 1] ?? 0;
+  return Math.round(prizePool * pct / 100);
 }
 
 function StatusBadge({ status }) {
@@ -41,10 +43,9 @@ export default function Portfolio() {
       const participations = await base44.entities.Participation.filter({ user_id: currentUser.id });
       if (participations.length === 0) { setIsLoading(false); return; }
 
-      const fundIds = [...new Set(participations.map(p => p.fund_id))];
-
       // Load all funds and all participations for leaderboard position
-      const fundIdsToLoad = [...new Set(participations.map(p => p.fund_id))];
+      const fundIds = [...new Set(participations.map(p => p.fund_id))];
+      const fundIdsToLoad = fundIds;
       const allFunds = await Promise.all(
         fundIdsToLoad.map(id => base44.entities.MatchFund.get(id))
       ).then(results => results.filter(Boolean));
@@ -66,18 +67,7 @@ export default function Portfolio() {
         const totalParticipants = fundParticipations.length;
         const prizePool = totalParticipants * (fund.entry_fee || 0);
 
-        // Calculate potential prize based on rank and prize_split
-        let potentialPrize = 0;
-        const split = fund.prize_split;
-        if (myRank === 1) {
-          const pct = split === "top2" ? 60 : split === "top3" ? 50 : 100;
-          potentialPrize = Math.round(prizePool * pct / 100);
-        } else if (myRank === 2 && (split === "top2" || split === "top3")) {
-          const pct = split === "top2" ? 40 : 30;
-          potentialPrize = Math.round(prizePool * pct / 100);
-        } else if (myRank === 3 && split === "top3") {
-          potentialPrize = Math.round(prizePool * 20 / 100);
-        }
+        const potentialPrize = calcPotentialPrize(myRank, prizePool, fund.prize_distribution);
 
         return {
           fund,
@@ -120,7 +110,7 @@ export default function Portfolio() {
         const sellerRank = fundParts.findIndex(p => p.user_id === purchase.seller_id) + 1;
         const totalParts = fundParts.length;
         const pool = totalParts * (fund.entry_fee || 0);
-        const currentPotentialPrize = calcPotentialPrize(sellerRank, pool, fund.prize_split);
+        const currentPotentialPrize = calcPotentialPrize(sellerRank, pool, fund.prize_distribution);
         const currentTheoreticalPerShare = Math.round(currentPotentialPrize / 100);
         const currentTotalValue = purchase.shares_bought * currentTheoreticalPerShare;
         const purchaseCost = purchase.total_cost;
