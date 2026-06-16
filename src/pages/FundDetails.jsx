@@ -347,6 +347,14 @@ export default function FundDetails() {
         throw new Error("Unable to verify your balance. Please refresh and try again.");
       }
 
+      // 🔒 Hard guard: lock if any match has already started
+      const startedMatch = matches.find(m =>
+        m.status !== 'upcoming' || new Date(m.match_date) <= new Date()
+      );
+      if (startedMatch) {
+        throw new Error("This fund is locked — its first match has already started. You can no longer join.");
+      }
+
       if (user.total_balance < fund.entry_fee) {
         throw new Error(`Insufficient balance! You need ${fund.entry_fee} pts but have ${user.total_balance} pts`);
       }
