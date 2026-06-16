@@ -55,6 +55,9 @@ export default function Home() {
       ]);
       const allFunds = allFundsRaw;
 
+      // DEBUG
+      console.log("FUNDS FETCHED:", allFunds.length, allFunds.map(f => ({ title: f.title, status: f.status, creator: f.creator_id?.slice(0,8) })));
+
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const upcomingWC = wcRaw
