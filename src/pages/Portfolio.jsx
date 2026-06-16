@@ -39,22 +39,37 @@ export default function Portfolio() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      // Get all participations for this user
-      const participations = await base44.entities.Participation.filter({ user_id: currentUser.id });
-      if (participations.length === 0) { setIsLoading(false); return; }
+      // Get all participations for this user AND all funds created by user
+      const [participations, createdFunds] = await Promise.all([
+        base44.entities.Participation.filter({ user_id: currentUser.id }),
+        base44.entities.MatchFund.filter({ creator_id: currentUser.id }),
+      ]);
 
-      // Load all funds and all participations for leaderboard position
-      const fundIds = [...new Set(participations.map(p => p.fund_id))];
-      const fundIdsToLoad = fundIds;
+      // Merge fund IDs from participations + created funds
+      const participationFundIds = new Set(participations.map(p => p.fund_id));
+      const allFundIds = [...new Set([
+        ...participations.map(p => p.fund_id),
+        ...createdFunds.map(f => f.id),
+      ])];
+
+      if (allFundIds.length === 0) { setIsLoading(false); return; }
+
+      const fundIdsToLoad = allFundIds;
+      // Use already-fetched created funds where possible, fall back to getFundById
+      const createdFundsMap = Object.fromEntries(createdFunds.map(f => [f.id, f]));
       const allFunds = (await Promise.all(
-        fundIdsToLoad.map(id => base44.functions.invoke('getFundById', { fund_id: id }).then(r => r?.fund).catch(() => null))
+        fundIdsToLoad.map(id =>
+          createdFundsMap[id]
+            ? Promise.resolve(createdFundsMap[id])
+            : base44.functions.invoke('getFundById', { fund_id: id }).then(r => r?.fund).catch(() => null)
+        )
       )).filter(Boolean);
 
       const allParticipations = await Promise.all(
         fundIdsToLoad.map(id => base44.entities.Participation.filter({ fund_id: id }))
       ).then(arrays => arrays.flat());
 
-      const rows = fundIds.map(fundId => {
+      const rows = allFundIds.map(fundId => {
         const fund = allFunds.find(f => f.id === fundId);
         if (!fund) return null;
 
