@@ -189,7 +189,7 @@ export default function Portfolio() {
                     <div className="text-center">
                       <div className="text-xs text-gray-500 mb-0.5">Potential Prize</div>
                       <div className={`text-lg font-bold ${potentialPrize > 0 ? "text-yellow-400" : "text-gray-500"}`}>
-                        ${potentialPrize}
+                        {potentialPrize} pts
                       </div>
                     </div>
                     <Link to={`/FundDetails?id=${fund.id}`}>
