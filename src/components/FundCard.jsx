@@ -69,7 +69,7 @@ export default function FundCard({ fund }) {
           <div className="text-right">
             <div className="text-sm text-gray-400">{t("prize_pool")}</div>
             <div className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-              ${prizePool}
+              {prizePool} pts
             </div>
           </div>
         </div>
@@ -80,7 +80,7 @@ export default function FundCard({ fund }) {
               <Trophy className="w-4 h-4 text-orange-400" />
               <span className="text-xs text-gray-400">{t("entry")}</span>
             </div>
-            <div className="text-lg font-bold text-white">${fund.entry_fee}</div>
+            <div className="text-lg font-bold text-white">{fund.entry_fee} pts</div>
           </div>
           <div className="p-3 rounded-lg bg-white/5 border border-white/10">
             <div className="flex items-center gap-2 mb-1">
