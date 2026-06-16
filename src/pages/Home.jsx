@@ -287,7 +287,10 @@ export default function Home() {
                     <span className="text-xs text-red-400 font-bold shrink-0 animate-pulse">🔴 LIVE</span>
                   ) : (
                     <span className="text-xs text-gray-400 shrink-0">
-                      {(match.match_date.endsWith('Z') ? new Date(match.match_date) : new Date(match.match_date + 'Z')).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                      {(() => {
+                        const d = new Date(match.match_date.endsWith('Z') ? match.match_date : match.match_date + 'Z');
+                        return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                      })()}
                     </span>
                   )}
                 </div>
@@ -303,7 +306,7 @@ export default function Home() {
           const byDate = {};
           for (const m of wcMatches) {
             const d = m.match_date.endsWith('Z') ? new Date(m.match_date) : new Date(m.match_date + 'Z');
-            const dateKey = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            const dateKey = d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
             if (!byDate[dateKey]) byDate[dateKey] = [];
             byDate[dateKey].push(m);
           }
