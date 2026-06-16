@@ -47,10 +47,7 @@ export default function Home() {
       const [participations, sharePurchases, allFundsRaw, wcRaw] = await Promise.all([
         base44.entities.Participation.filter({ user_id: currentUser.id }),
         base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
-        Promise.all([
-          base44.entities.MatchFund.filter({ status: "open" }, "-created_date", 100),
-          base44.entities.MatchFund.filter({ status: "in_progress" }, "-created_date", 50),
-        ]).then(([openRaw, inProgressRaw]) => [...openRaw, ...inProgressRaw]),
+        base44.functions.invoke('getOpenFunds', {}).then(r => r.funds || []),
         base44.entities.Match.filter({ competition: "World Cup 2026" }),
       ]);
       const allFunds = allFundsRaw;
