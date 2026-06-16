@@ -97,8 +97,8 @@ const WC_FIXTURES = [
   { home_team: "France", away_team: "Norway", match_date: "2026-06-27T01:00:00Z", group: "Group I", matchweek: 3 },
   { home_team: "Senegal", away_team: "Iraq", match_date: "2026-06-27T01:00:00Z", group: "Group I", matchweek: 3 },
   // GROUP J: Argentina, Algeria, Austria, Jordan
-  { home_team: "Argentina", away_team: "Algeria", match_date: "2026-06-17T19:00:00Z", group: "Group J", matchweek: 1 },
-  { home_team: "Austria", away_team: "Jordan", match_date: "2026-06-17T22:00:00Z", group: "Group J", matchweek: 1 },
+  { home_team: "Argentina", away_team: "Algeria", match_date: "2026-06-16T19:00:00Z", group: "Group J", matchweek: 1 },
+  { home_team: "Austria", away_team: "Jordan", match_date: "2026-06-16T22:00:00Z", group: "Group J", matchweek: 1 },
   { home_team: "Argentina", away_team: "Jordan", match_date: "2026-06-24T19:00:00Z", group: "Group J", matchweek: 2 },
   { home_team: "Algeria", away_team: "Austria", match_date: "2026-06-24T22:00:00Z", group: "Group J", matchweek: 2 },
   { home_team: "Argentina", away_team: "Austria", match_date: "2026-06-28T01:00:00Z", group: "Group J", matchweek: 3 },
@@ -180,8 +180,8 @@ export default function AdminMatches() {
 
   const seedMissingMatches = async () => {
     const wcMatchesToSeed = [
-      { home_team: "Argentina", away_team: "Algeria", match_date: "2026-06-17T19:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
-      { home_team: "Austria", away_team: "Jordan", match_date: "2026-06-17T22:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
+      { home_team: "Argentina", away_team: "Algeria", match_date: "2026-06-16T19:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
+      { home_team: "Austria", away_team: "Jordan", match_date: "2026-06-16T22:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
       { home_team: "Portugal", away_team: "DR Congo", match_date: "2026-06-18T01:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group K", season: "2026" },
       { home_team: "England", away_team: "Croatia", match_date: "2026-06-18T19:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group L", season: "2026" },
       { home_team: "Ghana", away_team: "Panama", match_date: "2026-06-18T22:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group L", season: "2026" },
