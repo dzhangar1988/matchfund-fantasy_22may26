@@ -63,10 +63,11 @@
     "selected_options"
   ],
   "rls": {
+    "list": {},
+    "read": {},
     "create": {
       "created_by_id": "{{user.id}}"
     },
-    "read": {},
     "update": {
       "created_by_id": "{{user.id}}"
     },
