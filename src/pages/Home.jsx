@@ -47,7 +47,7 @@ export default function Home() {
       const [participations, sharePurchases, allFundsRaw, wcRaw] = await Promise.all([
         base44.entities.Participation.filter({ user_id: currentUser.id }),
         base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
-        base44.entities.MatchFund.list().then(funds => funds.filter(f => f.status === "open" || f.status === "in_progress")),
+        base44.functions.invoke('getOpenFunds').then(r => r?.funds || []),
         base44.entities.Match.filter({ competition: "World Cup 2026" }),
       ]);
       const allFunds = allFundsRaw;
