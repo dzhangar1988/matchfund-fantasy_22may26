@@ -19,7 +19,7 @@ const TEAMS = {
     "Argentina", "Brazil", "Uruguay", "Ecuador", "Colombia", "Chile", "Bolivia", "Venezuela", "Paraguay",
     "Spain", "Germany", "France", "England", "Portugal", "Netherlands", "Italy", "Belgium",
     "Croatia", "Serbia", "Austria", "Hungary", "Czechia", "Turkey", "Ukraine", "Poland", "Slovakia", "Romania", "Switzerland",
-    "Morocco", "Senegal", "Egypt", "Nigeria", "Cameroon", "South Africa", "DR Congo", "Ivory Coast",
+    "Morocco", "Senegal", "Egypt", "Nigeria", "Cameroon", "South Africa", "DR Congo", "Ivory Coast", "Algeria",
     "Japan", "South Korea", "Saudi Arabia", "Iran", "Australia", "New Zealand", "Indonesia", "Uzbekistan",
     "Panama", "Honduras", "Jamaica", "Costa Rica", "El Salvador", "Cuba",
     "Qatar", "Iraq"
@@ -180,11 +180,11 @@ export default function AdminMatches() {
 
   const seedMissingMatches = async () => {
     const wcMatchesToSeed = [
-      { home_team: "Argentina", away_team: "Algeria", match_date: "2026-06-15T20:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
-      { home_team: "Austria", away_team: "Jordan", match_date: "2026-06-15T23:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
-      { home_team: "Portugal", away_team: "DR Congo", match_date: "2026-06-17T17:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group K", season: "2026" },
-      { home_team: "England", away_team: "Croatia", match_date: "2026-06-17T20:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group L", season: "2026" },
-      { home_team: "Ghana", away_team: "Panama", match_date: "2026-06-17T23:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group L", season: "2026" },
+      { home_team: "Argentina", away_team: "Algeria", match_date: "2026-06-17T19:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
+      { home_team: "Austria", away_team: "Jordan", match_date: "2026-06-17T22:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group J", season: "2026" },
+      { home_team: "Portugal", away_team: "DR Congo", match_date: "2026-06-18T01:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group K", season: "2026" },
+      { home_team: "England", away_team: "Croatia", match_date: "2026-06-18T19:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group L", season: "2026" },
+      { home_team: "Ghana", away_team: "Panama", match_date: "2026-06-18T22:00:00Z", competition: "World Cup 2026", matchweek: 1, group: "Group L", season: "2026" },
     ];
     for (const m of wcMatchesToSeed) {
       const existing = await base44.entities.Match.filter({ home_team: m.home_team, away_team: m.away_team });
