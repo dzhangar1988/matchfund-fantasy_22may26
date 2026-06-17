@@ -66,13 +66,15 @@ export default function Home() {
         .sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
       setWcMatches(upcomingWC);
 
-      setFunds(allFunds);
+      // Extra guard: only keep truly open/in_progress funds (status may lag if cancelled externally)
+      const liveFunds = allFunds.filter(f => f.status === "open" || f.status === "in_progress");
+      setFunds(liveFunds);
 
       const participatedFundIds = new Set(participations.map(p => p.fund_id));
       const investedFundIds = new Set(sharePurchases.map(s => s.fund_id));
       const ACTIVE_STATUSES = ["open", "in_progress"];
 
-      const active = allFunds.filter(f =>
+      const active = liveFunds.filter(f =>
         (participatedFundIds.has(f.id) || f.creator_id === currentUser.id) &&
         ACTIVE_STATUSES.includes(f.status)
       );
