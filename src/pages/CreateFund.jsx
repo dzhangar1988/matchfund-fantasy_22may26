@@ -389,7 +389,7 @@ export default function CreateFund() {
       const newBalance = Math.max(0, userBalance - fundData.entry_fee);
       await base44.entities.User.update(user.id, { total_balance: newBalance });
 
-      navigate(`/FundDetails?id=${newFund.id}`);
+      navigate(createPageUrl("Home"));
     } catch (err) {
       setError(err.message || "Failed to create fund");
     } finally {
