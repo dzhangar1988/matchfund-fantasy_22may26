@@ -355,9 +355,9 @@ export default function CreateFund() {
         published_at: new Date().toISOString()
       });
 
-      for (let i = 0; i < matches.length; i++) {
-        await base44.entities.FundMatch.create({ fund_id: newFund.id, match_id: matches[i].id, position: i + 1 });
-      }
+      await Promise.all(matches.map((m, i) =>
+        base44.entities.FundMatch.create({ fund_id: newFund.id, match_id: m.id, position: i + 1 })
+      ));
 
       const participation = await base44.entities.Participation.create({
         fund_id: newFund.id,
@@ -373,10 +373,10 @@ export default function CreateFund() {
         predictions_completed_at: new Date().toISOString()
       });
 
-      for (const match of matches) {
+      await Promise.all(matches.map((match) => {
         const opts = predictions[match.id] || [];
         const exactScoreData = exactScores[match.id];
-        await base44.entities.Prediction.create({
+        return base44.entities.Prediction.create({
           participation_id: participation.id,
           match_id: match.id,
           selected_options: opts,
@@ -384,7 +384,7 @@ export default function CreateFund() {
           predicted_away_goals: exactScoreData?.away !== undefined && exactScoreData?.away !== "" ? parseInt(exactScoreData.away) : null,
           credits_spent: opts.length
         });
-      }
+      }));
 
       const newBalance = Math.max(0, userBalance - fundData.entry_fee);
       await base44.entities.User.update(user.id, { total_balance: newBalance });
