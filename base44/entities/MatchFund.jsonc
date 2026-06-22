@@ -100,6 +100,25 @@
       "type": "string",
       "format": "date-time",
       "description": "\u0414\u0430\u0442\u0430 \u043f\u0443\u0431\u043b\u0438\u043a\u0430\u0446\u0438\u0438"
+    },
+    "scoring_mode": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "multiplier"
+      ],
+      "default": "standard",
+      "description": "Scoring mode: standard (fixed weights) or multiplier (per-pick multipliers)"
+    },
+    "multipliers": {
+      "type": "object",
+      "description": "Per-pick multipliers keyed by match_id_option (e.g. {\"match123_home_win\": 1.5})",
+      "default": {}
+    },
+    "multipliers_frozen_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When multipliers were frozen (at fund close time)"
     }
   },
   "required": [
