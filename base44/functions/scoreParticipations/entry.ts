@@ -57,6 +57,16 @@ function checkOption(option, match) {
   }
 }
 
+function getPickPoints(fund, matchId, option) {
+  const weight = getOptionWeight(option);
+  if (fund && fund.scoring_mode === 'multiplier' && fund.multipliers && Object.keys(fund.multipliers).length > 0) {
+    const mult = fund.multipliers[`${matchId}_${option}`];
+    if (mult === undefined || mult === null) return weight; // missing key → ×1
+    return Math.round(weight * mult * 100) / 100;
+  }
+  return weight; // standard mode or empty multipliers → fixed weights
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -90,14 +100,34 @@ Deno.serve(async (req) => {
     const allPredictions = await base44.asServiceRole.entities.Prediction.list();
     const relevantPredictions = allPredictions.filter(p => matchMap[p.match_id]);
 
+    // Load fund(s) and participations for scoring mode lookup
+    const fundMap = {};
+    if (fund_id) {
+      const fund = await base44.asServiceRole.entities.MatchFund.get(fund_id);
+      fundMap[fund.id] = fund;
+    } else {
+      const allFunds = await base44.asServiceRole.entities.MatchFund.list();
+      for (const f of allFunds) fundMap[f.id] = f;
+    }
+
+    let allParticipations;
+    if (fund_id) {
+      allParticipations = await base44.asServiceRole.entities.Participation.filter({ fund_id });
+    } else {
+      allParticipations = await base44.asServiceRole.entities.Participation.list();
+    }
+    const partIdToFundId = {};
+    for (const p of allParticipations) partIdToFundId[p.id] = p.fund_id;
+
     // Score each prediction individually
     const updates = [];
     for (const pred of relevantPredictions) {
       const match = matchMap[pred.match_id];
+      const fund = fundMap[partIdToFundId[pred.participation_id]];
       let pts = 0;
       for (const opt of (pred.selected_options || [])) {
         if (checkOption(opt, match)) {
-          pts += getOptionWeight(opt);
+          pts += getPickPoints(fund, pred.match_id, opt);
         }
       }
       const isCorrect = pts > 0;
@@ -131,24 +161,17 @@ Deno.serve(async (req) => {
       predsByPart[pred.participation_id].push(pred);
     }
 
-    // Load all participations (optionally filtered by fund)
-    let allParticipations;
-    if (fund_id) {
-      allParticipations = await base44.asServiceRole.entities.Participation.filter({ fund_id });
-    } else {
-      allParticipations = await base44.asServiceRole.entities.Participation.list();
-    }
-
     const partUpdates = [];
     for (const part of allParticipations) {
       const preds = predsByPart[part.id] || [];
+      const fund = fundMap[part.fund_id];
       let total = 0;
       for (const pred of preds) {
         const match = matchMap[pred.match_id];
         if (!match) continue; // match not finished yet
         let pts = 0;
         for (const opt of (pred.selected_options || [])) {
-          if (checkOption(opt, match)) pts += getOptionWeight(opt);
+          if (checkOption(opt, match)) pts += getPickPoints(fund, pred.match_id, opt);
         }
         total += pts;
       }
