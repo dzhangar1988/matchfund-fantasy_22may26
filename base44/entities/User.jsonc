@@ -98,8 +98,12 @@
     "username"
   ],
   "rls": {
-    "read": {},
-    "list": {},
+    "read": {
+      "id": "{{user.id}}"
+    },
+    "list": {
+      "id": "{{user.id}}"
+    },
     "update": {
       "$or": [
         {
