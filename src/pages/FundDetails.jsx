@@ -13,6 +13,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import OrderBook from "@/components/OrderBook";
 import PlayersPredictions from "@/components/PlayersPredictions";
 import { getFundParticipants } from "@/functions/getFundParticipants";
+import { cancelFund } from "@/functions/cancelFund";
+import { showRespect } from "@/functions/showRespect";
 import { formatOption, badgeClass } from "@/lib/predictionUtils";
 import {
   Tooltip,
@@ -473,43 +475,7 @@ export default function FundDetails() {
 
     setIsSubmitting(true);
     try {
-      // STEP 1 — Cancel active share listings
-      const activeListings = await base44.entities.ShareListing.filter({ fund_id: fund.id, status: "active" });
-      await Promise.all(activeListings.map(l =>
-        base44.entities.ShareListing.update(l.id, { status: "cancelled", shares_available: 0 })
-      ));
-
-      // STEP 2 — Refund share buyers & clawback from sellers
-      const purchases = await base44.entities.SharePurchase.filter({ fund_id: fund.id });
-      const usersToUpdate = {};
-      for (const purchase of purchases) {
-        if (!usersToUpdate[purchase.buyer_id]) {
-          const u = await base44.entities.User.get(purchase.buyer_id);
-          usersToUpdate[purchase.buyer_id] = u.total_balance ?? 0;
-        }
-        usersToUpdate[purchase.buyer_id] += purchase.total_cost;
-
-        if (!usersToUpdate[purchase.seller_id]) {
-          const u = await base44.entities.User.get(purchase.seller_id);
-          usersToUpdate[purchase.seller_id] = u.total_balance ?? 0;
-        }
-        usersToUpdate[purchase.seller_id] = Math.max(0, usersToUpdate[purchase.seller_id] - purchase.total_cost);
-      }
-      await Promise.all(Object.entries(usersToUpdate).map(([uid, bal]) =>
-        base44.entities.User.update(uid, { total_balance: bal })
-      ));
-
-      // STEP 3 — Refund entry fees
-      const allParticipations = await base44.entities.Participation.filter({ fund_id: fund.id });
-      await Promise.all(allParticipations.map(async (p) => {
-        const u = await base44.entities.User.get(p.user_id);
-        const currentBal = u.total_balance ?? 0;
-        await base44.entities.User.update(p.user_id, { total_balance: currentBal + fund.entry_fee });
-      }));
-
-      // STEP 4 — Mark fund cancelled
-      await base44.entities.MatchFund.update(fund.id, { status: "cancelled" });
-
+      await cancelFund({ fund_id: fund.id });
       navigate("/");
     } catch (err) {
       setError(err.message || "Failed to cancel fund");
@@ -520,22 +486,7 @@ export default function FundDetails() {
 
   const handleShowRespect = async (participant) => {
     try {
-      await base44.entities.ShowRespect.create({
-        giver_id: user.id,
-        receiver_id: participant.user_id,
-        fund_id: fund.id,
-        created_at: new Date().toISOString(),
-      });
-
-      // Increment receiver's show_respects_received
-      const receiver = await base44.entities.User.get(participant.user_id);
-      const newCount = (receiver.show_respects_received || 0) + 1;
-      const updates = { show_respects_received: newCount };
-      // Every 10 respects received, grant 1 respect_point
-      if (newCount % 10 === 0) {
-        updates.respect_points = (receiver.respect_points || 0) + 1;
-      }
-      await base44.entities.User.update(participant.user_id, updates);
+      await showRespect({ receiver_id: participant.user_id, fund_id: fund.id });
 
       // Refresh local respects list
       const respects = await base44.entities.ShowRespect.filter({ giver_id: user.id });
