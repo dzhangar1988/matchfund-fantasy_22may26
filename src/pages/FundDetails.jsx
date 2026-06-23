@@ -131,8 +131,8 @@ export default function FundDetails() {
       setParticipants(allParticipations);
 
       // Load users for display names — via service-role function (safe public fields only)
-      const { users: uMap } = await getFundParticipants({ fund_id: fundId });
-      setUsersMap(uMap);
+      const fundPartRes = await getFundParticipants({ fund_id: fundId });
+      setUsersMap(fundPartRes.data.users || {});
 
       // Load share listings only (no User.list() — display names come from participation fields)
       const listings = await base44.entities.ShareListing.filter({ fund_id: fundId });

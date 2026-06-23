@@ -27,7 +27,8 @@ export default function ReferralCard({ user, onUserUpdate }) {
       }
 
       // Загружаем данные о рефералах
-      const { count: referralCount } = await getReferralCount();
+      const refRes = await getReferralCount();
+      const referralCount = refRes.data.count;
       
       // Подсчитываем заработанное
       const transactions = await base44.entities.Transaction.filter({ 

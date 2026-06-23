@@ -37,14 +37,14 @@ export default function Leaderboard() {
   }, []);
 
   const loadLeaderboard = async () => {
-    const [me, lbResult, allParticipations, allFunds, allPredictions] = await Promise.all([
+    const [me, lbRes, allParticipations, allFunds, allPredictions] = await Promise.all([
       base44.auth.me().catch(() => null),
       getLeaderboard(),
       base44.entities.Participation.list(),
       base44.entities.MatchFund.list(),
       base44.entities.Prediction.list(),
     ]);
-    const allUsers = lbResult.users;
+    const allUsers = lbRes.data.users;
 
     setCurrentUser(me);
 
