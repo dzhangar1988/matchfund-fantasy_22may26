@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import OrderBook from "@/components/OrderBook";
 import PlayersPredictions from "@/components/PlayersPredictions";
+import { getFundParticipants } from "@/functions/getFundParticipants";
 import { formatOption, badgeClass } from "@/lib/predictionUtils";
 import {
   Tooltip,
@@ -129,10 +130,8 @@ export default function FundDetails() {
       const allParticipations = await base44.entities.Participation.filter({ fund_id: fundId }, "-total_points");
       setParticipants(allParticipations);
 
-      // Load users for display names
-      const allUsers = await base44.entities.User.list();
-      const uMap = {};
-      for (const u of allUsers) uMap[u.id] = u;
+      // Load users for display names — via service-role function (safe public fields only)
+      const { users: uMap } = await getFundParticipants({ fund_id: fundId });
       setUsersMap(uMap);
 
       // Load share listings only (no User.list() — display names come from participation fields)
@@ -895,7 +894,7 @@ export default function FundDetails() {
                       const pUser = usersMap[participant.user_id];
                       const displayName = participant.user_id === user?.id
                         ? "You"
-                        : (pUser?.username || pUser?.email?.split('@')[0] || `Player ${participant.user_id.slice(0, 8)}`);
+                        : (pUser?.username || participant.user_name || `Player ${participant.user_id.slice(0, 8)}`);
 
                       return (
                         <div
@@ -1022,7 +1021,7 @@ export default function FundDetails() {
                               <p className="text-white font-bold text-lg">
                                  {winner.user_id === user?.id
                                   ? "You"
-                                  : (() => { const wUser = usersMap[winner.user_id]; return wUser?.username || wUser?.email?.split('@')[0] || `Player ${winner.user_id.slice(0, 8)}`; })()}
+                                  : (() => { const wUser = usersMap[winner.user_id]; return wUser?.username || winner.user_name || `Player ${winner.user_id.slice(0, 8)}`; })()}
                                   {winner.is_creator && (
                                     <Badge className="ml-2 bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">
                                       Creator
