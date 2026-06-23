@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Gift, Users, DollarSign, Copy, Check, Lightbulb } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getReferralCount } from "@/functions/getReferralCount";
 
 export default function ReferralCard({ user, onUserUpdate }) {
   const [referralData, setReferralData] = useState(null);
@@ -26,8 +27,7 @@ export default function ReferralCard({ user, onUserUpdate }) {
       }
 
       // Загружаем данные о рефералах
-      const allUsers = await base44.entities.User.list();
-      const referrals = allUsers.filter(u => u.referred_by === user.id);
+      const { count: referralCount } = await getReferralCount();
       
       // Подсчитываем заработанное
       const transactions = await base44.entities.Transaction.filter({ 
@@ -38,7 +38,7 @@ export default function ReferralCard({ user, onUserUpdate }) {
 
       setReferralData({
         referralCode: user.referral_code,
-        friendsInvited: referrals.length,
+        friendsInvited: referralCount,
         totalEarned: totalEarned
       });
     } catch (error) {

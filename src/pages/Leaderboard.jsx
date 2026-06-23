@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Crown, Trophy, Medal, TrendingUp, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/lib/LanguageContext";
+import { getLeaderboard } from "@/functions/getLeaderboard";
 
 const TABS = [
   { key: "month", label: "This Month" },
@@ -36,13 +37,14 @@ export default function Leaderboard() {
   }, []);
 
   const loadLeaderboard = async () => {
-    const [me, allUsers, allParticipations, allFunds, allPredictions] = await Promise.all([
+    const [me, lbResult, allParticipations, allFunds, allPredictions] = await Promise.all([
       base44.auth.me().catch(() => null),
-      base44.entities.User.list(),
+      getLeaderboard(),
       base44.entities.Participation.list(),
       base44.entities.MatchFund.list(),
       base44.entities.Prediction.list(),
     ]);
+    const allUsers = lbResult.users;
 
     setCurrentUser(me);
 
@@ -108,7 +110,7 @@ export default function Leaderboard() {
         if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
         if (b.totalWinnings !== a.totalWinnings) return b.totalWinnings - a.totalWinnings;
         if ((b.respect_points || 0) !== (a.respect_points || 0)) return (b.respect_points || 0) - (a.respect_points || 0);
-        return (b.total_balance || 0) - (a.total_balance || 0);
+        return (b.username || "").localeCompare(a.username || "");
       });
 
     setAllSorted(sorted);
@@ -196,7 +198,7 @@ export default function Leaderboard() {
         if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
         if (b.totalWinnings !== a.totalWinnings) return b.totalWinnings - a.totalWinnings;
         if ((b.respect_points || 0) !== (a.respect_points || 0)) return (b.respect_points || 0) - (a.respect_points || 0);
-        return (b.total_balance || 0) - (a.total_balance || 0);
+        return (b.username || "").localeCompare(a.username || "");
       });
   }, [allSorted, activeTab, fundMap, predAccMap]);
 
