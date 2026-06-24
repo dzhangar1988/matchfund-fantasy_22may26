@@ -24,10 +24,10 @@ Deno.serve(async (req) => {
             const minRequired = fund.min_participants || 2;
 
             // Below minimum — cancel and refund instead of closing.
-            // Calls cancelFund so refunds follow the identical path as a manual cancel.
-            // cancelFund has its own idempotency guard (only acts on "open" funds).
+            // Uses the same refund logic as cancelFund (inlined to avoid
+            // function-to-function auth propagation issues).
             if (activeParts.length < minRequired) {
-                await base44.functions.invoke('cancelFund', { fund_id: fund.id, is_cron: true });
+                await cancelAndRefund(base44, fund.id, fund.entry_fee);
                 fundsCancelled++;
                 continue;
             }
@@ -86,3 +86,47 @@ Deno.serve(async (req) => {
         return Response.json({ error: error.message }, { status: 500 });
     }
 });
+
+/**
+ * Inlined cancel+refund logic — identical behavior to cancelFund.
+ * Cancels share listings, refunds entry fees & share purchases, marks fund cancelled.
+ * Idempotent: only acts on funds still "open".
+ */
+async function cancelAndRefund(base44, fundId, entryFee) {
+    const fund = await base44.asServiceRole.entities.MatchFund.get(fundId);
+    if (!fund) return;
+    if (fund.status !== 'open') return; // idempotency guard
+
+    // 1. Cancel active share listings
+    const activeListings = await base44.asServiceRole.entities.ShareListing.filter({ fund_id: fundId, status: 'active' });
+    await Promise.all(activeListings.map(l =>
+        base44.asServiceRole.entities.ShareListing.update(l.id, { status: 'cancelled', shares_available: 0 })
+    ));
+
+    // 2. Refund share buyers & clawback from sellers
+    const purchases = await base44.asServiceRole.entities.SharePurchase.filter({ fund_id: fundId });
+    const balanceDeltas = {};
+    for (const purchase of purchases) {
+        balanceDeltas[purchase.buyer_id] = (balanceDeltas[purchase.buyer_id] || 0) + purchase.total_cost;
+        balanceDeltas[purchase.seller_id] = (balanceDeltas[purchase.seller_id] || 0) - purchase.total_cost;
+    }
+
+    // 3. Refund entry fees
+    const allParticipations = await base44.asServiceRole.entities.Participation.filter({ fund_id: fundId });
+    for (const p of allParticipations) {
+        balanceDeltas[p.user_id] = (balanceDeltas[p.user_id] || 0) + entryFee;
+    }
+
+    // Apply all balance updates
+    const userIds = Object.keys(balanceDeltas);
+    const users = await Promise.all(userIds.map(id => base44.asServiceRole.entities.User.get(id)));
+    await Promise.all(users.map(u => {
+        const delta = balanceDeltas[u.id] || 0;
+        return base44.asServiceRole.entities.User.update(u.id, {
+            total_balance: Math.max(0, (u.total_balance || 0) + delta)
+        });
+    }));
+
+    // 4. Mark fund cancelled
+    await base44.asServiceRole.entities.MatchFund.update(fundId, { status: 'cancelled' });
+}
