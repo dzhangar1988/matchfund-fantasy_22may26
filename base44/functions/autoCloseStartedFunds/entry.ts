@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
             // Calls cancelFund so refunds follow the identical path as a manual cancel.
             // cancelFund has its own idempotency guard (only acts on "open" funds).
             if (activeParts.length < minRequired) {
-                await base44.functions.invoke('cancelFund', { fund_id: fund.id });
+                await base44.asServiceRole.functions.invoke('cancelFund', { fund_id: fund.id });
                 fundsCancelled++;
                 continue;
             }
