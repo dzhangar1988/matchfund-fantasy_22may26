@@ -1,22 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Plus, Trophy, ArrowRight, Users, RefreshCw } from "lucide-react";
+import { Plus, Trophy, ArrowRight, RefreshCw } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import OpenFundsPreview from "../components/OpenFundsPreview";
+import FundCard from "../components/FundCard";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
 
 export default function Home() {
   const { t } = useLanguage();
   const [funds, setFunds] = useState([]);
   const [user, setUser] = useState(null);
-  const [myActiveFunds, setMyActiveFunds] = useState([]);
-  const [myRoles, setMyRoles] = useState({});
-  const [participantCounts, setParticipantCounts] = useState({});
   const [wcMatches, setWcMatches] = useState([]);
   const [wcView, setWcView] = useState('date');
   const [isLoading, setIsLoading] = useState(true);
@@ -44,13 +41,12 @@ export default function Home() {
 
       setUser(currentUser);
 
-      const [participations, sharePurchases, allFundsRaw, wcRaw] = await Promise.all([
-        base44.entities.Participation.filter({ user_id: currentUser.id }),
-        base44.entities.SharePurchase.filter({ buyer_id: currentUser.id }),
+      const [allFundsRaw, wcRaw] = await Promise.all([
         Promise.all([
           base44.entities.MatchFund.filter({ status: "open" }, "-created_date", 50),
           base44.entities.MatchFund.filter({ status: "in_progress" }, "-created_date", 50),
-        ]).then(([open, inProgress]) => [...open, ...inProgress]),
+          base44.entities.MatchFund.filter({ status: "closed" }, "-created_date", 50),
+        ]).then(([open, inProgress, closed]) => [...open, ...inProgress, ...closed]),
         base44.entities.Match.filter({ competition: "World Cup 2026" }),
       ]);
       const allFunds = allFundsRaw;
@@ -66,39 +62,9 @@ export default function Home() {
         .sort((a, b) => new Date(a.match_date) - new Date(b.match_date));
       setWcMatches(upcomingWC);
 
-      // Extra guard: only keep truly open/in_progress funds (status may lag if cancelled externally)
-      const liveFunds = allFunds.filter(f => f.status === "open" || f.status === "in_progress");
-      setFunds(liveFunds);
-
-      const participatedFundIds = new Set(participations.map(p => p.fund_id));
-      const investedFundIds = new Set(sharePurchases.map(s => s.fund_id));
-      const ACTIVE_STATUSES = ["open", "in_progress"];
-
-      const active = liveFunds.filter(f =>
-        (participatedFundIds.has(f.id) || f.creator_id === currentUser.id) &&
-        ACTIVE_STATUSES.includes(f.status)
-      );
-
-      // Build roles map
-      const roles = {};
-      for (const f of active) {
-        roles[f.id] = {
-          creator: f.creator_id === currentUser.id,
-          player: participatedFundIds.has(f.id),
-          investor: investedFundIds.has(f.id) && !participatedFundIds.has(f.id) && f.creator_id !== currentUser.id,
-        };
-      }
-
-      // Load participant counts for each active fund
-      const countEntries = await Promise.all(
-        active.map(async (f) => {
-          const parts = await base44.entities.Participation.filter({ fund_id: f.id });
-          return [f.id, parts.length];
-        })
-      );
-      setParticipantCounts(Object.fromEntries(countEntries));
-      setMyRoles(roles);
-      setMyActiveFunds(active);
+      // Keep open (joinable), in_progress and closed (started/locked) funds — all public
+      const visibleFunds = allFunds.filter(f => f.status === "open" || f.status === "in_progress" || f.status === "closed");
+      setFunds(visibleFunds);
       setIsLoading(false);
       return;
     } catch (error) {
@@ -109,9 +75,8 @@ export default function Home() {
 
   const { containerRef, pulling, pullDistance, refreshing } = usePullToRefresh(loadData);
 
-  const myActiveFundIds = new Set(myActiveFunds.map(f => f.id));
-  // Show all open/in_progress funds - funds state already only contains open+in_progress
-  const openFunds = funds;
+  const openFunds = funds.filter(f => f.status === "open");
+  const liveFunds = funds.filter(f => f.status === "in_progress" || f.status === "closed");
 
   const stats = [
     { 
@@ -208,70 +173,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* My Active Funds */}
-        {!isLoading && user && (
-          <div className="mb-10">
-            <h2 className="text-xl font-bold text-white mb-4">My Active Funds</h2>
-            {myActiveFunds.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {myActiveFunds.map(fund => {
-                  const role = myRoles[fund.id] || {};
-                  return (
-                    <div key={fund.id} className="p-5 rounded-2xl border border-gray-700 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] flex flex-col gap-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <h3 className="text-white font-bold text-lg leading-tight">{fund.title}</h3>
-                        {fund.status === "in_progress" ? (
-                          <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs animate-pulse shrink-0">🔴 LIVE</Badge>
-                        ) : (
-                          <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs shrink-0">Open</Badge>
-                        )}
-                      </div>
-
-                      {/* Role badge — single, priority: Creator > Player > Investor */}
-                      <div className="flex flex-wrap gap-1">
-                        {fund.creator_id === user.id ? (
-                          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">Creator</Badge>
-                        ) : role.player ? (
-                          <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-xs">Player</Badge>
-                        ) : role.investor ? (
-                          <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-xs">Investor</Badge>
-                        ) : null}
-                      </div>
-
-                      <div className="flex items-center gap-4 text-sm text-gray-400">
-                        <span>Entry: <span className="text-white font-semibold">{fund.entry_fee} pts</span></span>
-                        <span>{fund.total_matches || 0} matches</span>
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5" />
-                          {participantCounts[fund.id] ?? "—"}
-                        </span>
-                      </div>
-
-                      <Link to={`/FundDetails?id=${fund.id}`}>
-                        <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-sm">
-                          View Fund <ArrowRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      </Link>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="p-8 rounded-2xl border border-gray-700 bg-gradient-to-br from-[#0F1E35] to-[#0A1628] text-center">
-                <p className="text-gray-400 mb-4">You're not in any active funds yet.</p>
-                <Button
-                  variant="outline"
-                  className="border-orange-500/50 text-orange-400 hover:bg-orange-500/10 min-h-[44px]"
-                  onClick={() => openFundsSectionRef.current?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  Browse Open Funds
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Open Funds Preview */}
+        {/* Open Funds — joinable */}
         <div ref={openFundsSectionRef} />
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -286,6 +188,23 @@ export default function Home() {
           </div>
         ) : (
           <OpenFundsPreview funds={openFunds} totalCount={openFunds.length} allFundsCount={openFunds.length} />
+        )}
+
+        {/* Live Funds — started (in_progress / closed), locked, public */}
+        {!isLoading && liveFunds.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-3xl font-bold text-white flex items-center gap-3 mb-6">
+              <span className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+                <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+              </span>
+              Live Funds ({liveFunds.length})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {liveFunds.map(fund => (
+                <FundCard key={fund.id} fund={fund} />
+              ))}
+            </div>
+          </div>
         )}
 
         {/* World Cup 2026 Upcoming Matches */}

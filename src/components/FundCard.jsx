@@ -95,7 +95,7 @@ export default function FundCard({ fund }) {
 
         <Link to={`/FundDetails?id=${fund.id}`}>
           <Button
-            disabled={fund.status === "finished" || fund.status === "cancelled" || fund.status === "closed"}
+            disabled={fund.status === "finished" || fund.status === "cancelled"}
             className={`w-full font-semibold ${
               hasJoined
                 ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
@@ -106,7 +106,7 @@ export default function FundCard({ fund }) {
               ? t("status_finished")
               : fund.status === "cancelled"
               ? t("status_cancelled")
-              : fund.status === "in_progress"
+              : (fund.status === "in_progress" || fund.status === "closed")
               ? t("view_details")
               : hasJoined 
               ? t("view_details")
