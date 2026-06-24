@@ -4,7 +4,8 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
 
-    const { fund_id } = await req.json();
+    const body = await req.json();
+    const { fund_id, is_cron } = body;
     if (!fund_id) return Response.json({ error: 'fund_id required' }, { status: 400 });
 
     const fund = await base44.asServiceRole.entities.MatchFund.get(fund_id);
@@ -18,8 +19,9 @@ Deno.serve(async (req) => {
 
     // Auth check — only enforced when a user is present (manual cancel).
     // Cron (autoCloseStartedFunds) calls this with no user context; skip the creator check.
+    // Auth check — only enforced when a user is present AND this isn't a cron call.
     const user = await base44.auth.me().catch(() => null);
-    if (user && fund.creator_id !== user.id) {
+    if (!is_cron && user && fund.creator_id !== user.id) {
       return Response.json({ error: 'Only the creator can cancel' }, { status: 403 });
     }
 
