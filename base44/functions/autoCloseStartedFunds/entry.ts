@@ -13,28 +13,38 @@ Deno.serve(async (req) => {
         );
 
         let fundsClosed = 0;
+        let fundsCancelled = 0;
         const multipliersFrozen = [];
 
         for (const fund of toClose) {
+            // Count active participants
+            const activeParts = await base44.asServiceRole.entities.Participation
+                .filter({ fund_id: fund.id, status: "active" });
+
+            const minRequired = fund.min_participants || 2;
+
+            // Below minimum — cancel and refund instead of closing
+            if (activeParts.length < minRequired) {
+                await base44.functions.invoke('refundFundParticipants', { fund_id: fund.id });
+                await base44.asServiceRole.entities.MatchFund.update(fund.id, { status: "cancelled" });
+                fundsCancelled++;
+                continue;
+            }
+
+            // Meets minimum — close normally and proceed to scoring
             const updateData = { status: "closed" };
 
             // For multiplier-mode funds: compute crowd-weighted multiplier snapshot before closing
             if (fund.scoring_mode === "multiplier") {
-                // 1. Get all active participations
-                const activeParts = await base44.asServiceRole.entities.Participation
-                    .filter({ fund_id: fund.id, status: "active" });
-
                 const totalActive = activeParts.length;
                 const multipliers = {};
 
                 if (totalActive > 0) {
-                    // 2. Gather all predictions for these participations
+                    // Gather all predictions for these participations
                     const partIds = activeParts.map(p => p.id);
                     const partUserMap = {};
                     for (const p of activeParts) partUserMap[p.id] = p.user_id;
 
-                    // Prediction.filter doesn't support IN, so fetch all for this fund's participations
-                    // by loading predictions via participation_id one-by-one (batched)
                     const allPreds = await Promise.all(
                         partIds.map(pid =>
                             base44.asServiceRole.entities.Prediction.filter({ participation_id: pid })
@@ -42,9 +52,8 @@ Deno.serve(async (req) => {
                     );
                     const preds = allPreds.flat();
 
-                    // 3. Tally distinct user_ids per ${match_id}_${option} key
-                    //    Use a Set of user_ids per key so one player counts once per key
-                    const pickerSets = {}; // key -> Set<user_id>
+                    // Tally distinct user_ids per ${match_id}_${option} key
+                    const pickerSets = {};
                     for (const pred of preds) {
                         const userId = partUserMap[pred.participation_id];
                         if (!userId) continue;
@@ -55,9 +64,9 @@ Deno.serve(async (req) => {
                         }
                     }
 
-                    // 4. Compute multiplier for each key with ≥1 picker
+                    // Compute multiplier for each key with ≥1 picker
                     for (const [key, userSet] of Object.entries(pickerSets)) {
-                        const pickerCount = userSet.size; // always ≥1 by construction
+                        const pickerCount = userSet.size;
                         multipliers[key] = Math.round((totalActive / pickerCount) * 100) / 100;
                     }
                 }
@@ -71,7 +80,7 @@ Deno.serve(async (req) => {
             fundsClosed++;
         }
 
-        return Response.json({ fundsClosed, multipliersFrozen, checked: openFunds.length });
+        return Response.json({ fundsClosed, fundsCancelled, multipliersFrozen, checked: openFunds.length });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }
