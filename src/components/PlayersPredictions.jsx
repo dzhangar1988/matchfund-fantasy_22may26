@@ -53,7 +53,7 @@ export default function PlayersPredictions({ participants, predictionsMap, match
                 </div>
                 {hasSubmitted ? (
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-400">{preds?.length ?? 0} predictions</span>
+                    <span className="text-xs text-gray-400">{preds?.reduce((sum, p) => sum + (p.selected_options?.length || 0), 0) ?? 0} predictions</span>
                     {summary && (
                       <span className="text-xs text-gray-500">• {summary}</span>
                     )}
