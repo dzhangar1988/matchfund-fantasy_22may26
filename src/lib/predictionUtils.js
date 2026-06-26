@@ -1,6 +1,13 @@
 // Shared prediction label and badge utilities
 // Used by both FundDetails (Your Predictions) and PlayersPredictions
 
+// Allowed predictions formula: ≤3 matches → matches+1, ≥4 matches → matches+2
+export function getAllowedPredictions(matchCount) {
+  if (matchCount <= 0) return 0;
+  if (matchCount <= 3) return matchCount + 1;
+  return matchCount + 2;
+}
+
 export function formatOption(opt, homeTeam, awayTeam) {
   if (opt.startsWith('exact_')) return 'Score: ' + opt.replace('exact_', '').replace('-', ' - ');
   const labels = {

@@ -15,7 +15,8 @@ import PlayersPredictions from "@/components/PlayersPredictions";
 import { getFundParticipants } from "@/functions/getFundParticipants";
 import { cancelFund } from "@/functions/cancelFund";
 import { showRespect } from "@/functions/showRespect";
-import { formatOption, badgeClass } from "@/lib/predictionUtils";
+import { formatOption, badgeClass, getAllowedPredictions } from "@/lib/predictionUtils";
+import { joinFund } from "@/functions/joinFund";
 import {
   Tooltip,
   TooltipContent,
@@ -342,7 +343,7 @@ export default function FundDetails() {
         points_earned: 0,
       }))
     );
-    
+
     try {
       if (!user || user.total_balance === null || user.total_balance === undefined) {
         throw new Error("Unable to verify your balance. Please refresh and try again.");
@@ -364,8 +365,13 @@ export default function FundDetails() {
         throw new Error(`Invalid predictions. Use between ${matches.length} and ${maxPredictions} picks total, max 2 per match.`);
       }
 
+      // 🔒 Explicit getAllowedPredictions guard before writing any Prediction rows
       const totalCredits = getTotalCredits();
-      
+      const allowed = getAllowedPredictions(matches.length);
+      if (totalCredits > allowed) {
+        throw new Error(`Prediction limit exceeded: ${totalCredits} picks submitted, but only ${allowed} allowed for ${matches.length} match${matches.length !== 1 ? 'es' : ''}.`);
+      }
+
       // Collect device fingerprint
       const deviceInfo = {
         user_agent: navigator.userAgent,
@@ -374,41 +380,13 @@ export default function FundDetails() {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         timestamp: new Date().toISOString()
       };
-      
-      const participation = await base44.entities.Participation.create({
+
+      // 🔒 Route through backend function — enforces hard server-side guard
+      //    (rejects if total predictions > allowed for fund's match count)
+      await joinFund({
         fund_id: fundId,
-        user_id: user.id,
-        user_name: user.username || user.full_name || user.email,
-        user_email: user.email,
-        entry_paid: fund.entry_fee,
-        is_creator: false,
-        status: "active",
-        credits_used: totalCredits,
-        total_points: 0,
-        joined_at: new Date().toISOString(),
-        predictions_completed_at: new Date().toISOString(),
-        device_info: deviceInfo
-      });
-
-      for (const match of matches) {
-        const opts = predictions[match.id] || [];
-        await base44.entities.Prediction.create({
-          participation_id: participation.id,
-          match_id: match.id,
-          selected_options: opts,
-          credits_spent: opts.length
-        });
-      }
-
-      const newBalance = Math.max(0, user.total_balance - fund.entry_fee);
-      await base44.entities.User.update(user.id, {
-        total_balance: newBalance,
-        total_predictions: (user.total_predictions || 0) + matches.length
-      });
-
-      const currentFund = await base44.entities.MatchFund.get(fundId);
-      await base44.entities.MatchFund.update(fundId, {
-        total_pool: (currentFund.total_pool || 0) + fund.entry_fee
+        predictions,
+        device_info: deviceInfo,
       });
 
       await loadData();
@@ -519,11 +497,7 @@ export default function FundDetails() {
 
   const totalCredits = getTotalCredits();
 
-  const maxPredictions = matches.length >= 1 && matches.length <= 3
-    ? matches.length + 1
-    : matches.length >= 4
-    ? matches.length + 2
-    : matches.length + 1;
+  const maxPredictions = getAllowedPredictions(matches.length);
 
   if (isLoading) {
     return (

@@ -18,6 +18,7 @@ import {
 import InfoCard from "../components/InfoCard";
 import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/lib/LanguageContext";
+import { getAllowedPredictions } from "@/lib/predictionUtils";
 
 // ── Prize distribution options ─────────────────────────────────────────────
 const PRIZE_OPTIONS = [
@@ -42,14 +43,6 @@ const PRIZE_OPTIONS = [
 ];
 
 const PLACE_LABELS = ["🥇 1st", "🥈 2nd", "🥉 3rd"];
-
-// ── Allowed predictions formula ────────────────────────────────────────────
-function getAllowedPredictions(matchCount) {
-  if (matchCount <= 0) return 0;
-  if (matchCount <= 3) return matchCount + 1;
-  return matchCount + 2;
-}
-// Formula: ≤3 matches → matches+1, ≥4 matches → matches+2
 
 export default function CreateFund() {
   const { t } = useLanguage();
