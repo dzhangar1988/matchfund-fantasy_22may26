@@ -61,6 +61,7 @@ export default function FundDetails() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [formError, setFormError] = useState(null);
   const [showExactScore, setShowExactScore] = useState({});
   const [exactScores, setExactScores] = useState({});
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -323,6 +324,7 @@ export default function FundDetails() {
     
     setIsSubmitting(true);
     setError(null);
+    setFormError(null);
 
     // ── Optimistic UI: immediately show joined state ──
     const optimisticParticipation = {
@@ -397,12 +399,13 @@ export default function FundDetails() {
 
       await loadData();
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (error) {
+    } catch (err) {
       // Rollback optimistic update on failure
       setHasJoined(false);
       setMyParticipation(null);
       setMyPredictions([]);
-      setError(error.message || "Failed to submit predictions");
+      // Show validation errors inline on the join form, not as a "Fund Not Found" page
+      setFormError(err?.response?.data?.error || err?.message || "Failed to submit predictions");
     } finally {
       setIsSubmitting(false);
     }
@@ -1252,12 +1255,12 @@ export default function FundDetails() {
               </Card>
             </div>
 
-            {error && (
+            {formError && (
               <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-red-400 font-semibold">Error</p>
-                  <p className="text-red-300 text-sm">{error}</p>
+                  <p className="text-red-400 font-semibold">Cannot join fund</p>
+                  <p className="text-red-300 text-sm">{formError}</p>
                 </div>
               </div>
             )}
