@@ -846,7 +846,10 @@ export default function FundDetails() {
                               <div>
                                 <div className="text-lg font-bold text-white">{participant.total_points || 0} pts</div>
                                 {fund.status === "finished" && participant.final_payout > 0 ? (
-                                  <div className="text-xs text-yellow-400">Prize: {participant.final_payout} pts</div>
+                                  <div className="text-xs text-yellow-400">
+                                    Prize: {participant.final_payout} pts
+                                    {participant.is_creator && <span className="text-gray-500"> (incl. 1% creator bonus)</span>}
+                                  </div>
                                 ) : potentialPrize > 0 ? (
                                   <div className="text-xs text-yellow-400">Prize: {potentialPrize} pts</div>
                                 ) : null}
