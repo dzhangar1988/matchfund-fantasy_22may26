@@ -845,9 +845,11 @@ export default function FundDetails() {
                             <div className="flex items-center gap-4 text-right flex-wrap justify-end">
                               <div>
                                 <div className="text-lg font-bold text-white">{participant.total_points || 0} pts</div>
-                                {potentialPrize > 0 && (
+                                {fund.status === "finished" && participant.final_payout > 0 ? (
+                                  <div className="text-xs text-yellow-400">Prize: {participant.final_payout} pts</div>
+                                ) : potentialPrize > 0 ? (
                                   <div className="text-xs text-yellow-400">Prize: {potentialPrize} pts</div>
-                                )}
+                                ) : null}
                               </div>
                               {(fund.status === "open" || fund.status === "in_progress") && !tradingClosed && (
                                 <div className="text-right">
