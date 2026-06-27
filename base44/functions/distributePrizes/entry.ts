@@ -12,8 +12,13 @@ function getOptionWeight(option) {
 }
 
 function checkOption(option, match) {
-  const h = match.home_goals ?? null;
-  const a = match.away_goals ?? null;
+  let h = match.home_goals ?? null;
+  let a = match.away_goals ?? null;
+  // Defensive fallback: old/bad data may have null goals with a result set.
+  // A draw with no goals recorded → treat as 0-0 (most common scoreless result).
+  if ((h === null || a === null) && match.result === 'draw') {
+    h = 0; a = 0;
+  }
   if (h === null || a === null) return false;
   const result = match.result;
   const totalGoals = h + a;
@@ -88,10 +93,13 @@ Deno.serve(async (req) => {
     // Load fund matches and check all finished
     const fundMatches = await base44.asServiceRole.entities.FundMatch.filter({ fund_id });
     const fundMatchIds = fundMatches.map(fm => fm.match_id);
-    const allFundMatchObjects = await Promise.all(
-      fundMatchIds.map(id => base44.asServiceRole.entities.Match.get(id))
-    );
-    const allFinished = allFundMatchObjects.every(m => m.status === 'finished');
+    const allFundMatchObjects = [];
+    for (const id of fundMatchIds) {
+      try {
+        allFundMatchObjects.push(await base44.asServiceRole.entities.Match.get(id));
+      } catch (e) { /* orphaned FundMatch — match deleted, skip */ }
+    }
+    const allFinished = allFundMatchObjects.length > 0 && allFundMatchObjects.every(m => m.status === 'finished');
     if (!allFinished) {
       return Response.json({ ok: true, message: 'Not all matches finished yet', skipped: true });
     }

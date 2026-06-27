@@ -10,6 +10,7 @@ import { createPageUrl } from "@/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import WC2026_FIXTURES from "@/data/wc2026Fixtures";
 import { distributePrizes as distributePrizesBackend } from "@/functions/distributePrizes";
+import { checkOption, getPickPoints } from "@/lib/scoringUtils";
 
 const COMPETITIONS = [
   "World Cup 2026",
@@ -357,14 +358,12 @@ export default function AdminMatches() {
     }
   };
 
-  const calculateFundPredictions = async (fundId, matchId, outcome, actualScore) => {
-    console.log("=== CALCULATING PREDICTIONS (CREDIT SYSTEM) ===");
-    console.log("Match:", matchId);
-    console.log("Outcome:", outcome, typeof outcome);
-    console.log("Actual Score:", actualScore);
+  const calculateFundPredictions = async (fund, matchId, outcome, actualScore) => {
+    console.log("=== CALCULATING PREDICTIONS ===");
+    console.log("Match:", matchId, "Outcome:", outcome, "Score:", actualScore);
 
     try {
-      const participations = await base44.entities.Participation.filter({ fund_id: fundId });
+      const participations = await base44.entities.Participation.filter({ fund_id: fund.id });
       console.log("Found participations:", participations.length);
 
       for (const participation of participations) {
@@ -375,23 +374,20 @@ export default function AdminMatches() {
           });
 
           if (predictions.length === 0) {
-            console.warn(`⚠️ No prediction record found for user ${participation.user_id?.slice(0, 8)} on match ${matchId} in fund ${fundId}`);
+            console.warn(`⚠️ No prediction record for user ${participation.user_id?.slice(0, 8)} on match ${matchId}`);
             continue;
           }
 
           const pred = predictions[0];
-          
           let selectedOptions = pred.selected_options;
           let creditsSpent = pred.credits_spent;
 
           if (!Array.isArray(selectedOptions) || selectedOptions.length === 0) {
-            console.warn(`⚠️ Old prediction format or empty prediction detected for user ${participation.user_id?.slice(0, 8)} on match ${matchId} in fund ${fundId}!`);
-            
+            console.warn(`⚠️ Old/empty prediction for user ${participation.user_id?.slice(0, 8)}`);
             if (pred.simple_prediction) {
               selectedOptions = [pred.simple_prediction];
               creditsSpent = creditsSpent ?? 1;
             } else {
-              console.warn(`⚠️ No actual predictions made for user ${participation.user_id?.slice(0, 8)} on match ${matchId} in fund ${fundId}! Setting points to 0.`);
               await base44.entities.Prediction.update(pred.id, {
                 points_earned: 0,
                 is_correct: false,
@@ -402,77 +398,25 @@ export default function AdminMatches() {
               continue;
             }
           }
-          
-          if (!Array.isArray(selectedOptions)) {
-            selectedOptions = [];
-          }
 
+          if (!Array.isArray(selectedOptions)) selectedOptions = [];
           if (creditsSpent === undefined || creditsSpent === null) {
             creditsSpent = selectedOptions.length || 1;
           }
-          
-          console.log("\n--- User:", participation.user_id?.slice(0, 8));
-          console.log("Selected options:", selectedOptions);
-          console.log("Credits spent:", creditsSpent);
-          
-          // Extract match goals from actualScore
+
+          // Score using shared checkOption logic (same as backend)
           const [homeGoals, awayGoals] = actualScore.split('-').map(Number);
-          const totalGoals = homeGoals + awayGoals;
-          
+          const matchData = { home_goals: homeGoals, away_goals: awayGoals, result: outcome };
+
           let points = 0;
-
-          // 1. Bold match (3 pts)
-          const boldMatch = selectedOptions.includes(outcome);
-          console.log("Bold check:", outcome, "in", selectedOptions, "=", boldMatch);
-          if (boldMatch) {
-            points += 3;
-            console.log("  Bold match! +3 pts");
-          }
-
-          // 2. Exact score (9 pts)
-          const exactOption = `exact_${actualScore}`;
-          const exactMatch = selectedOptions.includes(exactOption);
-          console.log("Exact check:", exactOption, "in", selectedOptions, "=", exactMatch);
-          if (exactMatch) {
-            points += 9; // Updated from 8 to 9
-            console.log("  Exact match! +9 pts");
-          }
-
-          // 3. NEW: Over 1.5 Goals (2 pts)
-          if (selectedOptions.includes('over_1_5') && totalGoals > 1.5) {
-            points += 2;
-            console.log("  Over 1.5 Goals! +2 pts");
-          }
-
-          // 4. NEW: Over 2.5 Goals (2 pts)
-          if (selectedOptions.includes('over_2_5') && totalGoals > 2.5) {
-            points += 2;
-            console.log("  Over 2.5 Goals! +2 pts");
-          }
-
-          // 5. NEW: Both Teams Score (2 pts)
-          if (selectedOptions.includes('btts_yes') && homeGoals > 0 && awayGoals > 0) {
-            points += 2;
-            console.log("  Both Teams Score! +2 pts");
-          }
-
-          // 6. Hedge fallback (1.5 pts) - only if nothing matched
-          if (points === 0 && selectedOptions.length > 1) {
-            const hasAnyMatch = 
-              selectedOptions.includes(outcome) ||
-              selectedOptions.includes(exactOption) ||
-              (totalGoals > 1.5 && selectedOptions.includes('over_1_5')) ||
-              (totalGoals > 2.5 && selectedOptions.includes('over_2_5')) ||
-              (homeGoals > 0 && awayGoals > 0 && selectedOptions.includes('btts_yes'));
-            
-            console.log("Hedge check (fallback):", hasAnyMatch);
-            if (hasAnyMatch) {
-              points = 1.5;
-              console.log("  Hedge fallback! +1.5 pts");
+          for (const opt of selectedOptions) {
+            if (checkOption(opt, matchData)) {
+              points += getPickPoints(fund, matchId, opt);
             }
           }
+          points = Math.floor(points);
 
-          console.log("Final points:", points);
+          console.log(`User ${participation.user_id?.slice(0, 8)}: [${selectedOptions.join(', ')}] → ${points} pts`);
 
           await base44.entities.Prediction.update(pred.id, {
             points_earned: points,
@@ -480,27 +424,22 @@ export default function AdminMatches() {
             credits_spent: creditsSpent,
             selected_options: selectedOptions
           });
-
           await sleep(50);
 
           const currentTotalPoints = (await base44.entities.Participation.get(participation.id)).total_points || 0;
           const newTotalPoints = currentTotalPoints + points;
-
-          await base44.entities.Participation.update(participation.id, {
-            total_points: newTotalPoints
-          });
-          
+          await base44.entities.Participation.update(participation.id, { total_points: newTotalPoints });
           await sleep(50);
-          
+
           console.log("Updated participation total_points:", newTotalPoints);
         } catch (error) {
-          console.error(`❌ Error calculating prediction for user ${participation.user_id?.slice(0, 8)} on match ${matchId} in fund ${fundId}:`, error);
+          console.error(`❌ Error calculating prediction for user ${participation.user_id?.slice(0, 8)}:`, error);
         }
       }
 
       console.log("=== PREDICTIONS CALCULATED ===\n");
     } catch (error) {
-      console.error("❌ Error in calculateFundPredictions for fund", fundId, ":", error);
+      console.error("❌ Error in calculateFundPredictions for fund", fund?.id, ":", error);
       throw error;
     }
   };
@@ -556,7 +495,7 @@ export default function AdminMatches() {
           }
 
           console.log(`\n🔄 Processing fund: ${fund.title}`);
-          await calculateFundPredictions(fm.fund_id, matchId, outcome, actualScore);
+          await calculateFundPredictions(fund, matchId, outcome, actualScore);
           
           await sleep(200); // Delay between calculating and updating status
           
@@ -1033,7 +972,7 @@ export default function AdminMatches() {
               const s = `${m.home_goals}-${m.away_goals}`;
               
               console.log(`Recalculating match: ${m.home_team} vs ${m.away_team} (${s})`);
-              await calculateFundPredictions(fm.fund_id, m.id, o, s);
+              await calculateFundPredictions(fund, m.id, o, s);
               await sleep(300); // Increased delay between match calculations
             }
           }
