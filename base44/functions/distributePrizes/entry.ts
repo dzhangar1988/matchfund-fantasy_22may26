@@ -153,9 +153,6 @@ Deno.serve(async (req) => {
         }
         total += pts;
       }
-      const creditsUsed = part.credits_used ?? 0;
-      const unusedCredits = Math.max(0, creditsPerPlayer - creditsUsed);
-      total += unusedCredits * 0.5;
       partTotals[part.id] = Math.floor(total);
     }
 
