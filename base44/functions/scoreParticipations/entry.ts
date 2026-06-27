@@ -66,7 +66,7 @@ function getPickPoints(fund, matchId, option) {
     if (mult === undefined || mult === null) return weight;
     return Math.round(weight * mult * 100) / 100;
   }
-  return Math.round(weight); // standard mode → fixed weights, rounded to whole number
+  return Math.floor(weight); // standard mode → fixed weights, floored to whole number
 }
 
 Deno.serve(async (req) => {
@@ -132,7 +132,7 @@ Deno.serve(async (req) => {
           pts += getPickPoints(fund, pred.match_id, opt);
         }
       }
-      pts = Math.round(pts); // whole numbers only
+      pts = Math.floor(pts); // whole numbers only
       const isCorrect = pts > 0;
       if (pred.points_earned !== pts || pred.is_correct !== isCorrect) {
         updates.push(
@@ -178,7 +178,7 @@ Deno.serve(async (req) => {
         }
         total += pts;
       }
-      total = Math.round(total); // whole numbers only
+      total = Math.floor(total); // whole numbers only
       if ((part.total_points || 0) !== total) {
         partUpdates.push(
           base44.asServiceRole.entities.Participation.update(part.id, { total_points: total })
