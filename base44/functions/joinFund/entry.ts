@@ -79,6 +79,9 @@ Deno.serve(async (req) => {
     }
     for (const matchId of matchIds) {
       const opts = predictions[matchId] || [];
+      if (opts.length < 1) {
+        return Response.json({ error: 'Every match must have at least 1 prediction' }, { status: 400 });
+      }
       if (opts.length > 2) {
         return Response.json({ error: 'Maximum 2 predictions per match' }, { status: 400 });
       }
