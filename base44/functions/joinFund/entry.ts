@@ -77,13 +77,16 @@ Deno.serve(async (req) => {
     if (totalPredictions < matchCount) {
       return Response.json({ error: `Need at least ${matchCount} predictions (1 per match)` }, { status: 400 });
     }
+    const matchMap = new Map(matches.map(m => [m.id, m]));
     for (const matchId of matchIds) {
       const opts = predictions[matchId] || [];
+      const m = matchMap.get(matchId);
+      const label = m ? `${m.home_team} vs ${m.away_team}` : `Match ${matchId}`;
       if (opts.length < 1) {
-        return Response.json({ error: 'Every match must have at least 1 prediction' }, { status: 400 });
+        return Response.json({ error: `${label} has no prediction — each match needs at least 1 pick` }, { status: 400 });
       }
       if (opts.length > 2) {
-        return Response.json({ error: 'Maximum 2 predictions per match' }, { status: 400 });
+        return Response.json({ error: `${label} has ${opts.length} picks — maximum 2 per match` }, { status: 400 });
       }
     }
 
