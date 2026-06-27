@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// ── Allowed predictions formula (mirrors lib/predictionUtils.js) ──────────
-// ≤3 matches → matches+1, ≥4 matches → matches+2
+// ── Prediction validation (inlined from functions/validatePredictions.js — KEEP IN SYNC) ──
+// Allowed predictions formula: ≤3 matches → matches+1, ≥4 matches → matches+2
 function getAllowedPredictions(matchCount) {
   if (matchCount <= 0) return 0;
   if (matchCount <= 3) return matchCount + 1;
@@ -68,7 +68,6 @@ Deno.serve(async (req) => {
     // ── Load ALL predictions for this participation ──
     const allPredictions = await base44.asServiceRole.entities.Prediction.filter({ participation_id: participation.id });
 
-    // ── (3) Validate new picks against shared prediction-limit ──
     // Build the full predictions map with the edited match's new picks
     const predictionsMap = {};
     for (const p of allPredictions) {
@@ -79,20 +78,19 @@ Deno.serve(async (req) => {
       }
     }
 
+    // ── (3) Validate (mirrors functions/validatePredictions.js — KEEP IN SYNC) ──
     const allowedPredictions = getAllowedPredictions(matchCount);
     let totalPicks = 0;
     for (const matchId of matchIds) {
       totalPicks += (predictionsMap[matchId] || []).length;
     }
-
     if (totalPicks > allowedPredictions) {
       return Response.json({
-        error: `Prediction limit exceeded: ${totalPicks} picks, but only ${allowedPredictions} allowed for ${matchCount} matches.`,
+        error: `Prediction limit exceeded: ${totalPicks} picks, but only ${allowedPredictions} allowed for ${matchCount} match${matchCount !== 1 ? 'es' : ''}.`,
         total_submitted: totalPicks,
         allowed: allowedPredictions,
       }, { status: 400 });
     }
-
     if (totalPicks < matchCount) {
       return Response.json({ error: `Need at least ${matchCount} predictions (1 per match)` }, { status: 400 });
     }

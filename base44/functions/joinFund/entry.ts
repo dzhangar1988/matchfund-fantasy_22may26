@@ -1,7 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
-// ── Allowed predictions formula (mirrors lib/predictionUtils.js) ──────────
-// ≤3 matches → matches+1, ≥4 matches → matches+2
+// ── Prediction validation (inlined from functions/validatePredictions.js — KEEP IN SYNC) ──
+// Allowed predictions formula: ≤3 matches → matches+1, ≥4 matches → matches+2
 function getAllowedPredictions(matchCount) {
   if (matchCount <= 0) return 0;
   if (matchCount <= 3) return matchCount + 1;
@@ -41,8 +41,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Fund has no matches configured' }, { status: 400 });
     }
 
-    const allowedPredictions = getAllowedPredictions(matchCount);
-
     // Load matches to check if any started
     const matches = await Promise.all(
       matchIds.map(id => base44.asServiceRole.entities.Match.get(id))
@@ -54,29 +52,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'This fund is locked — a match has already started.' }, { status: 400 });
     }
 
-    // Count total predictions submitted
+    // ═══════════════════════════════════════════════════════════════════════
+    // PREDICTION VALIDATION (mirrors functions/validatePredictions.js — KEEP IN SYNC)
+    // ═══════════════════════════════════════════════════════════════════════
+    const allowedPredictions = getAllowedPredictions(matchCount);
     let totalPredictions = 0;
-    for (const matchId of matchIds) {
-      const opts = predictions[matchId] || [];
-      totalPredictions += Array.isArray(opts) ? opts.length : 0;
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // HARD SERVER-SIDE GUARD: reject if total predictions > allowed for match count
-    // ═══════════════════════════════════════════════════════════════════════
-    if (totalPredictions > allowedPredictions) {
-      return Response.json({
-        error: `Prediction limit exceeded: ${totalPredictions} picks submitted, but only ${allowedPredictions} allowed for ${matchCount} match${matchCount !== 1 ? 'es' : ''}.`,
-        total_submitted: totalPredictions,
-        allowed: allowedPredictions,
-        match_count: matchCount
-      }, { status: 400 });
-    }
-
-    // Validate minimum (at least 1 per match) and max 2 per match
-    if (totalPredictions < matchCount) {
-      return Response.json({ error: `Need at least ${matchCount} predictions (1 per match)` }, { status: 400 });
-    }
     const matchMap = new Map(matches.map(m => [m.id, m]));
     for (const matchId of matchIds) {
       const opts = predictions[matchId] || [];
@@ -88,6 +68,18 @@ Deno.serve(async (req) => {
       if (opts.length > 2) {
         return Response.json({ error: `${label} has ${opts.length} picks — maximum 2 per match` }, { status: 400 });
       }
+      totalPredictions += opts.length;
+    }
+    if (totalPredictions < matchCount) {
+      return Response.json({ error: `Need at least ${matchCount} predictions (1 per match)` }, { status: 400 });
+    }
+    if (totalPredictions > allowedPredictions) {
+      return Response.json({
+        error: `Prediction limit exceeded: ${totalPredictions} picks submitted, but only ${allowedPredictions} allowed for ${matchCount} match${matchCount !== 1 ? 'es' : ''}.`,
+        total_submitted: totalPredictions,
+        allowed: allowedPredictions,
+        match_count: matchCount
+      }, { status: 400 });
     }
 
     // Check duplicate participation

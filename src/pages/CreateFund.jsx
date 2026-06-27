@@ -18,7 +18,7 @@ import {
 import InfoCard from "../components/InfoCard";
 import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/lib/LanguageContext";
-import { getAllowedPredictions } from "@/lib/predictionUtils";
+import { getAllowedPredictions, validatePredictions } from "@/lib/predictionUtils";
 
 // ── Prize distribution options ─────────────────────────────────────────────
 const PRIZE_OPTIONS = [
@@ -293,14 +293,9 @@ export default function CreateFund() {
 
   const allPredictionsValid = () => {
     if (matches.length < 1) return false;
-    if (totalPredictions > allowedPredictions) return false;
-    // At least one prediction total, and no match has more than 2
-    if (totalPredictions < 1) return false;
-    for (const match of matches) {
-      const opts = predictions[match.id] || [];
-      if (opts.length > 2) return false;
-    }
-    return true;
+    const matchIds = matches.map(m => m.id);
+    const result = validatePredictions(predictions, matches.length, matchIds);
+    return result.valid;
   };
 
   const userBalance = user?.total_balance ?? 0;

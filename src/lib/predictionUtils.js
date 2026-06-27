@@ -8,6 +8,43 @@ export function getAllowedPredictions(matchCount) {
   return matchCount + 2;
 }
 
+// Shared prediction validation — mirrors functions/validatePredictions.js
+// SINGLE SOURCE OF TRUTH for client-side prediction validation.
+// Called by: CreateFund, FundDetails
+export function validatePredictions(predictions, matchCount, matchIds) {
+  if (!matchCount || matchCount < 1) {
+    return { valid: false, error: 'Invalid match count', total: 0, allowed: 0 };
+  }
+
+  const allowed = getAllowedPredictions(matchCount);
+  const ids = Array.isArray(matchIds) ? matchIds : Object.keys(predictions || {});
+  let total = 0;
+
+  // Per-match rule: 1–2 picks
+  for (const matchId of ids) {
+    const opts = (predictions && predictions[matchId]) || [];
+    if (opts.length < 1) {
+      return { valid: false, error: 'Each match needs at least 1 pick', total, allowed };
+    }
+    if (opts.length > 2) {
+      return { valid: false, error: 'Maximum 2 picks per match', total, allowed };
+    }
+    total += opts.length;
+  }
+
+  // Total minimum: at least matchCount (1 per match)
+  if (total < matchCount) {
+    return { valid: false, error: `Need at least ${matchCount} predictions (1 per match)`, total, allowed };
+  }
+
+  // Total maximum: allowed cap
+  if (total > allowed) {
+    return { valid: false, error: `Prediction limit exceeded: ${total} picks, but only ${allowed} allowed for ${matchCount} match${matchCount !== 1 ? 'es' : ''}.`, total, allowed };
+  }
+
+  return { valid: true, error: null, total, allowed };
+}
+
 export function formatOption(opt, homeTeam, awayTeam) {
   if (opt.startsWith('exact_')) return 'Score: ' + opt.replace('exact_', '').replace('-', ' - ');
   const labels = {
