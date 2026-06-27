@@ -212,8 +212,20 @@ Deno.serve(async (req) => {
         const sorted = [...fundParticipations].sort((a, b) => (b.total_points || 0) - (a.total_points || 0));
 
         const grossPool = (fund.entry_fee || 0) * sorted.length;
-        const creatorBonus = Math.floor(grossPool * 0.01);
-        const netPool = grossPool - creatorBonus;
+        const platformFee = Math.floor(grossPool * (fund.platform_fee_percent || 7) / 100);
+        const creatorBonusAmount = Math.floor(grossPool * (fund.creator_bonus_percent || 1) / 100);
+        const prizePool = grossPool - platformFee - creatorBonusAmount;
+
+        const allUsers = await base44.asServiceRole.entities.User.list();
+        const userMap = {};
+        for (const u of allUsers) userMap[u.id] = u;
+
+        const prizeUpdates = [];
+
+        // Fix total_pool
+        prizeUpdates.push(
+          base44.asServiceRole.entities.MatchFund.update(fund_id, { total_pool: grossPool })
+        );
 
         // prize_distribution is an array like [100] or [60,40] or [50,30,20]
         const dist = Array.isArray(fund.prize_distribution) && fund.prize_distribution.length > 0
@@ -239,41 +251,73 @@ Deno.serve(async (req) => {
           const sharesForGroup = splits.slice(splitIndex, splitIndex + group.length);
           if (sharesForGroup.length === 0) break;
           const totalShare = sharesForGroup.reduce((s, v) => s + v, 0);
-          const prizePerPlayer = Math.floor((netPool * totalShare) / group.length);
+          const prizePerPlayer = Math.floor((prizePool * totalShare) / group.length);
           for (const part of group) {
             prizes[part.id] = prizePerPlayer;
           }
           splitIndex += group.length;
         }
 
-        // Update participations and user balances
-        const prizeUpdates = [];
+        // Update participations and user balances (delta approach — idempotent)
         for (const part of sorted) {
           const prize = prizes[part.id] || 0;
+          const oldPrize = part.final_payout || 0;
+          const oldStatus = part.status;
+          const newStatus = prize > 0 ? 'winner' : 'loser';
+          const delta = prize - oldPrize;
+
           prizeUpdates.push(
             base44.asServiceRole.entities.Participation.update(part.id, {
-              status: prize > 0 ? 'winner' : 'loser',
+              status: newStatus,
               final_payout: prize
             })
           );
-          if (prize > 0) {
-            const usr = await base44.asServiceRole.entities.User.get(part.user_id);
-            prizeUpdates.push(
-              base44.asServiceRole.entities.User.update(part.user_id, {
-                total_balance: (usr.total_balance || 0) + prize
-              })
-            );
+          if (delta !== 0 || (oldStatus !== newStatus && (oldPrize > 0 || prize > 0))) {
+            const usr = userMap[part.user_id];
+            if (usr) {
+              const userUpdates = {};
+              if (delta !== 0) userUpdates.total_balance = (usr.total_balance || 0) + delta;
+              if (prize > 0 && oldPrize === 0) {
+                userUpdates.total_winnings = (usr.total_winnings || 0) + prize;
+                userUpdates.total_wins = (usr.total_wins || 0) + 1;
+              } else if (prize === 0 && oldPrize > 0) {
+                userUpdates.total_winnings = Math.max(0, (usr.total_winnings || 0) - oldPrize);
+                userUpdates.total_wins = Math.max(0, (usr.total_wins || 0) - 1);
+              } else if (prize > 0 && oldPrize > 0 && delta !== 0) {
+                userUpdates.total_winnings = Math.max(0, (usr.total_winnings || 0) + delta);
+              }
+              if (Object.keys(userUpdates).length > 0) {
+                prizeUpdates.push(
+                  base44.asServiceRole.entities.User.update(part.user_id, userUpdates)
+                );
+                if (userUpdates.total_balance !== undefined) usr.total_balance = userUpdates.total_balance;
+                if (userUpdates.total_winnings !== undefined) usr.total_winnings = userUpdates.total_winnings;
+                if (userUpdates.total_wins !== undefined) usr.total_wins = userUpdates.total_wins;
+              }
+            }
           }
         }
 
-        // Creator bonus
-        if (creatorBonus > 0) {
-          const creator = await base44.asServiceRole.entities.User.get(fund.creator_id);
-          prizeUpdates.push(
-            base44.asServiceRole.entities.User.update(fund.creator_id, {
-              total_balance: (creator.total_balance || 0) + creatorBonus
-            })
-          );
+        // Creator bonus (delta approach)
+        if (creatorBonusAmount > 0) {
+          const creatorPart = fundParticipations.find(p => p.is_creator);
+          if (creatorPart) {
+            const oldBonus = creatorPart.creator_bonus || 0;
+            const deltaBonus = creatorBonusAmount - oldBonus;
+            prizeUpdates.push(
+              base44.asServiceRole.entities.Participation.update(creatorPart.id, { creator_bonus: creatorBonusAmount })
+            );
+            if (deltaBonus !== 0) {
+              const creator = userMap[fund.creator_id];
+              if (creator) {
+                prizeUpdates.push(
+                  base44.asServiceRole.entities.User.update(fund.creator_id, {
+                    total_balance: (creator.total_balance || 0) + deltaBonus
+                  })
+                );
+              }
+            }
+          }
         }
 
         // Mark fund finished

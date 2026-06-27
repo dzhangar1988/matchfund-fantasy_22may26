@@ -14,8 +14,6 @@ function getOptionWeight(option) {
 function checkOption(option, match) {
   let h = match.home_goals ?? null;
   let a = match.away_goals ?? null;
-  // Defensive fallback: old/bad data may have null goals with a result set.
-  // A draw with no goals recorded → treat as 0-0 (most common scoreless result).
   if ((h === null || a === null) && match.result === 'draw') {
     h = 0; a = 0;
   }
@@ -54,28 +52,19 @@ function checkOption(option, match) {
 }
 
 function getPickPoints(fund, matchId, option) {
-  const weight = getOptionWeight(option);
-  // Multiplier path is disabled — all funds use standard fixed weights.
-  if (false && fund && fund.scoring_mode === 'multiplier' && fund.multipliers && Object.keys(fund.multipliers).length > 0) {
-    const mult = fund.multipliers[`${matchId}_${option}`];
-    if (mult === undefined || mult === null) return weight;
-    return Math.round(weight * mult * 100) / 100;
-  }
-  return Math.floor(weight); // standard mode → fixed weights, floored to whole number
+  return Math.floor(getOptionWeight(option));
 }
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-
-    // Admin only (allow internal automation calls with no user)
     const user = await base44.auth.me().catch(() => null);
     if (user && user.role !== 'admin' && !user.is_admin) {
       return Response.json({ error: 'Admin only' }, { status: 403 });
     }
 
     const body = await req.json().catch(() => ({}));
-    const { fund_id } = body;
+    const { fund_id, force } = body;
     if (!fund_id) {
       return Response.json({ error: 'fund_id required' }, { status: 400 });
     }
@@ -86,7 +75,9 @@ Deno.serve(async (req) => {
     } catch {
       return Response.json({ error: 'Fund not found' }, { status: 404 });
     }
-    if (fund.status === 'finished' || fund.status === 'cancelled') {
+
+    // Skip already-finished funds unless force=true
+    if (!force && (fund.status === 'finished' || fund.status === 'cancelled')) {
       return Response.json({ ok: true, message: 'Fund already finished/cancelled', skipped: true });
     }
 
@@ -100,17 +91,17 @@ Deno.serve(async (req) => {
       } catch (e) { /* orphaned FundMatch — match deleted, skip */ }
     }
     const allFinished = allFundMatchObjects.length > 0 && allFundMatchObjects.every(m => m.status === 'finished');
-    if (!allFinished) {
+    // In force mode, proceed even if matches are orphaned (all deleted) — use existing total_points.
+    if (!allFinished && !force) {
       return Response.json({ ok: true, message: 'Not all matches finished yet', skipped: true });
     }
+    const hasValidMatches = allFundMatchObjects.length > 0;
 
     const matchMap = {};
     for (const m of allFundMatchObjects) matchMap[m.id] = m;
 
     // Load participations
     const allParticipations = await base44.asServiceRole.entities.Participation.filter({ fund_id });
-
-    // Edge case: 0 participants
     if (allParticipations.length === 0) {
       await base44.asServiceRole.entities.MatchFund.update(fund_id, { status: 'finished' });
       return Response.json({ ok: true, message: 'Fund completed with no participants.' });
@@ -131,11 +122,16 @@ Deno.serve(async (req) => {
     }
 
     const predUpdates = [];
-    const partTotals = {}; // participation_id → total_points
+    const partTotals = {};
 
     for (const part of allParticipations) {
       const preds = predsByPart[part.id] || [];
       let total = 0;
+      // If matches are orphaned (force mode), skip re-scoring and keep existing total_points.
+      if (!hasValidMatches && force) {
+        partTotals[part.id] = part.total_points || 0;
+        continue;
+      }
       for (const pred of preds) {
         const match = matchMap[pred.match_id];
         if (!match) continue;
@@ -145,7 +141,7 @@ Deno.serve(async (req) => {
             pts += getPickPoints(fund, pred.match_id, opt);
           }
         }
-        pts = Math.floor(pts); // whole numbers only
+        pts = Math.floor(pts);
         const isCorrect = pts > 0;
         if (pred.points_earned !== pts || pred.is_correct !== isCorrect) {
           predUpdates.push(
@@ -157,16 +153,13 @@ Deno.serve(async (req) => {
         }
         total += pts;
       }
-      // Unused credits bonus (0.5 pts per unused credit)
       const creditsUsed = part.credits_used ?? 0;
       const unusedCredits = Math.max(0, creditsPerPlayer - creditsUsed);
       total += unusedCredits * 0.5;
-      partTotals[part.id] = Math.floor(total); // whole numbers only
+      partTotals[part.id] = Math.floor(total);
     }
 
     await Promise.all(predUpdates);
-
-    // Update participation totals
     await Promise.all(
       allParticipations.map(part =>
         base44.asServiceRole.entities.Participation.update(part.id, { total_points: partTotals[part.id] })
@@ -175,165 +168,178 @@ Deno.serve(async (req) => {
 
     // ── Prize distribution ────────────────────────────────────────────────
     const allUsers = await base44.asServiceRole.entities.User.list();
-    const activeParticipations = allParticipations.filter(p => p.status === 'active' || p.status === 'pending');
+    const userMap = {};
+    for (const u of allUsers) userMap[u.id] = u;
+
+    // In force mode, re-distribute to all non-refunded participations.
+    // In normal mode, only active/pending are eligible.
+    const eligible = force
+      ? allParticipations.filter(p => p.status !== 'refunded')
+      : allParticipations.filter(p => p.status === 'active' || p.status === 'pending');
+
     const minRequired = fund.min_participants || 2;
 
-    const payCreatorBonus = async () => {
-      const creatorPart = allParticipations.find(p => p.is_creator);
-      if (creatorPart && creatorBonus > 0) {
-        await base44.asServiceRole.entities.Participation.update(creatorPart.id, { creator_bonus: creatorBonus });
-        const creator = allUsers.find(u => u.id === creatorPart.user_id);
-        if (creator) {
-          await base44.asServiceRole.entities.User.update(creator.id, {
-            total_balance: (creator.total_balance || 0) + creatorBonus
-          });
-        }
-      }
-    };
+    // Compute correct pool from entry_fee * count (not fund.total_pool which may be stale)
+    const grossPool = (fund.entry_fee || 0) * eligible.length;
+
+    // Fix total_pool on the fund
+    await base44.asServiceRole.entities.MatchFund.update(fund_id, { total_pool: grossPool });
 
     // Not enough participants → refund all
-    if (activeParticipations.length < minRequired) {
-      for (const p of allParticipations) {
+    if (eligible.length < minRequired) {
+      for (const p of eligible) {
+        const oldPayout = p.final_payout || 0;
         const refund = p.entry_paid || 0;
+        const delta = refund - oldPayout;
+
         await base44.asServiceRole.entities.Participation.update(p.id, {
           final_payout: refund,
+          final_rank: 1,
           status: 'refunded',
           paid_out_at: new Date().toISOString()
         });
-        const usr = allUsers.find(u => u.id === p.user_id);
-        if (usr) {
-          await base44.asServiceRole.entities.User.update(p.user_id, {
-            total_balance: (usr.total_balance || 0) + refund
-          });
+
+        if (delta !== 0) {
+          const usr = userMap[p.user_id];
+          if (usr) {
+            await base44.asServiceRole.entities.User.update(p.user_id, {
+              total_balance: (usr.total_balance || 0) + delta
+            });
+            usr.total_balance = (usr.total_balance || 0) + delta;
+          }
         }
       }
       await base44.asServiceRole.entities.MatchFund.update(fund_id, { status: 'cancelled' });
       return Response.json({ ok: true, message: 'Fund cancelled - not enough participants. 100% refunded.' });
     }
 
-    const totalPool = fund.total_pool || 0;
-    const platformFee = Math.floor(totalPool * (fund.platform_fee_percent || 7) / 100);
-    const creatorBonus = Math.floor(totalPool * (fund.creator_bonus_percent || 1) / 100);
-    const prizePool = totalPool - platformFee - creatorBonus;
+    const platformFee = Math.floor(grossPool * (fund.platform_fee_percent || 7) / 100);
+    const creatorBonusAmount = Math.floor(grossPool * (fund.creator_bonus_percent || 1) / 100);
+    const prizePool = grossPool - platformFee - creatorBonusAmount;
 
     // No prize pool after fees
     if (prizePool <= 0) {
-      await Promise.all(
-        allParticipations.map(p =>
-          base44.asServiceRole.entities.Participation.update(p.id, { status: 'loser', final_payout: 0 })
-        )
-      );
+      for (const p of eligible) {
+        const oldPayout = p.final_payout || 0;
+        const oldStatus = p.status;
+        const delta = -oldPayout;
+        await base44.asServiceRole.entities.Participation.update(p.id, {
+          status: 'loser',
+          final_payout: 0,
+          final_rank: null
+        });
+        if (delta !== 0) {
+          const usr = userMap[p.user_id];
+          if (usr) {
+            const userUpdates = { total_balance: (usr.total_balance || 0) + delta };
+            if (oldStatus === 'winner') {
+              userUpdates.total_winnings = Math.max(0, (usr.total_winnings || 0) - oldPayout);
+              userUpdates.total_wins = Math.max(0, (usr.total_wins || 0) - 1);
+            }
+            await base44.asServiceRole.entities.User.update(p.user_id, userUpdates);
+          }
+        }
+      }
       await base44.asServiceRole.entities.MatchFund.update(fund_id, { status: 'finished' });
       return Response.json({ ok: true, message: 'Fund completed. No prize pool left after fees.' });
     }
 
-    const ranked = [...activeParticipations].sort((a, b) => (partTotals[b.id] || 0) - (partTotals[a.id] || 0));
-    const count = ranked.length;
+    // Use prize_distribution (array of percentages like [100] or [60,40] or [50,30,20])
+    const dist = Array.isArray(fund.prize_distribution) && fund.prize_distribution.length > 0
+      ? fund.prize_distribution
+      : [100];
 
-    const payParticipant = async (p, prize, rank) => {
-      await base44.asServiceRole.entities.Participation.update(p.id, {
-        final_payout: prize,
+    const ranked = [...eligible].sort((a, b) => (partTotals[b.id] || 0) - (partTotals[a.id] || 0));
+
+    // Group by tied points
+    const groups = [];
+    for (const part of ranked) {
+      const last = groups[groups.length - 1];
+      if (last && partTotals[last[0].id] === partTotals[part.id]) {
+        last.push(part);
+      } else {
+        groups.push([part]);
+      }
+    }
+
+    // Assign prizes respecting ties
+    const prizes = {};
+    let splitIndex = 0;
+    for (const group of groups) {
+      const sharesForGroup = dist.slice(splitIndex, splitIndex + group.length).map(pct => pct / 100);
+      if (sharesForGroup.length === 0) break;
+      const totalShare = sharesForGroup.reduce((s, v) => s + v, 0);
+      const prizePerPlayer = Math.floor((prizePool * totalShare) / group.length);
+      for (const part of group) {
+        prizes[part.id] = prizePerPlayer;
+      }
+      splitIndex += group.length;
+    }
+
+    // Apply prizes using delta approach — idempotent: running twice = net zero change.
+    // Each run computes correctPrize - oldPrize; if already correct, delta=0.
+    for (let i = 0; i < ranked.length; i++) {
+      const part = ranked[i];
+      const correctPrize = prizes[part.id] || 0;
+      const oldPrize = part.final_payout || 0;
+      const oldStatus = part.status;
+      const newStatus = correctPrize > 0 ? 'winner' : 'loser';
+      const rank = i + 1;
+      const delta = correctPrize - oldPrize;
+
+      await base44.asServiceRole.entities.Participation.update(part.id, {
+        final_payout: correctPrize,
         final_rank: rank,
-        status: prize > 0 ? 'winner' : 'loser',
+        status: newStatus,
         paid_out_at: new Date().toISOString()
       });
-      if (prize > 0) {
-        const usr = allUsers.find(u => u.id === p.user_id);
+
+      if (delta !== 0 || (oldStatus !== newStatus && (oldPrize > 0 || correctPrize > 0))) {
+        const usr = userMap[part.user_id];
         if (usr) {
-          await base44.asServiceRole.entities.User.update(p.user_id, {
-            total_balance: (usr.total_balance || 0) + prize,
-            total_winnings: (usr.total_winnings || 0) + prize,
-            total_wins: (usr.total_wins || 0) + 1
-          });
+          const userUpdates = {};
+          if (delta !== 0) {
+            userUpdates.total_balance = (usr.total_balance || 0) + delta;
+          }
+          if (correctPrize > 0 && oldPrize === 0) {
+            userUpdates.total_winnings = (usr.total_winnings || 0) + correctPrize;
+            userUpdates.total_wins = (usr.total_wins || 0) + 1;
+          } else if (correctPrize === 0 && oldPrize > 0) {
+            userUpdates.total_winnings = Math.max(0, (usr.total_winnings || 0) - oldPrize);
+            userUpdates.total_wins = Math.max(0, (usr.total_wins || 0) - 1);
+          } else if (correctPrize > 0 && oldPrize > 0 && delta !== 0) {
+            userUpdates.total_winnings = Math.max(0, (usr.total_winnings || 0) + delta);
+          }
+          if (Object.keys(userUpdates).length > 0) {
+            await base44.asServiceRole.entities.User.update(part.user_id, userUpdates);
+            if (userUpdates.total_balance !== undefined) usr.total_balance = userUpdates.total_balance;
+            if (userUpdates.total_winnings !== undefined) usr.total_winnings = userUpdates.total_winnings;
+            if (userUpdates.total_wins !== undefined) usr.total_wins = userUpdates.total_wins;
+          }
         }
       }
-    };
+    }
 
-    // 1 participant → refund
-    if (count === 1) {
-      const p = ranked[0];
-      const refund = p.entry_paid || 0;
-      await base44.asServiceRole.entities.Participation.update(p.id, {
-        final_payout: refund,
-        final_rank: 1,
-        status: 'refunded',
-        paid_out_at: new Date().toISOString()
-      });
-      const usr = allUsers.find(u => u.id === p.user_id);
-      if (usr) {
-        await base44.asServiceRole.entities.User.update(p.user_id, {
-          total_balance: (usr.total_balance || 0) + refund
-        });
+    // Creator bonus (delta approach — idempotent)
+    if (creatorBonusAmount > 0) {
+      const creatorPart = allParticipations.find(p => p.is_creator);
+      if (creatorPart) {
+        const oldBonus = creatorPart.creator_bonus || 0;
+        const deltaBonus = creatorBonusAmount - oldBonus;
+        await base44.asServiceRole.entities.Participation.update(creatorPart.id, { creator_bonus: creatorBonusAmount });
+        if (deltaBonus !== 0) {
+          const creator = userMap[fund.creator_id];
+          if (creator) {
+            await base44.asServiceRole.entities.User.update(fund.creator_id, {
+              total_balance: (creator.total_balance || 0) + deltaBonus
+            });
+          }
+        }
       }
-      await payCreatorBonus();
-      await base44.asServiceRole.entities.MatchFund.update(fund_id, { status: 'finished' });
-      return Response.json({ ok: true, message: 'Fund completed with 1 participant. Entry fee refunded.' });
     }
 
-    // 2 participants → 60/40
-    if (count === 2) {
-      const prizes = [Math.floor(prizePool * 0.60), Math.floor(prizePool * 0.40)];
-      for (let i = 0; i < 2; i++) {
-        await payParticipant(ranked[i], prizes[i], i + 1);
-      }
-      await payCreatorBonus();
-      await base44.asServiceRole.entities.MatchFund.update(fund_id, { status: 'finished' });
-      return Response.json({ ok: true, message: 'Fund completed! Prizes: 60/40 split' });
-    }
-
-    // 3 participants → 50/30/20
-    if (count === 3) {
-      const prizes = [Math.floor(prizePool * 0.50), Math.floor(prizePool * 0.30), Math.floor(prizePool * 0.20)];
-      for (let i = 0; i < 3; i++) {
-        await payParticipant(ranked[i], prizes[i], i + 1);
-      }
-      await payCreatorBonus();
-      await base44.asServiceRole.entities.MatchFund.update(fund_id, { status: 'finished' });
-      return Response.json({ ok: true, message: 'Fund completed! Prizes: 50/30/20 split' });
-    }
-
-    // 4–9 participants → 40/25/15 + rest split
-    if (count >= 4 && count <= 9) {
-      const p1 = Math.floor(prizePool * 0.40);
-      const p2 = Math.floor(prizePool * 0.25);
-      const p3 = Math.floor(prizePool * 0.15);
-      const rest = Math.floor(prizePool * 0.20);
-      const restCount = count - 3;
-      const prizePerRest = restCount > 0 ? Math.floor(rest / restCount) : 0;
-      for (let i = 0; i < count; i++) {
-        const rank = i + 1;
-        let prize = 0;
-        if (rank === 1) prize = p1;
-        else if (rank === 2) prize = p2;
-        else if (rank === 3) prize = p3;
-        else prize = prizePerRest;
-        await payParticipant(ranked[i], prize, rank);
-      }
-      await payCreatorBonus();
-      await base44.asServiceRole.entities.MatchFund.update(fund_id, { status: 'finished' });
-      return Response.json({ ok: true, message: `Fund completed! Prizes distributed to ${count} players!` });
-    }
-
-    // 10+ participants → 40/25/15 + rest split (top 10)
-    const p1 = Math.floor(prizePool * 0.40);
-    const p2 = Math.floor(prizePool * 0.25);
-    const p3 = Math.floor(prizePool * 0.15);
-    const rest = Math.floor(prizePool * 0.20);
-    const top10Count = Math.min(10, count) - 3;
-    const prizePerRest = top10Count > 0 ? Math.floor(rest / top10Count) : 0;
-    for (let i = 0; i < count; i++) {
-      const rank = i + 1;
-      let prize = 0;
-      if (rank === 1) prize = p1;
-      else if (rank === 2) prize = p2;
-      else if (rank === 3) prize = p3;
-      else if (rank <= 10) prize = prizePerRest;
-      else prize = 0;
-      await payParticipant(ranked[i], prize, rank);
-    }
-    await payCreatorBonus();
     await base44.asServiceRole.entities.MatchFund.update(fund_id, { status: 'finished' });
-    return Response.json({ ok: true, message: 'Fund completed! Prizes distributed!' });
+    return Response.json({ ok: true, message: 'Fund completed! Prizes distributed per prize_distribution.' });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
