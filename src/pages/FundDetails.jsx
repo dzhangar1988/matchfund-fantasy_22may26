@@ -17,6 +17,7 @@ import { cancelFund } from "@/functions/cancelFund";
 import { showRespect } from "@/functions/showRespect";
 import { formatOption, badgeClass, getAllowedPredictions } from "@/lib/predictionUtils";
 import { joinFund } from "@/functions/joinFund";
+import { updatePrediction } from "@/functions/updatePrediction";
 import {
   Tooltip,
   TooltipContent,
@@ -440,18 +441,20 @@ export default function FundDetails() {
     setIsSavingEdit(true);
     try {
       const prediction = myPredictions.find(p => p.match_id === matchId);
-      if (prediction) {
-        await base44.entities.Prediction.update(prediction.id, {
-          selected_options: editPicks,
-          credits_spent: editPicks.length,
-        });
+      if (!prediction) {
+        toast({ description: "Prediction not found", variant: "destructive" });
+        return;
       }
+      await updatePrediction({
+        prediction_id: prediction.id,
+        selected_options: editPicks,
+      });
       setEditingMatchId(null);
       setEditPicks([]);
       await loadData();
       toast({ description: "Picks updated!" });
     } catch (err) {
-      toast({ description: "Failed to save: " + err.message, variant: "destructive" });
+      toast({ description: "Failed to save: " + (err?.response?.data?.error || err?.message), variant: "destructive" });
     } finally {
       setIsSavingEdit(false);
     }
