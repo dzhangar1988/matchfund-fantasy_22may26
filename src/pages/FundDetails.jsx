@@ -300,10 +300,16 @@ export default function FundDetails() {
     return (predictions[matchId] || []).length;
   };
 
+  const getIncompleteMatches = () => {
+    return matches.filter(m => (predictions[m.id] || []).length === 0);
+  };
+
   const allPredictionsValid = () => {
     if (matches.length === 0) return false;
     const total = getTotalCredits();
-    return total >= matches.length && total <= maxPredictions;
+    if (total < matches.length || total > maxPredictions) return false;
+    // Every match must have at least 1 pick
+    return getIncompleteMatches().length === 0;
   };
 
   const submitPredictions = async () => {
@@ -1207,28 +1213,42 @@ export default function FundDetails() {
                   </Alert>
                 )}
 
-                <Alert className={
-                  totalCredits === 0
-                    ? "bg-blue-500/10 border-blue-500/30"
-                    : allPredictionsValid()
-                    ? "bg-green-500/10 border-green-500/30"
-                    : "bg-yellow-500/10 border-yellow-500/30"
-                }>
-                  <AlertDescription className={
-                    totalCredits === 0
-                      ? "text-blue-300"
-                      : allPredictionsValid()
-                      ? "text-green-400"
-                      : "text-yellow-400"
-                  }>
-                    {totalCredits === 0
-                      ? "Select at least 1 prediction per match to proceed."
-                      : allPredictionsValid()
-                      ? `✅ ${totalCredits} predictions selected — ready to join!`
-                      : `${totalCredits} / ${maxPredictions} predictions selected — add ${matches.length - totalCredits} more to submit`
-                    }
-                  </AlertDescription>
-                </Alert>
+                {(() => {
+                  const incomplete = getIncompleteMatches();
+                  return (
+                    <Alert className={
+                      incomplete.length > 0
+                        ? "bg-yellow-500/10 border-yellow-500/30"
+                        : allPredictionsValid()
+                        ? "bg-green-500/10 border-green-500/30"
+                        : "bg-blue-500/10 border-blue-500/30"
+                    }>
+                      <AlertDescription className={
+                        incomplete.length > 0
+                          ? "text-yellow-400"
+                          : allPredictionsValid()
+                          ? "text-green-400"
+                          : "text-blue-300"
+                      }>
+                        {incomplete.length > 0 ? (
+                          <div>
+                            <p className="font-semibold">
+                              ⚠️ {incomplete.length} match{incomplete.length > 1 ? 'es' : ''} need{incomplete.length === 1 ? 's' : ''} at least 1 prediction:
+                            </p>
+                            <ul className="mt-1 ml-4 list-disc text-sm">
+                              {incomplete.map(m => (
+                                <li key={m.id}>{m.home_team} vs {m.away_team}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : allPredictionsValid()
+                          ? `✅ ${totalCredits} predictions selected — ready to join!`
+                          : `${totalCredits} / ${maxPredictions} predictions selected — add ${matches.length - totalCredits} more to submit`
+                        }
+                      </AlertDescription>
+                    </Alert>
+                  );
+                })()}
               </Card>
             </div>
 
