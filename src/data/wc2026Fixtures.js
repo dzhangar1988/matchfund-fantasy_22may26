@@ -13,7 +13,7 @@ const WC2026_FIXTURES = [
   { home_team: "Netherlands",  away_team: "Morocco",                match_date: "2026-06-30T01:00:00Z", group: "Knockouts", matchweek: 4, venue: "Monterrey" },
 
   // ---- Tue Jun 30 (Dallas) ----
-  { home_team: "Côte d'Ivoire", away_team: "Norway",                match_date: "2026-06-30T17:00:00Z", group: "Knockouts", matchweek: 4, venue: "Dallas" },
+  { home_team: "Ivory Coast",   away_team: "Norway",                match_date: "2026-06-30T17:00:00Z", group: "Knockouts", matchweek: 4, venue: "Dallas" },
   { home_team: "France",       away_team: "Sweden",                 match_date: "2026-06-30T21:00:00Z", group: "Knockouts", matchweek: 4, venue: "New Jersey" },
   { home_team: "Mexico",       away_team: "Ecuador",                match_date: "2026-07-01T01:00:00Z", group: "Knockouts", matchweek: 4, venue: "Mexico City" },
 
