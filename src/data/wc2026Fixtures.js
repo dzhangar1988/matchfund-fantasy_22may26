@@ -19,7 +19,7 @@ const WC2026_FIXTURES = [
 
   // ---- Wed Jul 1 (Dallas) ----
   { home_team: "England",      away_team: "DR Congo",               match_date: "2026-07-01T16:00:00Z", group: "Knockouts", matchweek: 4, venue: "Atlanta" },
-  // Belgium vs Senegal — Seattle — TIME MISSING (pending user input)
+  { home_team: "Belgium",      away_team: "Senegal",                match_date: "2026-07-01T19:00:00Z", group: "Knockouts", matchweek: 4, venue: "Seattle" },
   { home_team: "USA",          away_team: "Bosnia & Herzegovina",   match_date: "2026-07-02T00:00:00Z", group: "Knockouts", matchweek: 4, venue: "Santa Clara" },
 
   // ---- Thu Jul 2 (Dallas) ----
