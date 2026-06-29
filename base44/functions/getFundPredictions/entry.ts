@@ -25,9 +25,29 @@ Deno.serve(async (req) => {
       })
     );
 
+    // Strip private fields — same privacy rule as getFundParticipants.
+    // user_email and device_info must never leak to other players.
+    const safeParticipations = participations.map((p) => ({
+      id: p.id,
+      user_id: p.user_id,
+      user_name: p.user_name,
+      entry_paid: p.entry_paid,
+      potential_payout: p.potential_payout,
+      final_payout: p.final_payout,
+      creator_bonus: p.creator_bonus,
+      credits_used: p.credits_used,
+      total_points: p.total_points,
+      final_rank: p.final_rank,
+      status: p.status,
+      is_creator: p.is_creator,
+      joined_at: p.joined_at,
+      predictions_completed_at: p.predictions_completed_at,
+      paid_out_at: p.paid_out_at,
+    }));
+
     return Response.json({
       predictionsMap,
-      participations,
+      participations: safeParticipations,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
