@@ -135,10 +135,18 @@ export default function FundDetails() {
       const respects = await base44.entities.ShowRespect.filter({ giver_id: currentUser.id });
       setMyRespects(respects);
 
-      const foundMyParticipation = allParticipations.find(p => p.user_id === currentUser.id);
+      // Always load ALL predictions for this fund via service-role function (bypasses Prediction RLS).
+      // This is the same path that powers "Players' Predictions" — works for finished AND cancelled funds.
+      const fundPredsRes = await getFundPredictions({ fund_id: fundId });
+      const allPredsMap = fundPredsRes.data?.predictionsMap || {};
+      const srParticipations = fundPredsRes.data?.participations || [];
+
+      // Find the user's participation from service-role data (fallback if client-side RLS blocks it)
+      const foundMyParticipation = allParticipations.find(p => p.user_id === currentUser.id)
+        || srParticipations.find(p => p.user_id === currentUser.id);
       setMyParticipation(foundMyParticipation || null);
       setHasJoined(!!foundMyParticipation);
-      
+
       // Auto-verify password for creator or already joined
       if (foundMyParticipation || selectedFund.visibility !== "private") {
         setPasswordVerified(true);
@@ -149,15 +157,13 @@ export default function FundDetails() {
       }
 
       if (foundMyParticipation) {
-        // Load ALL predictions for this fund via service-role function (bypasses Prediction RLS)
-        const fundPredsRes = await getFundPredictions({ fund_id: fundId });
-        const allPredsMap = fundPredsRes.data?.predictionsMap || {};
-
         setMyPredictions(allPredsMap[foundMyParticipation.id] || []);
 
         // Build other participants' map only if current user has submitted
         if (foundMyParticipation.predictions_completed_at) {
-          const others = allParticipations.filter(p => p.user_id !== currentUser.id);
+          // Use whichever participation source has data (service-role as fallback)
+          const partSource = allParticipations.length > 0 ? allParticipations : srParticipations;
+          const others = partSource.filter(p => p.user_id !== currentUser.id);
           const map = {};
           for (const p of others) {
             map[p.id] = p.predictions_completed_at ? (allPredsMap[p.id] || null) : null;
@@ -743,7 +749,7 @@ export default function FundDetails() {
           })()}
         </Card>
 
-        {fund.status === "cancelled" ? null : hasJoined ? (
+        {hasJoined ? (
           <>
             {/* YOUR_PREDICTIONS_CARD_START */}
             {(() => {

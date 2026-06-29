@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
 
     return Response.json({
       predictionsMap,
-      participations: participations.map((p) => ({ id: p.id, user_id: p.user_id })),
+      participations,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
