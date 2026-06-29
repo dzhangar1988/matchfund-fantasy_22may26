@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trophy, Users, Clock, Target, Loader2, AlertCircle, CheckCircle, RefreshCw, Lock, Pencil } from "lucide-react";
+import { ArrowLeft, Trophy, Users, Clock, Target, Loader2, AlertCircle, CheckCircle, RefreshCw, Lock, Pencil, LogOut } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -19,6 +19,7 @@ import { formatOption, badgeClass, getAllowedPredictions, togglePick, normalizeO
 import { joinFund } from "@/functions/joinFund";
 import { updatePrediction } from "@/functions/updatePrediction";
 import { getFundPredictions } from "@/functions/getFundPredictions";
+import { leaveFund } from "@/functions/leaveFund";
 import {
   Tooltip,
   TooltipContent,
@@ -62,6 +63,7 @@ export default function FundDetails() {
   const [editingMatchId, setEditingMatchId] = useState(null);
   const [editPicks, setEditPicks] = useState([]);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
   const [myRespects, setMyRespects] = useState([]); // all respects given by current user ever
   const [usersMap, setUsersMap] = useState({}); // userId -> user object
   const { toast } = useToast();
@@ -426,6 +428,25 @@ export default function FundDetails() {
       setError(err.message || "Failed to cancel fund");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleLeaveFund = async () => {
+    if (!window.confirm("Leave this fund? Your entry fee will be refunded.")) return;
+    setIsLeaving(true);
+    try {
+      const res = await leaveFund({ fund_id: fund.id });
+      const action = res.data?.action;
+      if (action === 'fund_cancelled') {
+        toast({ description: res.data?.reason === 'creator_left' ? "Fund cancelled — all entry fees refunded." : "Fund auto-cancelled — not enough players. All entry fees refunded." });
+      } else {
+        toast({ description: `Left fund — ${res.data?.refunded || 0} pts refunded.` });
+      }
+      navigate("/");
+    } catch (err) {
+      toast({ description: err?.response?.data?.error || err?.message || "Failed to leave fund", variant: "destructive" });
+    } finally {
+      setIsLeaving(false);
     }
   };
 
@@ -947,10 +968,24 @@ export default function FundDetails() {
             )}
 
             <Card className="p-8 mb-6 border-gray-800 bg-gradient-to-br from-[#0F1E35] to-[#0A1628]">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <CheckCircle className="w-6 h-6 text-green-400" />
-                Your Predictions
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                  Your Predictions
+                </h2>
+                {fund.status === 'open' && !matches.some(m => m.status !== 'upcoming' || new Date(m.match_date) <= new Date()) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isLeaving}
+                    onClick={handleLeaveFund}
+                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-1.5"
+                  >
+                    {isLeaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
+                    Leave Fund
+                  </Button>
+                )}
+              </div>
 
               {/* Edit notice — only if at least one match is still unlocked */}
               {matches.some(m => new Date(m.match_date) > new Date() && m.status !== 'live' && m.status !== 'finished') && (
