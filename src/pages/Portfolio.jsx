@@ -104,10 +104,9 @@ export default function Portfolio() {
       // ---- My Investments (SharePurchases where I am buyer) ----
       const purchases = await base44.entities.SharePurchase.filter({ buyer_id: currentUser.id });
       const invFundIds = [...new Set(purchases.map(p => p.fund_id))];
-      const [allFundsForInv, allUsersForInv] = await Promise.all([
-        Promise.all(invFundIds.map(id => base44.entities.MatchFund.get(id).catch(() => null))).then(r => r.filter(Boolean)),
-        base44.entities.User.list(),
-      ]);
+      const allFundsForInv = await Promise.all(
+        invFundIds.map(id => base44.entities.MatchFund.get(id).catch(() => null))
+      ).then(r => r.filter(Boolean));
       const allParticipationsForInv = await Promise.all(
         invFundIds.map(id => base44.entities.Participation.filter({ fund_id: id }))
       ).then(arrays => arrays.flat());
@@ -116,8 +115,7 @@ export default function Portfolio() {
         const fund = allFundsForInv.find(f => f.id === purchase.fund_id);
         if (!fund) return null;
         const sellerParticipation = allParticipationsForInv.find(p => p.user_id === purchase.seller_id && p.fund_id === purchase.fund_id);
-        const sellerUser = allUsersForInv.find(u => u.id === purchase.seller_id);
-        const sellerName = sellerUser?.username || sellerUser?.full_name || `Player ${purchase.seller_id.slice(0, 8)}`;
+        const sellerName = sellerParticipation?.user_name || `Player ${purchase.seller_id.slice(0, 8)}`;
 
         // Current rank of seller
         const fundParts = allParticipationsForInv
