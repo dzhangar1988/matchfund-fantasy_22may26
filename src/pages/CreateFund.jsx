@@ -226,9 +226,10 @@ export default function CreateFund() {
       const current = prev[matchId] || [];
       if (checked) {
         if (option.startsWith('exact_')) {
-          return { ...prev, [matchId]: [...current.filter(o => !o.startsWith('exact_')), option] };
+          return { ...prev, [matchId]: [...new Set([...current.filter(o => !o.startsWith('exact_')), option])] };
         }
-        return { ...prev, [matchId]: [...current, option] };
+        // Dedupe-safe add: never allow the same option twice
+        return { ...prev, [matchId]: [...new Set([...current, option])] };
       }
       return { ...prev, [matchId]: current.filter(o => o !== option) };
     });

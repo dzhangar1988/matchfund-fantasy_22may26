@@ -1,6 +1,81 @@
 // Shared prediction label and badge utilities
 // Used by both FundDetails (Your Predictions) and PlayersPredictions
 
+// ── Canonical option names & aliases ───────────────────────────────────────
+// CreateFund uses btts_yes / over_2_5 / home_clean_sheet_win etc.
+// FundDetails edit UI uses both_score_yes / goals_over / clean_sheet_home etc.
+// normalizeOptions maps all aliases to the FundDetails UI names so that
+// toggle checks (includes) work regardless of which screen created the picks.
+const OPTION_NORMALIZE_MAP = {
+  'btts_yes': 'both_score_yes',
+  'btts_no': 'both_score_no',
+  'over_2_5': 'goals_over',
+  'under_2_5': 'goals_under',
+  'home_clean_sheet_win': 'clean_sheet_home',
+  'away_clean_sheet_win': 'clean_sheet_away',
+};
+
+// Normalize + dedupe an array of option strings.
+export function normalizeOptions(options) {
+  return [...new Set((options || []).map(o => OPTION_NORMALIZE_MAP[o] || o))];
+}
+
+// Simple dedupe (no alias mapping).
+export function dedupePicks(picks) {
+  return [...new Set(picks || [])];
+}
+
+// ── Mutual exclusivity & conflict rules (canonical names) ──────────────────
+export const MUTEX_GROUPS = [
+  ['both_score_yes', 'both_score_no'],
+  ['goals_over', 'goals_under'],
+  ['blowout_yes', 'blowout_no'],
+  // Alias variants for safety with un-normalized data
+  ['btts_yes', 'btts_no'],
+  ['over_2_5', 'under_2_5'],
+  ['home_clean_sheet_win', 'away_clean_sheet_win'],
+];
+
+export const CONFLICTS = [
+  ['both_score_yes', 'clean_sheet_home'],
+  ['both_score_yes', 'clean_sheet_away'],
+  ['draw', 'clean_sheet_home'],
+  ['draw', 'clean_sheet_away'],
+  // Alias variants
+  ['btts_yes', 'home_clean_sheet_win'],
+  ['btts_yes', 'away_clean_sheet_win'],
+];
+
+// ── Shared toggle function ──────────────────────────────────────────────────
+// Clicking a selected option removes it; clicking an unselected one adds it
+// (after removing mutex partners / conflicts and enforcing max-per-match).
+// Always deduplicates input so no option can appear twice.
+export function togglePick(currentPicks, option, { mutexGroups = [], conflicts = [], maxPerMatch = 2 } = {}) {
+  const picks = [...new Set(currentPicks)];
+
+  // Toggle OFF if already selected
+  if (picks.includes(option)) {
+    return picks.filter(o => o !== option);
+  }
+
+  // Toggle ON: remove mutex partners and conflicting options first
+  let updated = [...picks];
+  for (const group of mutexGroups) {
+    if (group.includes(option)) {
+      updated = updated.filter(o => !group.includes(o));
+    }
+  }
+  for (const [a, b] of conflicts) {
+    if (option === a) updated = updated.filter(o => o !== b);
+    if (option === b) updated = updated.filter(o => o !== a);
+  }
+
+  // Enforce max per match
+  if (updated.length >= maxPerMatch) return picks;
+
+  return [...updated, option];
+}
+
 // Allowed predictions formula: ≤3 matches → matches+1, ≥4 matches → matches+2
 export function getAllowedPredictions(matchCount) {
   if (matchCount <= 0) return 0;

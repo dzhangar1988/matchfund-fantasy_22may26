@@ -15,11 +15,14 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    const { prediction_id, selected_options } = body;
+    const { prediction_id, selected_options: raw_options } = body;
 
-    if (!prediction_id || !Array.isArray(selected_options)) {
+    if (!prediction_id || !Array.isArray(raw_options)) {
       return Response.json({ error: 'prediction_id and selected_options[] required' }, { status: 400 });
     }
+
+    // ── Dedupe: never store the same option twice ──
+    const selected_options = [...new Set(raw_options)];
 
     // ── (3) Per-match rule: 1–2 picks ──
     if (selected_options.length < 1 || selected_options.length > 2) {

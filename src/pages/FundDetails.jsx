@@ -15,7 +15,7 @@ import PlayersPredictions from "@/components/PlayersPredictions";
 import { getFundParticipants } from "@/functions/getFundParticipants";
 import { cancelFund } from "@/functions/cancelFund";
 import { showRespect } from "@/functions/showRespect";
-import { formatOption, badgeClass, getAllowedPredictions } from "@/lib/predictionUtils";
+import { formatOption, badgeClass, getAllowedPredictions, togglePick, normalizeOptions, dedupePicks, MUTEX_GROUPS, CONFLICTS } from "@/lib/predictionUtils";
 import { joinFund } from "@/functions/joinFund";
 import { updatePrediction } from "@/functions/updatePrediction";
 import {
@@ -31,21 +31,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-// Mutual exclusivity groups
-const MUTEX_GROUPS = [
-  ['both_score_yes', 'both_score_no'],
-  ['goals_over', 'goals_under'],
-  ['blowout_yes', 'blowout_no'],
-];
-
-// Conflict rules: if A is selected, B cannot be selected
-const CONFLICTS = [
-  ['both_score_yes', 'clean_sheet_home'],
-  ['both_score_yes', 'clean_sheet_away'],
-  ['draw', 'clean_sheet_home'],
-  ['draw', 'clean_sheet_away'],
-];
 
 export default function FundDetails() {
   const navigate = useNavigate();
@@ -197,36 +182,20 @@ export default function FundDetails() {
       const current = prev[matchId] || [];
       const isSelected = current.includes(option);
 
-      if (isSelected) {
-        // Deselect
-        return { ...prev, [matchId]: current.filter(o => o !== option) };
+      // Use shared togglePick for dedup-safe add/remove with mutex/conflict handling
+      const newPicks = togglePick(current, option, { mutexGroups: MUTEX_GROUPS, conflicts: CONFLICTS });
+
+      // If toggle didn't change anything (blocked by max-per-match), keep prev
+      if (newPicks.length === current.length && !isSelected) return prev;
+
+      // Enforce global maxPredictions cap (only when adding)
+      if (!isSelected) {
+        const currentTotal = Object.values(prev).reduce((s, o) => s + o.length, 0);
+        const netChange = newPicks.length - current.length;
+        if (currentTotal + netChange > maxPredictions) return prev;
       }
 
-      // Remove mutex partners
-      let updated = [...current];
-      for (const group of MUTEX_GROUPS) {
-        if (group.includes(option)) {
-          updated = updated.filter(o => !group.includes(o));
-        }
-      }
-
-      // Remove conflicting options
-      for (const [a, b] of CONFLICTS) {
-        if (option === a) updated = updated.filter(o => o !== b);
-        if (option === b) updated = updated.filter(o => o !== a);
-      }
-
-      // Enforce max 2 per match
-      if (updated.length >= 2) return prev;
-
-      // Enforce global maxPredictions cap
-      const currentTotal = Object.values(prev).reduce((s, o) => s + o.length, 0);
-      // updated may have fewer than current (mutex removal), so net change = updated.length + 1 - current[matchId].length
-      const currentMatchCount = (prev[matchId] || []).length;
-      const netChange = updated.length + 1 - currentMatchCount;
-      if (currentTotal + netChange > maxPredictions) return prev;
-
-      return { ...prev, [matchId]: [...updated, option] };
+      return { ...prev, [matchId]: newPicks };
     });
   };
 
@@ -414,30 +383,15 @@ export default function FundDetails() {
 
   const handleEditMatch = (match) => {
     const prediction = myPredictions.find(p => p.match_id === match.id);
-    setEditPicks(prediction?.selected_options ? [...prediction.selected_options] : []);
+    setEditPicks(normalizeOptions(prediction?.selected_options || []));
     setEditingMatchId(match.id);
   };
 
   const handleEditPickToggle = (option) => {
-    setEditPicks(prev => {
-      if (prev.includes(option)) return prev.filter(o => o !== option);
-      // Remove mutex partners
-      let updated = [...prev];
-      for (const group of MUTEX_GROUPS) {
-        if (group.includes(option)) updated = updated.filter(o => !group.includes(o));
-      }
-      // Remove conflicts
-      for (const [a, b] of CONFLICTS) {
-        if (option === a) updated = updated.filter(o => o !== b);
-        if (option === b) updated = updated.filter(o => o !== a);
-      }
-      if (updated.length >= 2) return prev;
-      return [...updated, option];
-    });
+    setEditPicks(prev => togglePick(prev, option, { mutexGroups: MUTEX_GROUPS, conflicts: CONFLICTS }));
   };
 
   const handleSaveEdit = async (matchId) => {
-    if (editPicks.length < 1 || editPicks.length > 2) return;
     setIsSavingEdit(true);
     try {
       const prediction = myPredictions.find(p => p.match_id === matchId);
@@ -445,9 +399,11 @@ export default function FundDetails() {
         toast({ description: "Prediction not found", variant: "destructive" });
         return;
       }
+      const dedupedPicks = dedupePicks(editPicks);
+      if (dedupedPicks.length < 1 || dedupedPicks.length > 2) return;
       await updatePrediction({
         prediction_id: prediction.id,
-        selected_options: editPicks,
+        selected_options: dedupedPicks,
       });
       setEditingMatchId(null);
       setEditPicks([]);
