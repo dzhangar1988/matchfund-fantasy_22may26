@@ -18,6 +18,7 @@ import { showRespect } from "@/functions/showRespect";
 import { formatOption, badgeClass, getAllowedPredictions, togglePick, normalizeOptions, dedupePicks, MUTEX_GROUPS, CONFLICTS } from "@/lib/predictionUtils";
 import { joinFund } from "@/functions/joinFund";
 import { updatePrediction } from "@/functions/updatePrediction";
+import { getFundPredictions } from "@/functions/getFundPredictions";
 import {
   Tooltip,
   TooltipContent,
@@ -146,21 +147,19 @@ export default function FundDetails() {
       }
 
       if (foundMyParticipation) {
-        const allPredictions = await base44.entities.Prediction.filter({ participation_id: foundMyParticipation.id });
-        setMyPredictions(allPredictions);
+        // Load ALL predictions for this fund via service-role function (bypasses Prediction RLS)
+        const fundPredsRes = await getFundPredictions({ fund_id: fundId });
+        const allPredsMap = fundPredsRes.data?.predictionsMap || {};
 
-        // Load other participants' predictions only if current user has submitted
+        setMyPredictions(allPredsMap[foundMyParticipation.id] || []);
+
+        // Build other participants' map only if current user has submitted
         if (foundMyParticipation.predictions_completed_at) {
           const others = allParticipations.filter(p => p.user_id !== currentUser.id);
           const map = {};
-          await Promise.all(others.map(async (p) => {
-            if (p.predictions_completed_at) {
-              const preds = await base44.entities.Prediction.filter({ participation_id: p.id });
-              map[p.id] = preds;
-            } else {
-              map[p.id] = null;
-            }
-          }));
+          for (const p of others) {
+            map[p.id] = p.predictions_completed_at ? (allPredsMap[p.id] || null) : null;
+          }
           setOtherPredictionsMap(map);
         }
       } else {
