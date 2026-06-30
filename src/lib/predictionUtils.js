@@ -36,6 +36,7 @@ export const MUTEX_GROUPS = [
   ['home_clean_sheet_win', 'away_clean_sheet_win'],
   ['et_home_win', 'et_away_win'],
   ['pen_home_win', 'pen_away_win'],
+  ['over_1_5', 'under_1_5'],
 ];
 
 export const CONFLICTS = [
@@ -136,6 +137,8 @@ export function formatOption(opt, homeTeam, awayTeam) {
     over_2_5: 'Over 2.5 Goals',
     goals_under: 'Under 2.5 Goals',
     under_2_5: 'Under 2.5 Goals',
+    over_1_5: 'Over 1.5 Goals',
+    under_1_5: 'Under 1.5 Goals',
     blowout_yes: 'Blowout (3+)',
     blowout_no: 'No Blowout',
     clean_sheet_home: `${homeTeam} Win to Nil`,
@@ -168,6 +171,8 @@ export function isCorrectPrediction(opt, match) {
 
   if (opt === 'goals_over' || opt === 'over_2_5') return total > 2.5;
   if (opt === 'goals_under' || opt === 'under_2_5') return total <= 2.5;
+  if (opt === 'over_1_5') return total > 1;
+  if (opt === 'under_1_5') return total <= 1;
 
   if (opt === 'blowout_yes') return diff >= 3;
   if (opt === 'blowout_no') return diff < 3;
@@ -195,7 +200,7 @@ export function badgeClass(opt, match) {
   // Pending - original colors
   if (opt.startsWith('exact_')) return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
   if (['home_win', 'away_win', 'draw'].includes(opt)) return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
-  if (['both_score_yes', 'both_score_no', 'btts_yes', 'btts_no', 'goals_over', 'goals_under', 'over_2_5', 'under_2_5', 'blowout_yes', 'blowout_no'].includes(opt))
+  if (['both_score_yes', 'both_score_no', 'btts_yes', 'btts_no', 'goals_over', 'goals_under', 'over_2_5', 'under_2_5', 'over_1_5', 'under_1_5', 'blowout_yes', 'blowout_no'].includes(opt))
     return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
   if (['clean_sheet_home', 'clean_sheet_away', 'home_clean_sheet_win', 'away_clean_sheet_win'].includes(opt))
     return 'bg-purple-500/20 text-purple-400 border-purple-500/30';

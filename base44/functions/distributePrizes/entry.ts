@@ -5,6 +5,7 @@ function getOptionWeight(option) {
   if (option === 'home_win' || option === 'draw' || option === 'away_win') return 3;
   if (option === 'btts_yes' || option === 'btts_no' || option === 'both_score_yes' || option === 'both_score_no') return 2;
   if (option === 'over_2_5' || option === 'under_2_5' || option === 'goals_over' || option === 'goals_under') return 2.5;
+  if (option === 'over_1_5' || option === 'under_1_5') return 1.5;
   if (option === 'blowout_yes' || option === 'blowout_no') return 1.5;
   if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win' || option === 'clean_sheet_home' || option === 'clean_sheet_away') return 4;
   if (option === 'et_home_win' || option === 'et_away_win' || option === 'pen_home_win' || option === 'pen_away_win') return 7;
@@ -35,6 +36,8 @@ function checkOption(option, match) {
     case 'goals_over':   return totalGoals > 2;
     case 'under_2_5':
     case 'goals_under':  return totalGoals <= 2;
+    case 'over_1_5':   return totalGoals > 1;
+    case 'under_1_5':  return totalGoals <= 1;
     case 'blowout_yes':  return goalDiff >= 3;
     case 'blowout_no':   return goalDiff < 3;
     case 'home_clean_sheet_win':

@@ -1035,6 +1035,12 @@ export default function FundDetails() {
                         ], color: "bg-blue-500 border-blue-500"
                       },
                       {
+                        label: "Total Goals 1.5 (1 pt)", options: [
+                          { value: 'over_1_5', label: 'Over 1.5' },
+                          { value: 'under_1_5', label: 'Under 1.5' },
+                        ], color: "bg-blue-500 border-blue-500"
+                      },
+                      {
                         label: "Margin (1.5 pts)", options: [
                           { value: 'blowout_yes', label: 'Blowout (3+ goals)' },
                           { value: 'blowout_no', label: 'No Blowout' },
@@ -1383,6 +1389,38 @@ export default function FundDetails() {
                             {[
                               { value: 'goals_over', label: 'Over 2.5 Goals' },
                               { value: 'goals_under', label: 'Under 2.5 Goals' },
+                            ].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (globalCapReached || matchCredits >= 2);
+                              return (
+                                <Button
+                                  key={option.value}
+                                  type="button"
+                                  variant={isSelected ? "default" : "outline"}
+                                  size="sm"
+                                  disabled={isDisabled}
+                                  className={`flex items-center gap-1 ${
+                                    isSelected
+                                      ? "bg-blue-500 hover:bg-blue-600 text-white font-bold border-blue-500"
+                                      : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                  }`}
+                                  onClick={() => handlePredictionChange(match.id, option.value)}
+                                >
+                                  {isSelected && <span>✓</span>}
+                                  <span>{option.label}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Total Goals 1.5 — 1 pt */}
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Total Goals 1.5 <span className="normal-case text-gray-600">(1 pt)</span></p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[
+                              { value: 'over_1_5', label: 'Over 1.5' },
+                              { value: 'under_1_5', label: 'Under 1.5' },
                             ].map((option) => {
                               const isSelected = opts.includes(option.value);
                               const isDisabled = !isSelected && (globalCapReached || matchCredits >= 2);

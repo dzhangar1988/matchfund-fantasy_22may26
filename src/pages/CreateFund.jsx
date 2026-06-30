@@ -158,6 +158,8 @@ export default function CreateFund() {
         const total = parseInt(scoreMatch[1]) + parseInt(scoreMatch[2]);
         if (total > 2) conflicts.add('under_2_5');
         if (total <= 2) conflicts.add('over_2_5');
+        if (total > 1) conflicts.add('under_1_5');
+        if (total <= 1) conflicts.add('over_1_5');
       }
     }
     selectedOptions.forEach(option => {
@@ -197,10 +199,14 @@ export default function CreateFund() {
         const total = home + away;
         if (option === 'under_2_5' && total > 2) return `Точный счёт ${home}:${away} (${total} голов) > 2`;
         if (option === 'over_2_5' && total <= 2) return `Точный счёт ${home}:${away} (${total} голов) ≤ 2`;
+        if (option === 'under_1_5' && total > 1) return `Точный счёт ${home}:${away} (${total} голов) > 1`;
+        if (option === 'over_1_5' && total <= 1) return `Точный счёт ${home}:${away} (${total} голов) ≤ 1`;
       }
     }
     if (current.includes('under_2_5') && option.startsWith('exact_')) return 'Несовместимо с "0-2 гола"';
     if (current.includes('over_2_5') && option.startsWith('exact_')) return 'Несовместимо с "3+ голов"';
+    if (current.includes('under_1_5') && option.startsWith('exact_')) return 'Несовместимо с "0-1 гол"';
+    if (current.includes('over_1_5') && option.startsWith('exact_')) return 'Несовместимо с "2+ голов"';
     if ((current.includes('home_clean_sheet_win') || current.includes('away_clean_sheet_win')) && option === 'btts_yes') return 'Несовместимо с "Победа всухую"';
     if (current.includes('btts_yes') && (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win')) return 'Несовместимо с "Обе забьют: Да"';
     if (current.includes('home_clean_sheet_win')) {
@@ -253,6 +259,8 @@ export default function CreateFund() {
       let withoutExact = current.filter(o => !o.startsWith('exact_'));
       if (total > 2) withoutExact = withoutExact.filter(o => o !== 'under_2_5');
       if (total <= 2) withoutExact = withoutExact.filter(o => o !== 'over_2_5');
+      if (total > 1) withoutExact = withoutExact.filter(o => o !== 'under_1_5');
+      if (total <= 1) withoutExact = withoutExact.filter(o => o !== 'over_1_5');
       return { ...prev, [matchId]: [...withoutExact, exactOption] };
     });
   };
@@ -771,6 +779,35 @@ export default function CreateFund() {
                           <p className="text-xs text-gray-400 mb-2 font-semibold">{t("goals")}</p>
                           <div className="flex gap-2 flex-wrap">
                             {[{ value: 'over_2_5', label: t("over_goals") }, { value: 'under_2_5', label: t("under_goals") }].map((option) => {
+                              const isSelected = opts.includes(option.value);
+                              const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
+                              const disabledReason = getDisabledReason(option.value, match.id);
+                              return (
+                                <Tooltip key={option.value}>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button" variant={isSelected ? "default" : "outline"} size="sm"
+                                      className={`flex items-center gap-1 ${isSelected ? "bg-purple-500 hover:bg-purple-600 text-white font-bold" : isDisabled ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50" : "border-gray-600 text-gray-300 hover:bg-white/5"}`}
+                                      onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                      disabled={isDisabled}
+                                    >
+                                      {isSelected && <span>✓</span>}
+                                      {isDisabled && !isSelected && <span>🔒</span>}
+                                      <span>{option.label}</span>
+                                    </Button>
+                                  </TooltipTrigger>
+                                  {isDisabled && disabledReason && <TooltipContent><p>{disabledReason}</p></TooltipContent>}
+                                </Tooltip>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Goals 1.5 line — 1 pt */}
+                        <div>
+                          <p className="text-xs text-gray-400 mb-2 font-semibold">Total Goals 1.5 (1 pt)</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {[{ value: 'over_1_5', label: 'Over 1.5' }, { value: 'under_1_5', label: 'Under 1.5' }].map((option) => {
                               const isSelected = opts.includes(option.value);
                               const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
                               const disabledReason = getDisabledReason(option.value, match.id);
