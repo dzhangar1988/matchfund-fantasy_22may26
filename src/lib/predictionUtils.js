@@ -34,6 +34,8 @@ export const MUTEX_GROUPS = [
   ['btts_yes', 'btts_no'],
   ['over_2_5', 'under_2_5'],
   ['home_clean_sheet_win', 'away_clean_sheet_win'],
+  ['et_home_win', 'et_away_win'],
+  ['pen_home_win', 'pen_away_win'],
 ];
 
 export const CONFLICTS = [
@@ -140,6 +142,10 @@ export function formatOption(opt, homeTeam, awayTeam) {
     clean_sheet_away: `${awayTeam} Win to Nil`,
     home_clean_sheet_win: `${homeTeam} Win to Nil`,
     away_clean_sheet_win: `${awayTeam} Win to Nil`,
+    et_home_win: `${homeTeam} ET Win`,
+    et_away_win: `${awayTeam} ET Win`,
+    pen_home_win: `${homeTeam} Pen Win`,
+    pen_away_win: `${awayTeam} Pen Win`,
   };
   return labels[opt] || opt;
 }
@@ -169,6 +175,11 @@ export function isCorrectPrediction(opt, match) {
   if (opt === 'clean_sheet_home' || opt === 'home_clean_sheet_win') return result === 'home_win' && away === 0;
   if (opt === 'clean_sheet_away' || opt === 'away_clean_sheet_win') return result === 'away_win' && home === 0;
 
+  if (opt === 'et_home_win')  return match.decided_by === 'extra_time' && home > away;
+  if (opt === 'et_away_win')  return match.decided_by === 'extra_time' && away > home;
+  if (opt === 'pen_home_win') return match.decided_by === 'penalties' && match.penalty_winner === 'home';
+  if (opt === 'pen_away_win') return match.decided_by === 'penalties' && match.penalty_winner === 'away';
+
   if (opt.startsWith('exact_')) {
     const score = opt.replace('exact_', '');
     return score === `${home}-${away}`;
@@ -188,5 +199,19 @@ export function badgeClass(opt, match) {
     return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
   if (['clean_sheet_home', 'clean_sheet_away', 'home_clean_sheet_win', 'away_clean_sheet_win'].includes(opt))
     return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+  if (['et_home_win', 'et_away_win', 'pen_home_win', 'pen_away_win'].includes(opt))
+    return 'bg-red-500/20 text-red-400 border-red-500/30';
   return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+}
+
+// Knockout-only options (Extra Time / Penalty Win), 7 pts each.
+// Returns null for group-stage matches (group is set).
+export function getKnockoutOptions(match) {
+  if (match.group) return null;
+  return [
+    { value: 'et_home_win',  label: `${match.home_team} ET Win` },
+    { value: 'et_away_win',  label: `${match.away_team} ET Win` },
+    { value: 'pen_home_win', label: `${match.home_team} Pen Win` },
+    { value: 'pen_away_win', label: `${match.away_team} Pen Win` },
+  ];
 }

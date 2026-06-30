@@ -1045,6 +1045,14 @@ export default function FundDetails() {
                           { value: 'clean_sheet_away', label: `${match.away_team} Win to Nil` },
                         ], color: "bg-purple-500 border-purple-500"
                       },
+                      ...(!match.group ? [{
+                        label: "Extra Time / Penalty (7 pts)", options: [
+                          { value: 'et_home_win', label: `${match.home_team} ET Win` },
+                          { value: 'et_away_win', label: `${match.away_team} ET Win` },
+                          { value: 'pen_home_win', label: `${match.home_team} Pen Win` },
+                          { value: 'pen_away_win', label: `${match.away_team} Pen Win` },
+                        ], color: "bg-red-500 border-red-500"
+                      }] : []),
                     ];
 
                     return (
@@ -1462,6 +1470,42 @@ export default function FundDetails() {
                             })}
                           </div>
                         </div>
+
+                        {/* Extra Time / Penalty — knockout only, 7 pts */}
+                        {!match.group && (
+                          <div>
+                            <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Extra Time / Penalty <span className="normal-case text-gray-600">(7 pts)</span></p>
+                            <div className="flex gap-2 flex-wrap">
+                              {[
+                                { value: 'et_home_win', label: `${match.home_team} ET Win` },
+                                { value: 'et_away_win', label: `${match.away_team} ET Win` },
+                                { value: 'pen_home_win', label: `${match.home_team} Pen Win` },
+                                { value: 'pen_away_win', label: `${match.away_team} Pen Win` },
+                              ].map((option) => {
+                                const isSelected = opts.includes(option.value);
+                                const isDisabled = !isSelected && (globalCapReached || matchCredits >= 2);
+                                return (
+                                  <Button
+                                    key={option.value}
+                                    type="button"
+                                    variant={isSelected ? "default" : "outline"}
+                                    size="sm"
+                                    disabled={isDisabled}
+                                    className={`flex items-center gap-1 ${
+                                      isSelected
+                                        ? "bg-red-500 hover:bg-red-600 text-white font-bold border-red-500"
+                                        : "border-gray-600 text-gray-300 hover:bg-white/5"
+                                    }`}
+                                    onClick={() => handlePredictionChange(match.id, option.value)}
+                                  >
+                                    {isSelected && <span>✓</span>}
+                                    <span>{option.label}</span>
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
                         {!showExact ? (
                           <Button

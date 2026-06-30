@@ -357,7 +357,7 @@ export default function AdminMatches() {
     }
   };
 
-  const calculateFundPredictions = async (fund, matchId, outcome, actualScore) => {
+  const calculateFundPredictions = async (fund, matchId, outcome, actualScore, decidedBy = 'regular_time', penaltyWinner = null) => {
     console.log("=== CALCULATING PREDICTIONS ===");
     console.log("Match:", matchId, "Outcome:", outcome, "Score:", actualScore);
 
@@ -405,7 +405,7 @@ export default function AdminMatches() {
 
           // Score using shared checkOption logic (same as backend)
           const [homeGoals, awayGoals] = actualScore.split('-').map(Number);
-          const matchData = { home_goals: homeGoals, away_goals: awayGoals, result: outcome };
+          const matchData = { home_goals: homeGoals, away_goals: awayGoals, result: outcome, decided_by: decidedBy, penalty_winner: penaltyWinner };
 
           let points = 0;
           for (const opt of selectedOptions) {
@@ -467,10 +467,22 @@ export default function AdminMatches() {
       if (awayGoals > homeGoals) outcome = "away_win";
       const actualScore = `${homeGoals}-${awayGoals}`;
 
+      const decidedBy = scores.decided_by || 'regular_time';
+      let penaltyWinner = null;
+      if (decidedBy === 'penalties') {
+        if (homeGoals !== awayGoals) {
+          throw new Error("Penalty shootout: enter the level score after extra time (e.g. 1-1), then pick the shootout winner.");
+        }
+        penaltyWinner = scores.penalty_winner || null;
+        if (!penaltyWinner) throw new Error("Select the penalty shootout winner.");
+      }
+
       await base44.entities.Match.update(matchId, {
         home_goals: homeGoals,
         away_goals: awayGoals,
         result: outcome,
+        decided_by: decidedBy,
+        penalty_winner: penaltyWinner,
         status: "finished"
       });
       console.log("✅ Match updated with result:", outcome);
@@ -494,8 +506,8 @@ export default function AdminMatches() {
           }
 
           console.log(`\n🔄 Processing fund: ${fund.title}`);
-          await calculateFundPredictions(fund, matchId, outcome, actualScore);
-          
+          await calculateFundPredictions(fund, matchId, outcome, actualScore, decidedBy, penaltyWinner);
+
           await sleep(200); // Delay between calculating and updating status
           
           await updateFundStatusAndCalculate(fm.fund_id);
@@ -971,7 +983,7 @@ export default function AdminMatches() {
               const s = `${m.home_goals}-${m.away_goals}`;
               
               console.log(`Recalculating match: ${m.home_team} vs ${m.away_team} (${s})`);
-              await calculateFundPredictions(fund, m.id, o, s);
+              await calculateFundPredictions(fund, m.id, o, s, m.decided_by, m.penalty_winner);
               await sleep(300); // Increased delay between match calculations
             }
           }
@@ -1494,6 +1506,44 @@ export default function AdminMatches() {
                             }}
                             className="w-16 bg-white/5 border-gray-700 text-white text-center font-bold"
                           />
+                          {!match.group && (
+                            <>
+                              <Select
+                                value={matchScores[match.id]?.decided_by ?? "regular_time"}
+                                onValueChange={(val) => setMatchScores({
+                                  ...matchScores,
+                                  [match.id]: { ...matchScores[match.id], decided_by: val, penalty_winner: val === "penalties" ? (matchScores[match.id]?.penalty_winner ?? null) : null }
+                                })}
+                              >
+                                <SelectTrigger className="w-36 bg-white/5 border-gray-700 text-white text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="regular_time">Regular time</SelectItem>
+                                  <SelectItem value="extra_time">Extra time</SelectItem>
+                                  <SelectItem value="penalties">Penalties</SelectItem>
+                                </SelectContent>
+                              </Select>
+
+                              {matchScores[match.id]?.decided_by === "penalties" && (
+                                <Select
+                                  value={matchScores[match.id]?.penalty_winner ?? ""}
+                                  onValueChange={(val) => setMatchScores({
+                                    ...matchScores,
+                                    [match.id]: { ...matchScores[match.id], penalty_winner: val }
+                                  })}
+                                >
+                                  <SelectTrigger className="w-40 bg-white/5 border-gray-700 text-white text-xs">
+                                    <SelectValue placeholder="Shootout winner" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="home">{match.home_team} won pens</SelectItem>
+                                    <SelectItem value="away">{match.away_team} won pens</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </>
+                          )}
                           <Button
                             size="sm"
                             onClick={() => finishMatch(match.id)}

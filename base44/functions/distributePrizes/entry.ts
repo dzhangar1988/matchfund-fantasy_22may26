@@ -7,6 +7,7 @@ function getOptionWeight(option) {
   if (option === 'over_2_5' || option === 'under_2_5' || option === 'goals_over' || option === 'goals_under') return 2.5;
   if (option === 'blowout_yes' || option === 'blowout_no') return 1.5;
   if (option === 'home_clean_sheet_win' || option === 'away_clean_sheet_win' || option === 'clean_sheet_home' || option === 'clean_sheet_away') return 4;
+  if (option === 'et_home_win' || option === 'et_away_win' || option === 'pen_home_win' || option === 'pen_away_win') return 7;
   if (option.startsWith('exact_')) return 9;
   return 1;
 }
@@ -40,6 +41,10 @@ function checkOption(option, match) {
     case 'clean_sheet_home': return result === 'home_win' && a === 0;
     case 'away_clean_sheet_win':
     case 'clean_sheet_away': return result === 'away_win' && h === 0;
+    case 'et_home_win':  return match.decided_by === 'extra_time' && h > a;
+    case 'et_away_win':  return match.decided_by === 'extra_time' && a > h;
+    case 'pen_home_win': return match.decided_by === 'penalties' && match.penalty_winner === 'home';
+    case 'pen_away_win': return match.decided_by === 'penalties' && match.penalty_winner === 'away';
     default: {
       if (option.startsWith('exact_')) {
         const parts = option.replace('exact_', '').split('-');

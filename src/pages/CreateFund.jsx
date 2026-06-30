@@ -18,7 +18,7 @@ import {
 import InfoCard from "../components/InfoCard";
 import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/lib/LanguageContext";
-import { getAllowedPredictions, validatePredictions } from "@/lib/predictionUtils";
+import { getAllowedPredictions, validatePredictions, getKnockoutOptions } from "@/lib/predictionUtils";
 
 // ── Prize distribution options ─────────────────────────────────────────────
 const PRIZE_OPTIONS = [
@@ -167,6 +167,10 @@ export default function CreateFund() {
       if (option === 'away_clean_sheet_win') { conflicts.add('draw'); conflicts.add('home_win'); }
       if (option === 'home_win') conflicts.add('away_clean_sheet_win');
       if (option === 'away_win') conflicts.add('home_clean_sheet_win');
+      if (option === 'et_home_win') conflicts.add('et_away_win');
+      if (option === 'et_away_win') conflicts.add('et_home_win');
+      if (option === 'pen_home_win') conflicts.add('pen_away_win');
+      if (option === 'pen_away_win') conflicts.add('pen_home_win');
       if (option === 'draw') { conflicts.add('home_clean_sheet_win'); conflicts.add('away_clean_sheet_win'); conflicts.add('blowout_yes'); }
       if (option === 'under_2_5') conflicts.add('blowout_yes');
       if (option === 'blowout_yes') { conflicts.add('under_2_5'); conflicts.add('draw'); }
@@ -851,6 +855,37 @@ export default function CreateFund() {
                             })}
                           </div>
                         </div>
+
+                        {/* Extra Time / Penalty — knockout only, 7 pts */}
+                        {!match.group && (
+                          <div>
+                            <p className="text-xs text-gray-400 mb-2 font-semibold">Extra Time / Penalty Win (7 pts)</p>
+                            <div className="flex gap-2 flex-wrap">
+                              {getKnockoutOptions(match).map((option) => {
+                                const isSelected = opts.includes(option.value);
+                                const isDisabled = !isSelected && (opts.length >= 2 || isOptionDisabled(match.id, option.value));
+                                const disabledReason = getDisabledReason(option.value, match.id);
+                                return (
+                                  <Tooltip key={option.value}>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        type="button" variant={isSelected ? "default" : "outline"} size="sm"
+                                        className={`flex items-center gap-1 ${isSelected ? "bg-red-500 hover:bg-red-600 text-white font-bold" : isDisabled ? "border-gray-700 text-gray-600 cursor-not-allowed opacity-50" : "border-gray-600 text-gray-300 hover:bg-white/5"}`}
+                                        onClick={() => handleSetPrediction(match.id, option.value, !isSelected)}
+                                        disabled={isDisabled}
+                                      >
+                                        {isSelected && <span>✓</span>}
+                                        {isDisabled && !isSelected && <span>🔒</span>}
+                                        <span>{option.label}</span>
+                                      </Button>
+                                    </TooltipTrigger>
+                                    {isDisabled && disabledReason && <TooltipContent><p>{disabledReason}</p></TooltipContent>}
+                                  </Tooltip>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Exact Score */}
                         {!showExact ? (
