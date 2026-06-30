@@ -203,7 +203,6 @@ export default function AdminMatches() {
   };
 
   const loadMatches = async () => {
-    await seedMissingMatches();
     const allMatches = await base44.entities.Match.list("-match_date");
     setMatches(allMatches);
 
