@@ -79,22 +79,24 @@ export function togglePick(currentPicks, option, { mutexGroups = [], conflicts =
   return [...updated, option];
 }
 
-// Allowed predictions formula: ≤3 matches → matches+1, ≥4 matches → matches+2
-export function getAllowedPredictions(matchCount) {
+// Allowed predictions formula: min(base + knockoutCount, matchCount × 2)
+// base: ≤3 matches → matches+1, ≥4 matches → matches+2
+// knockoutCount: number of fund matches with !group (knockout-stage)
+export function getAllowedPredictions(matchCount, knockoutCount = 0) {
   if (matchCount <= 0) return 0;
-  if (matchCount <= 3) return matchCount + 1;
-  return matchCount + 2;
+  const base = matchCount <= 3 ? matchCount + 1 : matchCount + 2;
+  return Math.min(base + knockoutCount, matchCount * 2);
 }
 
 // Shared prediction validation — mirrors functions/validatePredictions.js
 // SINGLE SOURCE OF TRUTH for client-side prediction validation.
 // Called by: CreateFund, FundDetails
-export function validatePredictions(predictions, matchCount, matchIds) {
+export function validatePredictions(predictions, matchCount, matchIds, knockoutCount = 0) {
   if (!matchCount || matchCount < 1) {
     return { valid: false, error: 'Invalid match count', total: 0, allowed: 0 };
   }
 
-  const allowed = getAllowedPredictions(matchCount);
+  const allowed = getAllowedPredictions(matchCount, knockoutCount);
   const ids = Array.isArray(matchIds) ? matchIds : Object.keys(predictions || {});
   let total = 0;
 

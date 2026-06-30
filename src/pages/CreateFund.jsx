@@ -301,13 +301,13 @@ export default function CreateFund() {
 
   const getMatchPredictionCount = (matchId) => (predictions[matchId] || []).length;
 
-  const allowedPredictions = getAllowedPredictions(matches.length);
+  const allowedPredictions = getAllowedPredictions(matches.length, matches.filter(m => !m.group).length);
   const totalPredictions = getTotalPredictions();
 
   const allPredictionsValid = () => {
     if (matches.length < 1) return false;
     const matchIds = matches.map(m => m.id);
-    const result = validatePredictions(predictions, matches.length, matchIds);
+    const result = validatePredictions(predictions, matches.length, matchIds, matches.filter(m => !m.group).length);
     return result.valid;
   };
 

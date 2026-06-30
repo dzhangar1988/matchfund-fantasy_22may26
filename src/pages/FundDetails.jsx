@@ -353,7 +353,7 @@ export default function FundDetails() {
 
       // 🔒 Explicit getAllowedPredictions guard before writing any Prediction rows
       const totalCredits = getTotalCredits();
-      const allowed = getAllowedPredictions(matches.length);
+      const allowed = getAllowedPredictions(matches.length, matches.filter(m => !m.group).length);
       if (totalCredits > allowed) {
         throw new Error(`Prediction limit exceeded: ${totalCredits} picks submitted, but only ${allowed} allowed for ${matches.length} match${matches.length !== 1 ? 'es' : ''}.`);
       }
@@ -492,7 +492,7 @@ export default function FundDetails() {
 
   const totalCredits = getTotalCredits();
 
-  const maxPredictions = getAllowedPredictions(matches.length);
+  const maxPredictions = getAllowedPredictions(matches.length, matches.filter(m => !m.group).length);
 
   if (isLoading) {
     return (

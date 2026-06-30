@@ -1,11 +1,11 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // ── Prediction validation (inlined from functions/validatePredictions.js — KEEP IN SYNC) ──
-// Allowed predictions formula: ≤3 matches → matches+1, ≥4 matches → matches+2
-function getAllowedPredictions(matchCount) {
+// Allowed predictions formula: min(base + knockoutCount, matchCount × 2)
+function getAllowedPredictions(matchCount, knockoutCount = 0) {
   if (matchCount <= 0) return 0;
-  if (matchCount <= 3) return matchCount + 1;
-  return matchCount + 2;
+  const base = matchCount <= 3 ? matchCount + 1 : matchCount + 2;
+  return Math.min(base + knockoutCount, matchCount * 2);
 }
 
 Deno.serve(async (req) => {
@@ -55,7 +55,8 @@ Deno.serve(async (req) => {
     // ═══════════════════════════════════════════════════════════════════════
     // PREDICTION VALIDATION (mirrors functions/validatePredictions.js — KEEP IN SYNC)
     // ═══════════════════════════════════════════════════════════════════════
-    const allowedPredictions = getAllowedPredictions(matchCount);
+    const knockoutCount = matches.filter(m => !m.group).length;
+    const allowedPredictions = getAllowedPredictions(matchCount, knockoutCount);
     let totalPredictions = 0;
     const matchMap = new Map(matches.map(m => [m.id, m]));
     for (const matchId of matchIds) {

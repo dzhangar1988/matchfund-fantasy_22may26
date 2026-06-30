@@ -3,24 +3,24 @@
 // Called by: joinFund, updatePrediction
 // Frontend mirror: lib/predictionUtils.js → validatePredictions()
 //
-// Allowed predictions formula: ≤3 matches → matches+1, ≥4 matches → matches+2
+// Allowed predictions formula: min(base + knockoutCount, matchCount × 2)
 // ────────────────────────────────────────────────────────────────────────────
-function getAllowedPredictions(matchCount) {
+function getAllowedPredictions(matchCount, knockoutCount = 0) {
   if (matchCount <= 0) return 0;
-  if (matchCount <= 3) return matchCount + 1;
-  return matchCount + 2;
+  const base = matchCount <= 3 ? matchCount + 1 : matchCount + 2;
+  return Math.min(base + knockoutCount, matchCount * 2);
 }
 
 Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({}));
-    const { predictions, matchCount, matchIds } = body;
+    const { predictions, matchCount, matchIds, knockoutCount = 0 } = body;
 
     if (!matchCount || matchCount < 1) {
       return Response.json({ valid: false, error: 'Invalid match count', total: 0, allowed: 0 });
     }
 
-    const allowed = getAllowedPredictions(matchCount);
+    const allowed = getAllowedPredictions(matchCount, knockoutCount);
     const ids = Array.isArray(matchIds) ? matchIds : Object.keys(predictions || {});
     let total = 0;
 
