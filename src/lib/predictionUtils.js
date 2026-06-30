@@ -204,10 +204,15 @@ export function badgeClass(opt, match) {
   return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
 }
 
+// A match is knockout-stage if group is "Knockouts" or null (no group letter).
+export function isKnockoutMatch(match) {
+  return !match.group || match.group === "Knockouts";
+}
+
 // Knockout-only options (Extra Time / Penalty Win), 7 pts each.
 // Returns null for group-stage matches (group is set).
 export function getKnockoutOptions(match) {
-  if (match.group) return null;
+  if (!isKnockoutMatch(match)) return null;
   return [
     { value: 'et_home_win',  label: `${match.home_team} ET Win` },
     { value: 'et_away_win',  label: `${match.away_team} ET Win` },

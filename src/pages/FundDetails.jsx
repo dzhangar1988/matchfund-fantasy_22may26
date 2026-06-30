@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import OrderBook from "@/components/OrderBook";
 import PlayersPredictions from "@/components/PlayersPredictions";
 import { getFundParticipants } from "@/functions/getFundParticipants";
+import { isKnockoutMatch } from "@/lib/predictionUtils";
 import { cancelFund } from "@/functions/cancelFund";
 import { showRespect } from "@/functions/showRespect";
 import { formatOption, badgeClass, getAllowedPredictions, togglePick, normalizeOptions, dedupePicks, MUTEX_GROUPS, CONFLICTS } from "@/lib/predictionUtils";
@@ -1045,7 +1046,7 @@ export default function FundDetails() {
                           { value: 'clean_sheet_away', label: `${match.away_team} Win to Nil` },
                         ], color: "bg-purple-500 border-purple-500"
                       },
-                      ...(!match.group ? [{
+                      ...(isKnockoutMatch(match) ? [{
                         label: "Extra Time / Penalty (7 pts)", options: [
                           { value: 'et_home_win', label: `${match.home_team} ET Win` },
                           { value: 'et_away_win', label: `${match.away_team} ET Win` },
@@ -1472,7 +1473,7 @@ export default function FundDetails() {
                         </div>
 
                         {/* Extra Time / Penalty — knockout only, 7 pts */}
-                        {!match.group && (
+                        {isKnockoutMatch(match) && (
                           <div>
                             <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide">Extra Time / Penalty <span className="normal-case text-gray-600">(7 pts)</span></p>
                             <div className="flex gap-2 flex-wrap">

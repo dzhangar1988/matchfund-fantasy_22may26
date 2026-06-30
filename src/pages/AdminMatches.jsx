@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import WC2026_FIXTURES from "@/data/wc2026Fixtures";
 import { distributePrizes as distributePrizesBackend } from "@/functions/distributePrizes";
 import { checkOption, getPickPoints } from "@/lib/scoringUtils";
+import { isKnockoutMatch } from "@/lib/predictionUtils";
 
 const COMPETITIONS = [
   "World Cup 2026",
@@ -1506,7 +1507,7 @@ export default function AdminMatches() {
                             }}
                             className="w-16 bg-white/5 border-gray-700 text-white text-center font-bold"
                           />
-                          {!match.group && (
+                          {isKnockoutMatch(match) && (
                             <>
                               <Select
                                 value={matchScores[match.id]?.decided_by ?? "regular_time"}

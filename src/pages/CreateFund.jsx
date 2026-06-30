@@ -18,7 +18,7 @@ import {
 import InfoCard from "../components/InfoCard";
 import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/lib/LanguageContext";
-import { getAllowedPredictions, validatePredictions, getKnockoutOptions } from "@/lib/predictionUtils";
+import { getAllowedPredictions, validatePredictions, getKnockoutOptions, isKnockoutMatch } from "@/lib/predictionUtils";
 
 // ── Prize distribution options ─────────────────────────────────────────────
 const PRIZE_OPTIONS = [
@@ -857,7 +857,7 @@ export default function CreateFund() {
                         </div>
 
                         {/* Extra Time / Penalty — knockout only, 7 pts */}
-                        {!match.group && (
+                        {isKnockoutMatch(match) && (
                           <div>
                             <p className="text-xs text-gray-400 mb-2 font-semibold">Extra Time / Penalty Win (7 pts)</p>
                             <div className="flex gap-2 flex-wrap">
